@@ -1,0 +1,1327 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Technical Architecture - Rapid.one Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #fff;
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 2.5em;
+        margin-bottom: 0.5em;
+        border-bottom: 3px solid #000;
+        padding-bottom: 0.3em;
+      }
+
+      h2 {
+        font-size: 2em;
+        margin-top: 2em;
+        margin-bottom: 0.5em;
+        border-bottom: 2px solid #333;
+        padding-bottom: 0.2em;
+      }
+
+      h3 {
+        font-size: 1.5em;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+      }
+
+      h4 {
+        font-size: 1.2em;
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+      }
+
+      p {
+        margin-bottom: 1em;
+      }
+
+      .header-info {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 30px;
+      }
+
+      .header-info p {
+        margin: 5px 0;
+        font-size: 0.9em;
+      }
+
+      .toc {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+
+      .toc h2 {
+        margin-top: 0;
+        border: none;
+      }
+
+      .toc ol {
+        margin-left: 20px;
+      }
+
+      .toc li {
+        margin: 5px 0;
+      }
+
+      .toc a {
+        color: #000;
+        text-decoration: none;
+      }
+
+      .toc a:hover {
+        text-decoration: underline;
+      }
+
+      .mermaid {
+        background: #fff;
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        border: 1px solid #000;
+      }
+
+      th {
+        background: #000;
+        color: #fff;
+        padding: 12px;
+        text-align: left;
+        font-weight: bold;
+      }
+
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+
+      tr:nth-child(even) {
+        background: #f9f9f9;
+      }
+
+      pre {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        padding: 15px;
+        overflow-x: auto;
+        margin: 15px 0;
+        font-family: "Courier New", monospace;
+        font-size: 0.9em;
+      }
+
+      code {
+        background: #f5f5f5;
+        padding: 2px 6px;
+        border: 1px solid #ddd;
+        font-family: "Courier New", monospace;
+        font-size: 0.9em;
+      }
+
+      .code-block {
+        background: #f5f5f5;
+        border: 1px solid #000;
+        padding: 15px;
+        margin: 15px 0;
+        font-family: "Courier New", monospace;
+        white-space: pre-wrap;
+        font-size: 0.85em;
+      }
+
+      .section {
+        margin-bottom: 40px;
+      }
+
+      hr {
+        border: none;
+        border-top: 1px solid #ddd;
+        margin: 40px 0;
+      }
+
+      ul,
+      ol {
+        margin-left: 30px;
+        margin-bottom: 15px;
+      }
+
+      li {
+        margin: 8px 0;
+      }
+
+      .api-structure {
+        background: #f5f5f5;
+        border: 1px solid #000;
+        padding: 20px;
+        margin: 20px 0;
+        font-family: "Courier New", monospace;
+        font-size: 0.85em;
+      }
+
+      .api-structure ul {
+        list-style: none;
+        margin-left: 0;
+      }
+
+      .api-structure li {
+        margin: 3px 0;
+      }
+
+      .comparison-box {
+        background: #f9f9f9;
+        border: 1px solid #000;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .benefit-section {
+        background: #f5f5f5;
+        border-left: 4px solid #000;
+        padding: 15px;
+        margin: 15px 0;
+      }
+
+      strong {
+        font-weight: 600;
+      }
+
+      @media print {
+        body {
+          max-width: 100%;
+          padding: 10px;
+        }
+        .mermaid {
+          page-break-inside: avoid;
+        }
+        table {
+          page-break-inside: avoid;
+        }
+      }
+
+      .legend {
+        font-size: 0.85em;
+        margin-top: 5px;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Technical Architecture - Rapid.one Platform</h1>
+
+    <div class="header-info">
+      <p><strong>Version:</strong> 2.0</p>
+      <p><strong>Last Updated:</strong> 2025-11-13</p>
+      <p><strong>Status:</strong> In Development (Phase 1)</p>
+    </div>
+
+    <div class="toc">
+      <h2>Table of Contents</h2>
+      <ol>
+        <li><a href="#executive-summary">Executive Summary</a></li>
+        <li><a href="#system-overview">System Overview</a></li>
+        <li><a href="#architecture-diagrams">Architecture Diagrams</a></li>
+        <li><a href="#technology-stack">Technology Stack</a></li>
+        <li><a href="#migration-strategy">Migration Strategy</a></li>
+        <li><a href="#database-schema">Database Schema</a></li>
+        <li><a href="#api-architecture">API Architecture</a></li>
+        <li><a href="#security-architecture">Security Architecture</a></li>
+        <li>
+          <a href="#integration-architecture">Integration Architecture</a>
+        </li>
+        <li><a href="#deployment-architecture">Deployment Architecture</a></li>
+        <li><a href="#why-this-architecture">Why This Architecture</a></li>
+        <li><a href="#appendix">Appendix</a></li>
+      </ol>
+    </div>
+
+    <div class="section" id="executive-summary">
+      <h2>1. Executive Summary</h2>
+      <p>
+        Rapid.one is a comprehensive Employer of Record (EoR) platform designed
+        for the Indian market, facilitating employee management, payroll
+        processing, compliance, and HR operations for companies hiring in India.
+      </p>
+
+      <div class="comparison-box">
+        <p>
+          <strong>Platform Scope:</strong> 150+ feature areas across 4 portals
+        </p>
+        <p>
+          <strong>Current Implementation:</strong> 30-35 screens (~25-30%
+          complete)
+        </p>
+        <p>
+          <strong>Target Completion:</strong> 6-12 months for full feature
+          parity
+        </p>
+      </div>
+
+      <h3>Key Architectural Decisions</h3>
+      <ol>
+        <li>
+          <strong>Monorepo Architecture</strong> - Single repository with clear
+          domain separation
+        </li>
+        <li>
+          <strong>Next.js 14 App Router</strong> - Modern React framework with
+          server components
+        </li>
+        <li>
+          <strong>Supabase Backend</strong> - PostgreSQL with real-time
+          capabilities and built-in auth
+        </li>
+        <li><strong>TypeScript First</strong> - End-to-end type safety</li>
+        <li>
+          <strong>API-First Design</strong> - Clear separation between frontend
+          and backend
+        </li>
+        <li>
+          <strong>Multi-Tenant Architecture</strong> - Single codebase serving
+          multiple companies
+        </li>
+      </ol>
+    </div>
+
+    <hr />
+
+    <div class="section" id="system-overview">
+      <h2>2. System Overview</h2>
+
+      <div class="mermaid">
+        graph TB subgraph "User Interfaces" EP[Employee Portal] EMP[Employer
+        Portal] CP[Contractor Portal] SA[Super Admin Portal] end subgraph
+        "Application Layer" NX[Next.js 14 App Router] API[API Routes]
+        MW[Middleware & Auth] end subgraph "Backend Services" SB[Supabase]
+        SBAUTH[Supabase Auth] SBDB[(PostgreSQL)] SBSTORE[Storage] SBRT[Realtime]
+        end subgraph "External Integrations" SV[SpringVerify] ZS[Zoho Sign]
+        PL[Plum Insurance] SG[SendGrid] DR[DevRev] SC[Succeed LMS] end EP --> NX
+        EMP --> NX CP --> NX SA --> NX NX --> API API --> MW MW --> SBAUTH API
+        --> SB SB --> SBDB SB --> SBSTORE SB --> SBRT API --> SV API --> ZS API
+        --> PL API --> SG API --> DR API --> SC
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section" id="architecture-diagrams">
+      <h2>3. Architecture Diagrams</h2>
+
+      <h3>3.1 High-Level System Architecture</h3>
+      <div class="mermaid">
+        graph LR subgraph "Client Layer" WEB[Web Browser] end subgraph "CDN &
+        Edge" VERCEL[Vercel Edge Network] CACHE[Global CDN Cache] end subgraph
+        "Application Layer" SSR[Next.js SSR] ISR[Incremental Static
+        Regeneration] CSR[Client-Side React] end subgraph "API Layer" REST[REST
+        API Routes] TRPC[tRPC Endpoints] WS[WebSocket Handlers] end subgraph
+        "Data Layer" PG[(PostgreSQL)] REDIS[(Redis Cache)] S3[(Object Storage)]
+        end WEB --> VERCEL VERCEL --> CACHE CACHE --> SSR CACHE --> ISR CACHE
+        --> CSR SSR --> REST CSR --> REST CSR --> TRPC CSR --> WS REST --> PG
+        REST --> REDIS TRPC --> PG WS --> PG REST --> S3
+      </div>
+
+      <h3>3.2 Portal Architecture</h3>
+      <div class="mermaid">
+        graph TB subgraph "Employer Portal" ED[Dashboard] EEM[Employee
+        Management] EP[Payroll] EC[Compliance] EA[Attendance] EL[Leave
+        Management] EX[Expense Management] ECO[Contractor Management]
+        ER[Reports] ES[Settings] end subgraph "Employee Portal"
+        EMDASH[Dashboard] EMPROF[Profile] EMPAY[Payslips] EMTAX[Tax Declaration]
+        EMLEAVE[Leave Requests] EMEXP[Expense Requests] EMATT[Attendance]
+        EMDOC[Documents] EMONB[Onboarding] end subgraph "Contractor Portal"
+        CDASH[Dashboard] CTS[Timesheets] CINV[Invoices] CPROF[Profile]
+        CONB[Onboarding] end subgraph "Super Admin Portal" SADASH[Dashboard]
+        SACLIENT[Client Management] SATEAM[Team Management] SAPAY[Payroll
+        Management] SASERV[Services Management] SAINV[Invoice Management]
+        SAREQ[Request Management] SAFIN[Finance] SAREPORT[Reports] SAAUDIT[Audit
+        Logs] end subgraph "Shared Services" AUTH[Authentication]
+        NOTIF[Notifications] SEARCH[Global Search] EXPORT[Export Service]
+        UPLOAD[Upload Service] end ED --> AUTH EMDASH --> AUTH CDASH --> AUTH
+        SADASH --> AUTH EEM --> NOTIF EMPROF --> NOTIF CTS --> NOTIF SAREQ -->
+        NOTIF ER --> EXPORT SAREPORT --> EXPORT EMDOC --> UPLOAD EMEXP -->
+        UPLOAD
+      </div>
+
+      <h3>3.3 Data Flow Architecture</h3>
+      <div class="mermaid">
+        sequenceDiagram participant U as User participant FE as Frontend
+        participant MW as Middleware participant API as API Routes participant
+        SB as Supabase participant DB as PostgreSQL participant EXT as External
+        Services U->>FE: Request Action FE->>MW: HTTP Request MW->>MW: Validate
+        JWT Token MW->>MW: Check Permissions alt Authorized MW->>API: Forward
+        Request API->>SB: Query/Mutation SB->>DB: Execute Query DB-->>SB: Return
+        Data SB-->>API: Response opt External Integration Needed API->>EXT: API
+        Call EXT-->>API: Response end API-->>FE: JSON Response FE-->>U: Render
+        UI else Unauthorized MW-->>FE: 401 Error FE-->>U: Redirect to Login end
+      </div>
+
+      <h3>3.4 Authentication & Authorization Flow</h3>
+      <div class="mermaid">
+        graph TB subgraph "Authentication Flow" LOGIN[Login Page]
+        CREDS[Username/Password] SSO[SSO Providers] TWOFA[2FA Verification]
+        LOGIN --> CREDS LOGIN --> SSO CREDS --> TWOFA SSO --> TWOFA end subgraph
+        "Authorization Layer" JWT[JWT Token] REFRESH[Refresh Token]
+        RBAC[Role-Based Access Control] PERMS[Permission Matrix] end subgraph
+        "Session Management" SESS[Session Store] LOGOUT[Logout Handler]
+        TIMEOUT[Auto Timeout] end TWOFA --> JWT JWT --> RBAC RBAC --> PERMS JWT
+        --> REFRESH JWT --> SESS SESS --> LOGOUT SESS --> TIMEOUT
+      </div>
+
+      <h3>3.5 Database Entity-Relationship Diagram</h3>
+      <div class="mermaid">
+        erDiagram COMPANIES ||--o{ EMPLOYEES : employs COMPANIES ||--o{
+        CONTRACTORS : engages COMPANIES ||--o{ TEAMS : has COMPANIES ||--o{
+        LEAVE_POLICIES : defines COMPANIES ||--o{ SALARY_STRUCTURES : defines
+        EMPLOYEES ||--o{ LEAVE_REQUESTS : submits EMPLOYEES ||--o{
+        EXPENSE_REQUESTS : submits EMPLOYEES ||--o{ ATTENDANCE_RECORDS : has
+        EMPLOYEES ||--o{ PAYSLIPS : receives EMPLOYEES ||--o{ TAX_DECLARATIONS :
+        files EMPLOYEES ||--o{ DOCUMENTS : owns EMPLOYEES }o--|| TEAMS :
+        belongs_to CONTRACTORS ||--o{ TIMESHEETS : submits CONTRACTORS ||--o{
+        INVOICES : generates CONTRACTORS ||--o{ CONTRACTOR_PAYMENTS : receives
+        TEAMS ||--o{ EMPLOYEES : contains LEAVE_REQUESTS }o--|| LEAVE_POLICIES :
+        governed_by LEAVE_REQUESTS ||--o{ LEAVE_APPROVALS : has EXPENSE_REQUESTS
+        ||--o{ EXPENSE_APPROVALS : has PAYSLIPS }o--|| PAYROLL_RUNS : part_of
+        PAYROLL_RUNS }o--|| COMPANIES : processed_for COMPANIES ||--o{
+        COMPLIANCE_REPORTS : generates COMPLIANCE_REPORTS ||--o{ EPF_REPORTS :
+        includes COMPLIANCE_REPORTS ||--o{ TDS_REPORTS : includes COMPANIES
+        ||--o{ SPECIAL_REQUESTS : receives SPECIAL_REQUESTS ||--o{
+        REQUEST_APPROVALS : has EMPLOYEES ||--o{ ASSETS : assigned CONTRACTORS
+        ||--o{ ASSETS : assigned COMPANIES ||--o{ ASSETS : owns
+      </div>
+
+      <h3>3.6 Component Hierarchy</h3>
+      <div class="mermaid">
+        graph TB subgraph "Layout Components" ROOT[RootLayout]
+        AUTH_LAYOUT[AuthLayout] EMP_LAYOUT[EmployerLayout]
+        EMPL_LAYOUT[EmployeeLayout] CONT_LAYOUT[ContractorLayout]
+        ADMIN_LAYOUT[SuperAdminLayout] end subgraph "Shared Components"
+        NAV[Navigation] SIDEBAR[Sidebar] HEADER[Header] FOOTER[Footer]
+        MODAL[Modal] TOAST[Toast Notifications] TABLE[DataTable]
+        FORM[FormBuilder] CHART[ChartComponents] end subgraph "Feature
+        Components" EMP_TABLE[EmployeeTable] PAY_CALC[PayrollCalculator]
+        LEAVE_CAL[LeaveCalendar] DOC_VIEW[DocumentViewer] SIGN[SignatureCapture]
+        UPLOAD[FileUpload] end subgraph "Page Components" DASH[Dashboard]
+        LIST[ListViews] DETAIL[DetailViews] FORMS[FormPages]
+        REPORTS[ReportPages] end ROOT --> AUTH_LAYOUT ROOT --> EMP_LAYOUT ROOT
+        --> EMPL_LAYOUT ROOT --> CONT_LAYOUT ROOT --> ADMIN_LAYOUT EMP_LAYOUT
+        --> NAV EMP_LAYOUT --> SIDEBAR EMPL_LAYOUT --> NAV EMPL_LAYOUT -->
+        SIDEBAR NAV --> HEADER DASH --> TABLE DASH --> CHART LIST --> TABLE
+        FORMS --> FORM FORMS --> UPLOAD DETAIL --> DOC_VIEW TABLE --> MODAL FORM
+        --> MODAL DASH --> TOAST FORMS --> TOAST
+      </div>
+
+      <h3>3.7 API Architecture</h3>
+      <div class="mermaid">
+        graph TB subgraph "API Routes Structure" ROOT_API["API Root"]
+        AUTH_API["Auth Routes"] EMP_API["Employee Routes"] CONT_API["Contractor
+        Routes"] PAY_API["Payroll Routes"] COMP_API["Compliance Routes"]
+        REQ_API["Request Routes"] DOC_API["Document Routes"]
+        NOTIF_API["Notification Routes"] REPORT_API["Report Routes"] end
+        subgraph "API Middleware" RATE_LIMIT["Rate Limiting"] CORS["CORS
+        Handler"] AUTH_MW["Auth Middleware"] LOGGING["Request Logging"]
+        VALIDATION["Input Validation"] end subgraph "API Services"
+        EMP_SVC["Employee Service"] PAY_SVC["Payroll Service"]
+        NOTIF_SVC["Notification Service"] DOC_SVC["Document Service"]
+        COMP_SVC["Compliance Service"] end ROOT_API --> AUTH_API ROOT_API -->
+        EMP_API ROOT_API --> CONT_API ROOT_API --> PAY_API ROOT_API --> COMP_API
+        ROOT_API --> REQ_API ROOT_API --> DOC_API ROOT_API --> NOTIF_API
+        ROOT_API --> REPORT_API AUTH_API --> RATE_LIMIT EMP_API --> AUTH_MW
+        PAY_API --> AUTH_MW AUTH_MW --> CORS CORS --> LOGGING LOGGING -->
+        VALIDATION EMP_API --> EMP_SVC PAY_API --> PAY_SVC NOTIF_API -->
+        NOTIF_SVC DOC_API --> DOC_SVC COMP_API --> COMP_SVC
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section" id="technology-stack">
+      <h2>4. Technology Stack</h2>
+
+      <h3>4.1 Frontend Stack</h3>
+      <div class="code-block">
+        ┌─────────────────────────────────────────┐ │ Framework: Next.js 14 (App
+        Router) │ │ Language: TypeScript 5.x │ │ UI Library: React 18 │ │
+        Styling: Tailwind CSS 3.x │ │ State: React Hooks + Context │ │ Forms:
+        React Hook Form │ │ Validation: Zod │ │ Charts: Recharts / Chart.js │ │
+        Date: date-fns │ │ Icons: Lucide React │
+        └─────────────────────────────────────────┘
+      </div>
+
+      <h3>4.2 Backend Stack</h3>
+      <div class="code-block">
+        ┌─────────────────────────────────────────┐ │ Database: PostgreSQL 15 │
+        │ BaaS: Supabase │ │ Authentication: Supabase Auth │ │ Storage: Supabase
+        Storage │ │ Realtime: Supabase Realtime │ │ ORM: Prisma (Future) │ │
+        API: Next.js API Routes │ │ Validation: Zod │
+        └─────────────────────────────────────────┘
+      </div>
+
+      <h3>4.3 DevOps & Infrastructure</h3>
+      <div class="code-block">
+        ┌─────────────────────────────────────────┐ │ Hosting: Vercel │ │
+        Database: Supabase Cloud │ │ CI/CD: GitHub Actions │ │ Version Control:
+        Git │ │ Package Manager: pnpm │ │ Code Quality: ESLint + Prettier │ │
+        Type Checking: TypeScript │ │ Testing: Jest + React Testing Library │
+        └─────────────────────────────────────────┘
+      </div>
+
+      <h3>4.4 External Integrations</h3>
+      <div class="code-block">
+        ┌─────────────────────────────────────────┐ │ Verification: SpringVerify
+        API │ │ E-Signature: Zoho Sign API │ │ Insurance: Plum API │ │ Email:
+        SendGrid API │ │ Support: DevRev API │ │ LMS: Succeed API │ │ Payments:
+        Razorpay / Stripe │ │ SMS: Twilio │
+        └─────────────────────────────────────────┘
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section" id="migration-strategy">
+      <h2>5. Migration Strategy</h2>
+
+      <h3>5.1 Previous Architecture (Challenges)</h3>
+      <div class="mermaid">
+        graph TB subgraph "Old System Issues" MONO[Monolithic Backend]
+        TIGHT[Tightly Coupled Code] NO_TYPE[No Type Safety] MANUAL[Manual
+        Deployments] NO_RT[No Realtime Features] OLD_AUTH[Basic Auth Only] end
+        subgraph "Previous Tech Stack" PHP[PHP Backend] MYSQL[(MySQL)]
+        JQUERY[jQuery Frontend] BOOTSTRAP[Bootstrap UI] end MONO --> PHP TIGHT
+        --> PHP NO_TYPE --> JQUERY MANUAL --> PHP NO_RT --> MYSQL OLD_AUTH -->
+        PHP
+      </div>
+
+      <h3>5.2 Migration Path</h3>
+      <div class="code-block">
+        Phase 1: Foundation (Current) ├── Setup Next.js + Supabase ├── Implement
+        Auth ├── Build Core UI Components └── Database Schema Migration Phase 2:
+        Core Features (In Progress) ├── Employee Management ├── Contractor
+        Management ├── Leave & Expense └── Payroll Basic Phase 3: Advanced
+        (Planned) ├── Special Requests ├── Onboarding Workflows ├── Super Admin
+        Portal └── Integrations Phase 4: Enterprise (Future) ├── LMS Integration
+        ├── Advanced Analytics ├── Multi-Currency └── Exit Formalities
+      </div>
+
+      <h3>5.3 Migration Benefits Matrix</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Aspect</th>
+            <th>Previous System</th>
+            <th>New System</th>
+            <th>Improvement</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Type Safety</strong></td>
+            <td>None (PHP, jQuery)</td>
+            <td>Full TypeScript</td>
+            <td>100% type coverage</td>
+          </tr>
+          <tr>
+            <td><strong>Development Speed</strong></td>
+            <td>Manual CRUD</td>
+            <td>Auto-generated APIs</td>
+            <td>3x faster</td>
+          </tr>
+          <tr>
+            <td><strong>UI Consistency</strong></td>
+            <td>Bootstrap components</td>
+            <td>Tailwind + React</td>
+            <td>Modern, customizable</td>
+          </tr>
+          <tr>
+            <td><strong>Authentication</strong></td>
+            <td>Basic session auth</td>
+            <td>Supabase Auth + 2FA</td>
+            <td>Enterprise-grade</td>
+          </tr>
+          <tr>
+            <td><strong>Realtime Features</strong></td>
+            <td>Polling</td>
+            <td>WebSocket subscriptions</td>
+            <td>True realtime</td>
+          </tr>
+          <tr>
+            <td><strong>Deployment</strong></td>
+            <td>Manual FTP</td>
+            <td>Git push → Auto deploy</td>
+            <td>Zero-downtime</td>
+          </tr>
+          <tr>
+            <td><strong>Scalability</strong></td>
+            <td>Vertical only</td>
+            <td>Horizontal + Edge</td>
+            <td>10x capacity</td>
+          </tr>
+          <tr>
+            <td><strong>API Design</strong></td>
+            <td>REST only</td>
+            <td>REST + tRPC + GraphQL</td>
+            <td>Type-safe APIs</td>
+          </tr>
+          <tr>
+            <td><strong>Testing</strong></td>
+            <td>Manual QA</td>
+            <td>Automated tests</td>
+            <td>80% coverage target</td>
+          </tr>
+          <tr>
+            <td><strong>Documentation</strong></td>
+            <td>Outdated docs</td>
+            <td>Auto-generated from code</td>
+            <td>Always current</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr />
+
+    <div class="section" id="database-schema">
+      <h2>6. Database Schema</h2>
+
+      <h3>6.1 Core Tables Structure</h3>
+      <div class="code-block">
+        COMPANIES ├── id (uuid, PK) ├── name (text) ├── domain (text) ├──
+        settings (jsonb) ├── subscription_tier (text) ├── created_at (timestamp)
+        └── updated_at (timestamp) USERS ├── id (uuid, PK, FK → Supabase Auth)
+        ├── email (text, unique) ├── role (enum: employer, employee, contractor,
+        super_admin) ├── company_id (uuid, FK → COMPANIES) ├── profile_data
+        (jsonb) ├── created_at (timestamp) └── last_login_at (timestamp)
+        EMPLOYEES ├── id (uuid, PK) ├── user_id (uuid, FK → USERS) ├──
+        company_id (uuid, FK → COMPANIES) ├── team_id (uuid, FK → TEAMS) ├──
+        employee_code (text, unique) ├── designation (text) ├── employment_type
+        (enum: full_time, part_time, intern) ├── joining_date (date) ├──
+        salary_structure_id (uuid, FK → SALARY_STRUCTURES) ├── status (enum:
+        active, probation, resigned, terminated) ├── personal_details (jsonb)
+        ├── statutory_details (jsonb) └── created_at (timestamp) CONTRACTORS ├──
+        id (uuid, PK) ├── user_id (uuid, FK → USERS) ├── company_id (uuid, FK →
+        COMPANIES) ├── contractor_type (enum: individual, company) ├──
+        contract_start_date (date) ├── contract_end_date (date) ├── rate_type
+        (enum: hourly, fixed) ├── rate_amount (decimal) ├── status (enum:
+        active, inactive, terminated) └── created_at (timestamp) LEAVE_REQUESTS
+        ├── id (uuid, PK) ├── employee_id (uuid, FK → EMPLOYEES) ├──
+        leave_type_id (uuid, FK → LEAVE_TYPES) ├── start_date (date) ├──
+        end_date (date) ├── days_count (decimal) ├── reason (text) ├── status
+        (enum: pending, approved, rejected, cancelled) ├── approver_id (uuid, FK
+        → USERS) ├── approved_at (timestamp) └── created_at (timestamp)
+        PAYROLL_RUNS ├── id (uuid, PK) ├── company_id (uuid, FK → COMPANIES) ├──
+        month (integer) ├── year (integer) ├── status (enum: draft, processing,
+        completed, paid) ├── total_gross (decimal) ├── total_deductions
+        (decimal) ├── total_net (decimal) ├── processed_at (timestamp) └──
+        created_at (timestamp) SPECIAL_REQUESTS ├── id (uuid, PK) ├── company_id
+        (uuid, FK → COMPANIES) ├── requester_id (uuid, FK → USERS) ├──
+        request_type (enum: equipment, gift, termination, amendment, etc.) ├──
+        request_data (jsonb) ├── status (enum: pending, in_progress, completed,
+        rejected) ├── assigned_to (uuid, FK → USERS) └── created_at (timestamp)
+      </div>
+
+      <h3>6.2 Database Indexes Strategy</h3>
+      <pre><code>-- High-traffic query optimization
+CREATE INDEX idx_employees_company_status ON employees(company_id, status);
+CREATE INDEX idx_leave_requests_employee_status ON leave_requests(employee_id, status);
+CREATE INDEX idx_payslips_employee_month ON payslips(employee_id, month, year);
+CREATE INDEX idx_attendance_employee_date ON attendance_records(employee_id, date);
+
+-- Search optimization
+CREATE INDEX idx_employees_search ON employees USING gin(to_tsvector('english', name || ' ' || email));
+CREATE INDEX idx_companies_domain ON companies(domain);
+
+-- Foreign key optimization
+CREATE INDEX idx_employees_company ON employees(company_id);
+CREATE INDEX idx_employees_team ON employees(team_id);
+CREATE INDEX idx_leave_requests_employee ON leave_requests(employee_id);</code></pre>
+    </div>
+
+    <hr />
+
+    <div class="section" id="api-architecture">
+      <h2>7. API Architecture</h2>
+
+      <h3>7.1 REST API Endpoints Structure</h3>
+      <div class="api-structure">
+        /api/v1 ├── /auth │ ├── POST /login │ ├── POST /signup │ ├── POST
+        /logout │ ├── POST /forgot-password │ ├── POST /reset-password │ ├──
+        POST /verify-2fa │ └── GET /session │ ├── /employees │ ├── GET
+        /employees │ ├── GET /employees/:id │ ├── POST /employees │ ├── PUT
+        /employees/:id │ ├── DELETE /employees/:id │ ├── GET
+        /employees/:id/payslips │ ├── GET /employees/:id/leaves │ └── POST
+        /employees/:id/documents │ ├── /contractors │ ├── GET /contractors │ ├──
+        GET /contractors/:id │ ├── POST /contractors │ ├── PUT /contractors/:id
+        │ ├── GET /contractors/:id/timesheets │ └── GET
+        /contractors/:id/invoices │ ├── /leave │ ├── GET /leave/requests │ ├──
+        POST /leave/requests │ ├── PUT /leave/requests/:id │ ├── POST
+        /leave/requests/:id/approve │ ├── POST /leave/requests/:id/reject │ └──
+        GET /leave/calendar │ ├── /expenses │ ├── GET /expenses/requests │ ├──
+        POST /expenses/requests │ ├── PUT /expenses/requests/:id │ ├── POST
+        /expenses/requests/:id/approve │ └── POST /expenses/requests/:id/reject
+        │ ├── /payroll │ ├── GET /payroll/runs │ ├── POST /payroll/runs │ ├──
+        GET /payroll/runs/:id │ ├── POST /payroll/runs/:id/process │ ├── GET
+        /payroll/payslips │ └── GET /payroll/payslips/:id/pdf │ ├── /compliance
+        │ ├── GET /compliance/epf │ ├── GET /compliance/tds │ ├── GET
+        /compliance/reports │ └── POST /compliance/generate │ ├── /requests │
+        ├── GET /requests │ ├── POST /requests │ ├── GET /requests/:id │ ├── PUT
+        /requests/:id │ └── POST /requests/:id/update-status │ ├── /documents │
+        ├── GET /documents │ ├── POST /documents/upload │ ├── GET /documents/:id
+        │ ├── DELETE /documents/:id │ └── POST /documents/:id/sign │ └──
+        /notifications ├── GET /notifications ├── PUT /notifications/:id/read
+        └── DELETE /notifications/:id
+      </div>
+
+      <h3>7.2 API Response Standards</h3>
+      <pre><code>// Success Response
+{
+  "success": true,
+  "data": { /* resource data */ },
+  "meta": {
+    "timestamp": "2025-11-13T10:30:00Z",
+    "requestId": "uuid"
+  }
+}
+
+// Error Response
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": [
+      {
+        "field": "email",
+        "message": "Invalid email format"
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "2025-11-13T10:30:00Z",
+    "requestId": "uuid"
+  }
+}
+
+// Paginated Response
+{
+  "success": true,
+  "data": [ /* array of resources */ ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "totalPages": 5,
+    "totalItems": 98
+  },
+  "meta": {
+    "timestamp": "2025-11-13T10:30:00Z",
+    "requestId": "uuid"
+  }
+}</code></pre>
+    </div>
+
+    <hr />
+
+    <div class="section" id="security-architecture">
+      <h2>8. Security Architecture</h2>
+
+      <h3>8.1 Security Layers</h3>
+      <div class="mermaid">
+        graph TB subgraph "Network Security" HTTPS[HTTPS/TLS 1.3] DDOS[DDoS
+        Protection] WAF[Web Application Firewall] end subgraph "Authentication
+        Security" JWT_SEC[JWT Tokens] TWOFA_SEC[2FA/MFA] SSO_SEC[SSO
+        Integration] RATE[Rate Limiting] end subgraph "Authorization Security"
+        RBAC_SEC[Role-Based Access] ABAC[Attribute-Based Access] RLS[Row-Level
+        Security] end subgraph "Data Security" ENCRYPT[Encryption at Rest]
+        TRANSIT[Encryption in Transit] MASK[Data Masking] AUDIT[Audit Logging]
+        end subgraph "Application Security" XSS[XSS Prevention] CSRF[CSRF
+        Protection] SQL[SQL Injection Prevention] SANITIZE[Input Sanitization]
+        end HTTPS --> JWT_SEC DDOS --> WAF WAF --> RATE JWT_SEC --> RBAC_SEC
+        TWOFA_SEC --> RBAC_SEC SSO_SEC --> RBAC_SEC RBAC_SEC --> RLS ABAC -->
+        RLS RLS --> ENCRYPT ENCRYPT --> TRANSIT TRANSIT --> AUDIT SANITIZE -->
+        XSS SANITIZE --> CSRF SANITIZE --> SQL
+      </div>
+
+      <h3>8.2 Role-Based Access Control Matrix</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Resource</th>
+            <th>Employee</th>
+            <th>Employer</th>
+            <th>Contractor</th>
+            <th>Super Admin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Own Profile</td>
+            <td>RW</td>
+            <td>RW</td>
+            <td>RW</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Other Profiles</td>
+            <td>R</td>
+            <td>CRUD</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Payslips</td>
+            <td>R (own)</td>
+            <td>CRUD</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Leave Requests</td>
+            <td>CR (own)</td>
+            <td>CRUD</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Expenses</td>
+            <td>CR (own)</td>
+            <td>CRUD</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Timesheets</td>
+            <td>-</td>
+            <td>RU</td>
+            <td>CRUD (own)</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Payroll Runs</td>
+            <td>-</td>
+            <td>CRUD</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Compliance</td>
+            <td>-</td>
+            <td>R</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Company Settings</td>
+            <td>-</td>
+            <td>CRUD</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>All Companies</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>CRUD</td>
+          </tr>
+          <tr>
+            <td>Audit Logs</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>R</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="legend">
+        Legend: C=Create, R=Read, U=Update, D=Delete, W=Write, -=No Access
+      </p>
+
+      <h3>8.3 Data Encryption Strategy</h3>
+      <div class="code-block">
+        Encryption at Rest (Database): ├── Algorithm: AES-256-GCM ├── Key
+        Management: Supabase Vault ├── Encrypted Fields: │ ├── PAN numbers │ ├──
+        Aadhaar numbers │ ├── Bank account details │ ├── Salary information │
+        └── Personal identification documents Encryption in Transit: ├──
+        Protocol: TLS 1.3 ├── Certificates: Let's Encrypt (Auto-renewed) ├──
+        HSTS: Enabled (max-age=31536000) └── Certificate Pinning: Implemented
+        Token Security: ├── JWT Algorithm: RS256 (RSA + SHA-256) ├── Token
+        Expiry: 1 hour (access token) ├── Refresh Token: 30 days ├── Token
+        Storage: HttpOnly cookies └── CSRF Protection: SameSite=Strict
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section" id="integration-architecture">
+      <h2>9. Integration Architecture</h2>
+
+      <h3>9.1 Third-Party Integration Flow</h3>
+      <div class="mermaid">
+        sequenceDiagram participant APP as Application participant QUEUE as Job
+        Queue participant WORKER as Background Worker participant EXT as
+        External API participant DB as Database participant NOTIF as
+        Notification Service APP->>QUEUE: Enqueue Integration Job QUEUE-->>APP:
+        Job ID WORKER->>QUEUE: Poll for Jobs QUEUE-->>WORKER: Job Details
+        WORKER->>EXT: API Request (with retry) alt Success EXT-->>WORKER:
+        Success Response WORKER->>DB: Update Status + Data WORKER->>NOTIF: Send
+        Success Notification else Failure EXT-->>WORKER: Error Response
+        WORKER->>WORKER: Retry with Backoff alt Max Retries Exceeded
+        WORKER->>DB: Mark as Failed WORKER->>NOTIF: Send Failure Alert end end
+        WORKER->>QUEUE: Mark Job Complete
+      </div>
+
+      <h3>9.2 SpringVerify Integration (Background Verification)</h3>
+      <div class="code-block">
+        Purpose: Aadhaar, PAN, Bank Account verification Endpoint:
+        https://api.springverify.com/v1/ Authentication: API Key in Header
+        Workflows: 1. Aadhaar Verification POST /verifications/aadhaar Request:
+        { "aadhaar_number", "name" } Response: { "status", "verified",
+        "name_match" } 2. PAN Verification POST /verifications/pan Request: {
+        "pan_number", "name", "dob" } Response: { "status", "verified",
+        "details" } 3. Background Check POST /verifications/background Request:
+        { "candidate_id", "checks": ["education", "employment"] } Response: {
+        "status", "report_url", "completion_date" } Webhook: POST
+        /api/webhooks/springverify
+      </div>
+
+      <h3>9.3 Zoho Sign Integration (E-Signature)</h3>
+      <div class="code-block">
+        Purpose: Document signing workflow Endpoint:
+        https://sign.zoho.com/api/v1/ Authentication: OAuth 2.0 Workflows: 1.
+        Upload Document POST /documents Request: Multipart form with PDF
+        Response: { "document_id" } 2. Send for Signature POST
+        /documents/{id}/submit Request: { "recipients": [{ "email", "name",
+        "action": "SIGN" }] } Response: { "request_id", "status" } 3. Check
+        Status GET /requests/{id} Response: { "status", "signed_documents" }
+        Webhook: POST /api/webhooks/zoho-sign Events: document.signed,
+        document.declined
+      </div>
+
+      <h3>9.4 Plum Insurance Integration</h3>
+      <div class="code-block">
+        Purpose: Health insurance enrollment Endpoint:
+        https://api.plumhq.com/v1/ Authentication: Bearer Token Workflows: 1.
+        Create Policy POST /policies Request: { "company_id", "plan_id",
+        "employees": [] } Response: { "policy_id", "premium" } 2. Add Member
+        POST /policies/{id}/members Request: { "employee_details", "dependents":
+        [] } Response: { "member_id", "card_url" } 3. File Claim POST /claims
+        Request: { "policy_id", "member_id", "documents": [] } Response: {
+        "claim_id", "status" } Webhook: POST /api/webhooks/plum Events:
+        claim.approved, claim.rejected, policy.renewed
+      </div>
+
+      <h3>9.5 SendGrid Integration (Email)</h3>
+      <div class="code-block">
+        Purpose: Transactional emails Endpoint: https://api.sendgrid.com/v3/
+        Authentication: API Key Email Templates: ├── Welcome Email (onboarding)
+        ├── Offer Letter ├── Payslip Generated ├── Leave Approved/Rejected ├──
+        Expense Approved/Rejected ├── Password Reset ├── 2FA Code └── Compliance
+        Reminders Implementation: - Dynamic template rendering - Personalization
+        tokens - Click tracking - Open rate tracking - Bounce handling
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section" id="deployment-architecture">
+      <h2>10. Deployment Architecture</h2>
+
+      <h3>10.1 Infrastructure Diagram</h3>
+      <div class="mermaid">
+        graph TB subgraph "User Devices" BROWSER[Web Browsers] MOBILE[Mobile
+        Browsers] end subgraph "CDN Layer - Vercel Edge" EDGE1[Edge Location:
+        Mumbai] EDGE2[Edge Location: Singapore] EDGE3[Edge Location: Tokyo] end
+        subgraph "Application Layer - Vercel" NEXT1[Next.js Instance 1]
+        NEXT2[Next.js Instance 2] NEXT3[Next.js Instance 3] LB[Load Balancer]
+        end subgraph "Backend Services - Supabase" SBAPI[Supabase API]
+        SBAUTH[Auth Service] SBSTORE[Storage Service] SBRT[Realtime Service] end
+        subgraph "Database Layer" PGPRIMARY[(PostgreSQL Primary)]
+        PGREPLICA1[(Read Replica 1)] PGREPLICA2[(Read Replica 2)] end subgraph
+        "External Services" REDIS[(Redis Cache)] S3[(Object Storage)]
+        MONITORING[Monitoring & Logs] end BROWSER --> EDGE1 MOBILE --> EDGE2
+        EDGE1 --> LB EDGE2 --> LB EDGE3 --> LB LB --> NEXT1 LB --> NEXT2 LB -->
+        NEXT3 NEXT1 --> SBAPI NEXT2 --> SBAPI NEXT3 --> SBAPI SBAPI --> SBAUTH
+        SBAPI --> SBSTORE SBAPI --> SBRT SBAPI --> PGPRIMARY SBAPI -->
+        PGREPLICA1 SBAPI --> PGREPLICA2 PGPRIMARY --> PGREPLICA1 PGPRIMARY -->
+        PGREPLICA2 SBAPI --> REDIS SBSTORE --> S3 NEXT1 --> MONITORING NEXT2 -->
+        MONITORING NEXT3 --> MONITORING
+      </div>
+
+      <h3>10.2 Deployment Pipeline</h3>
+      <div class="mermaid">
+        graph TB DEV[Local Development] LINT[Linting & Formatting] TEST[Unit
+        Tests] GIT[Git Push] PR[Pull Request] REVIEW[Code Review] BUILD[Build
+        Application] TYPECHECK[Type Checking] E2E[E2E Tests] SECURITY[Security
+        Scan] PREVIEW[Preview Deploy] STAGING[Staging Deploy] PROD[Production
+        Deploy] HEALTH[Health Checks] METRICS[Metrics Collection] ALERTS[Alert
+        System] DEV --> LINT LINT --> TEST TEST --> GIT GIT --> PR PR --> REVIEW
+        REVIEW --> BUILD BUILD --> TYPECHECK TYPECHECK --> E2E E2E --> SECURITY
+        SECURITY --> PREVIEW PREVIEW --> STAGING STAGING --> PROD PROD -->
+        HEALTH HEALTH --> METRICS METRICS --> ALERTS
+      </div>
+
+      <h3>10.3 Environment Configuration</h3>
+      <div class="comparison-box">
+        <h4>Development Environment</h4>
+        <ul>
+          <li>URL: http://localhost:3001</li>
+          <li>Database: Supabase Dev Instance</li>
+          <li>Hot Reload: Enabled</li>
+          <li>Debug Mode: Enabled</li>
+          <li>Source Maps: Enabled</li>
+          <li>API Mocking: Enabled</li>
+        </ul>
+      </div>
+
+      <div class="comparison-box">
+        <h4>Staging Environment</h4>
+        <ul>
+          <li>URL: https://staging.rapid.one</li>
+          <li>Database: Supabase Staging</li>
+          <li>Authentication: Test accounts only</li>
+          <li>External APIs: Sandbox mode</li>
+          <li>Rate Limiting: Relaxed</li>
+        </ul>
+      </div>
+
+      <div class="comparison-box">
+        <h4>Production Environment</h4>
+        <ul>
+          <li>URL: https://app.rapid.one</li>
+          <li>Database: Supabase Production (Multi-region)</li>
+          <li>CDN: Vercel Edge Network (Global)</li>
+          <li>Monitoring: Datadog / Sentry</li>
+          <li>Backups: Daily automated (30-day retention)</li>
+          <li>Disaster Recovery: Multi-region replication</li>
+          <li>SLA: 99.9% uptime</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section" id="why-this-architecture">
+      <h2>11. Why This Architecture</h2>
+
+      <h3>11.1 Technical Advantages</h3>
+      <div class="mermaid">
+        graph TB subgraph "Performance Benefits" EDGE[Edge Computing]
+        SSR[Server-Side Rendering] ISR[Incremental Static Regeneration]
+        CACHE[Intelligent Caching] end subgraph "Developer Experience" TS[Type
+        Safety] HMR[Hot Module Reload] COMP[Component-Based]
+        API_GEN[Auto-generated APIs] end subgraph "Scalability"
+        AUTO[Auto-scaling] SERVERLESS[Serverless Functions] CDN_SCALE[Global
+        CDN] DB_SCALE[Database Scaling] end subgraph "Maintainability"
+        MODULAR[Modular Architecture] TEST[Testable Code] DOC[Self-documenting]
+        VERSION[Version Control] end EDGE --> FAST[Faster Load Times] SSR -->
+        FAST ISR --> FAST CACHE --> FAST TS --> DX[Better DX] HMR --> DX COMP
+        --> DX API_GEN --> DX AUTO --> RELIABLE[High Reliability] SERVERLESS -->
+        RELIABLE CDN_SCALE --> RELIABLE DB_SCALE --> RELIABLE MODULAR -->
+        MAINTAIN[Easy Maintenance] TEST --> MAINTAIN DOC --> MAINTAIN VERSION
+        --> MAINTAIN
+      </div>
+
+      <h3>11.2 Cost-Benefit Analysis</h3>
+      <div class="comparison-box">
+        <h4>Infrastructure Costs (Monthly Estimate)</h4>
+        <table>
+          <tr>
+            <td>Vercel Pro Plan</td>
+            <td>$20 + usage</td>
+          </tr>
+          <tr>
+            <td>Supabase Pro Plan</td>
+            <td>$25 + usage</td>
+          </tr>
+          <tr>
+            <td>External API Credits</td>
+            <td>$100-500</td>
+          </tr>
+          <tr>
+            <td>Monitoring & Analytics</td>
+            <td>$50</td>
+          </tr>
+          <tr>
+            <td>Domain & SSL</td>
+            <td>$15</td>
+          </tr>
+          <tr>
+            <td><strong>TOTAL (Low Traffic)</strong></td>
+            <td><strong>~$210/month</strong></td>
+          </tr>
+          <tr>
+            <td><strong>TOTAL (High Traffic)</strong></td>
+            <td><strong>~$800/month</strong></td>
+          </tr>
+        </table>
+
+        <h4>Previous System Costs</h4>
+        <ul>
+          <li>Dedicated Server: $200/month</li>
+          <li>Database Server: $150/month</li>
+          <li>DevOps Engineer: $5,000/month</li>
+          <li>Manual Deployment Time: $500/month</li>
+          <li><strong>TOTAL: $5,850/month</strong></li>
+        </ul>
+
+        <p>
+          <strong>COST SAVINGS: ~$5,000-5,600/month (85-90% reduction)</strong>
+        </p>
+      </div>
+
+      <h3>11.3 Comparison Matrix</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Previous System</th>
+            <th>New System</th>
+            <th>Improvement</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Page Load Time</strong></td>
+            <td>3-5 seconds</td>
+            <td>0.8-1.5 seconds</td>
+            <td>70% faster</td>
+          </tr>
+          <tr>
+            <td><strong>API Response Time</strong></td>
+            <td>500-1000ms</td>
+            <td>100-200ms</td>
+            <td>75% faster</td>
+          </tr>
+          <tr>
+            <td><strong>Development Time</strong></td>
+            <td>2 weeks/feature</td>
+            <td>3-5 days/feature</td>
+            <td>60% faster</td>
+          </tr>
+          <tr>
+            <td><strong>Type Safety</strong></td>
+            <td>0%</td>
+            <td>100%</td>
+            <td>∞ improvement</td>
+          </tr>
+          <tr>
+            <td><strong>Test Coverage</strong></td>
+            <td>~10%</td>
+            <td>80% target</td>
+            <td>700% increase</td>
+          </tr>
+          <tr>
+            <td><strong>Deployment Time</strong></td>
+            <td>2-4 hours</td>
+            <td>5 minutes</td>
+            <td>95% faster</td>
+          </tr>
+          <tr>
+            <td><strong>Downtime/Deploy</strong></td>
+            <td>15-30 minutes</td>
+            <td>0 seconds</td>
+            <td>Zero downtime</td>
+          </tr>
+          <tr>
+            <td><strong>Bug Detection</strong></td>
+            <td>Production</td>
+            <td>Development</td>
+            <td>Shift-left</td>
+          </tr>
+          <tr>
+            <td><strong>Scalability</strong></td>
+            <td>Max 1,000 users</td>
+            <td>100,000+ users</td>
+            <td>100x capacity</td>
+          </tr>
+          <tr>
+            <td><strong>Developer Onboarding</strong></td>
+            <td>2 weeks</td>
+            <td>2-3 days</td>
+            <td>70% faster</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>11.4 Business Value Delivered</h3>
+      <div class="benefit-section">
+        <h4>Real-time Updates</h4>
+        <p>
+          <strong>Technical Capability:</strong> Instant notifications, live
+          dashboards
+        </p>
+        <p>
+          <strong>Business Outcome:</strong> Better user engagement, reduced
+          support tickets
+        </p>
+      </div>
+
+      <div class="benefit-section">
+        <h4>Type Safety</h4>
+        <p>
+          <strong>Technical Capability:</strong> Catch errors before production
+        </p>
+        <p>
+          <strong>Business Outcome:</strong> 90% fewer runtime errors, faster QA
+        </p>
+      </div>
+
+      <div class="benefit-section">
+        <h4>Component Reusability</h4>
+        <p><strong>Technical Capability:</strong> Build once, use everywhere</p>
+        <p><strong>Business Outcome:</strong> 60% faster feature development</p>
+      </div>
+
+      <div class="benefit-section">
+        <h4>Auto-scaling Infrastructure</h4>
+        <p>
+          <strong>Technical Capability:</strong> Handle traffic spikes
+          automatically
+        </p>
+        <p><strong>Business Outcome:</strong> No downtime during peak usage</p>
+      </div>
+
+      <div class="benefit-section">
+        <h4>API-First Design</h4>
+        <p>
+          <strong>Technical Capability:</strong> Easy mobile app integration in
+          future
+        </p>
+        <p><strong>Business Outcome:</strong> Multi-platform readiness</p>
+      </div>
+
+      <div class="benefit-section">
+        <h4>Modern Stack</h4>
+        <p>
+          <strong>Technical Capability:</strong> Attract top engineering talent
+        </p>
+        <p>
+          <strong>Business Outcome:</strong> Faster hiring, better retention
+        </p>
+      </div>
+
+      <div class="benefit-section">
+        <h4>Zero-downtime Deployments</h4>
+        <p>
+          <strong>Technical Capability:</strong> Ship features multiple times
+          per day
+        </p>
+        <p>
+          <strong>Business Outcome:</strong> Faster time-to-market, competitive
+          advantage
+        </p>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section" id="appendix">
+      <h2>12. Appendix</h2>
+
+      <h3>12.1 Glossary</h3>
+      <ul>
+        <li>
+          <strong>EoR</strong> - Employer of Record: legal entity that hires
+          employees on behalf of another company
+        </li>
+        <li>
+          <strong>SSR</strong> - Server-Side Rendering: rendering pages on
+          server for better SEO and initial load
+        </li>
+        <li>
+          <strong>ISR</strong> - Incremental Static Regeneration: update static
+          pages without full rebuild
+        </li>
+        <li>
+          <strong>JWT</strong> - JSON Web Token: secure token format for
+          authentication
+        </li>
+        <li>
+          <strong>2FA</strong> - Two-Factor Authentication: additional security
+          layer beyond password
+        </li>
+        <li>
+          <strong>RBAC</strong> - Role-Based Access Control: permissions based
+          on user roles
+        </li>
+        <li>
+          <strong>tRPC</strong> - TypeScript Remote Procedure Call: end-to-end
+          typesafe APIs
+        </li>
+        <li>
+          <strong>Edge Computing</strong> - Running code at CDN edge locations
+          close to users
+        </li>
+        <li>
+          <strong>Serverless</strong> - Code execution without managing servers
+        </li>
+      </ul>
+
+      <h3>12.2 Key Files Reference</h3>
+      <div class="code-block">
+        /src ├── /app # Next.js App Router │ ├── layout.tsx # Root layout with
+        global CSS │ ├── page.tsx # Home page │ ├── /employer # Employer portal
+        routes │ ├── /employee # Employee portal routes │ ├── /contractor #
+        Contractor portal routes │ ├── /super-admin # Super admin portal
+        (future) │ └── /api # API routes │ ├── /components # Shared React
+        components │ ├── /ui # Base UI components │ ├── /forms # Form components
+        │ └── /layouts # Layout components │ ├── /lib # Utility libraries │ ├──
+        supabase.ts # Supabase client │ ├── auth.ts # Auth helpers │ └──
+        utils.ts # Generic utilities │ ├── /types # TypeScript type definitions
+        │ ├── database.ts # Database types │ └── api.ts # API types │ └──
+        /middleware.ts # Request middleware /docs ├── FEATURE_GAP_ANALYSIS.md #
+        Feature implementation status ├── TECHNICAL_ARCHITECTURE.html # This
+        document └── API_DOCUMENTATION.md # API reference (future)
+      </div>
+
+      <h3>12.3 Version History</h3>
+      <ul>
+        <li>
+          <strong>v2.0</strong> (Current) - Next.js 14 + Supabase architecture
+        </li>
+        <li>
+          <strong>v1.0</strong> (Legacy) - PHP + MySQL monolithic architecture
+        </li>
+      </ul>
+    </div>
+
+    <hr />
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "default",
+        themeVariables: {
+          primaryColor: "#fff",
+          primaryTextColor: "#000",
+          primaryBorderColor: "#000",
+          lineColor: "#000",
+          secondaryColor: "#f5f5f5",
+          tertiaryColor: "#fff",
+        },
+      });
+    </script>
+  </body>
+</html>
