@@ -1,9 +1,8 @@
 {
+  "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "nodeVersion": "18.x",
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": {
       "description": "Supabase URL from your project settings",
@@ -28,16 +27,6 @@
     "NEXT_PUBLIC_APP_NAME": {
       "description": "Application name",
       "required": true
-    }
-  },
-  "outputDirectory": ".next",
-  "publicSource": "./public",
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "regions": ["auto"],
-  "functions": {
-    "src/pages/api/**/*.ts": {
-      "maxDuration": 60
     }
   }
 }
