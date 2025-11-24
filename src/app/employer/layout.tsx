@@ -25,7 +25,7 @@ export default function EmployerLayout({
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden md:ml-0">
-          <Header showSearch showNotifications />
+          <Header showNotifications />
           <main className="flex-1 overflow-y-auto">
             <div className="p-6">{children}</div>
           </main>

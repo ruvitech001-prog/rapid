@@ -77,13 +77,11 @@ export default function EmployerDashboard() {
     value,
     subtitle,
     icon: Icon,
-    href,
   }: {
     title: string
     value: string | number
     subtitle: string
     icon: React.ReactNode
-    href?: string
   }) => (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-6">
@@ -124,35 +122,30 @@ export default function EmployerDashboard() {
           value={stats.totalEmployees}
           subtitle={`${stats.activeEmployees} active`}
           icon={<Users className="h-8 w-8" />}
-          href="/employer/employees"
         />
         <StatCard
           title="Pending Leave Requests"
           value={stats.pendingLeaves}
           subtitle="Requires attention"
           icon={<Calendar className="h-8 w-8" />}
-          href="/employer/leave/requests"
         />
         <StatCard
           title="Pending Expenses"
           value={stats.pendingExpenses}
           subtitle="Awaiting approval"
           icon={<FileText className="h-8 w-8" />}
-          href="/employer/expenses/requests"
         />
         <StatCard
           title="Monthly Payroll"
           value={`₹${stats.monthlyPayroll.toLocaleString('en-IN')}`}
           subtitle="Current month"
           icon={<DollarSign className="h-8 w-8" />}
-          href="/employer/payroll/dashboard"
         />
         <StatCard
           title="Active Contractors"
           value={stats.contractorsActive}
           subtitle="Currently engaged"
           icon={<Briefcase className="h-8 w-8" />}
-          href="/employer/contractors"
         />
         <StatCard
           title="Revenue Growth"

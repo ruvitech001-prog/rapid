@@ -92,7 +92,7 @@ export default function ContractorDashboard() {
                 </div>
               ))}
             </div>
-            <Link href="/contractor/timesheets" className="text-xs text-primary hover:underline mt-4 block">
+            <Link href="/contractor/timesheets/submit" className="text-xs text-primary hover:underline mt-4 block">
               View All Timesheets
             </Link>
           </CardContent>

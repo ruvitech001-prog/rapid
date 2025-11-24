@@ -51,19 +51,19 @@ export default function HomePage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Authentication</h3>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/login"
+              href="/auth/login"
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Login
             </Link>
             <Link
-              href="/signup"
+              href="/auth/signup"
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Signup
             </Link>
             <Link
-              href="/company-onboarding"
+              href="/auth/company-onboarding"
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Company Onboarding

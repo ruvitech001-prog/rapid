@@ -1,0 +1,43 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "nodeVersion": "18.x",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": {
+      "description": "Supabase URL from your project settings",
+      "required": true
+    },
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
+      "description": "Supabase Anonymous Key",
+      "required": true
+    },
+    "SUPABASE_SERVICE_ROLE_KEY": {
+      "description": "Supabase Service Role Key (keep private)",
+      "required": true
+    },
+    "SUPABASE_PROJECT_ID": {
+      "description": "Your Supabase project ID",
+      "required": true
+    },
+    "NEXT_PUBLIC_APP_URL": {
+      "description": "Application URL",
+      "required": true
+    },
+    "NEXT_PUBLIC_APP_NAME": {
+      "description": "Application name",
+      "required": true
+    }
+  },
+  "outputDirectory": ".next",
+  "publicSource": "./public",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "regions": ["auto"],
+  "functions": {
+    "src/pages/api/**/*.ts": {
+      "maxDuration": 60
+    }
+  }
+}

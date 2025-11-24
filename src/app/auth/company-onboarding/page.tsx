@@ -88,7 +88,7 @@ export default function CompanyOnboardingPage() {
 
         {/* Progress Steps */}
         <div className="flex items-center justify-between">
-          {steps.map((step, idx) => (
+          {steps.map((step) => (
             <div key={step.number} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div

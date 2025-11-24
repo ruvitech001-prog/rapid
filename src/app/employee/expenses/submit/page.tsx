@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CloudUpload } from 'lucide-react'
+import { Upload } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -179,7 +179,7 @@ export default function SubmitExpensePage() {
                 <Label htmlFor="billFile">Upload Bill/Receipt *</Label>
                 <div className="flex justify-center px-6 py-8 border-2 border-dashed border-border rounded-lg hover:border-primary/50 transition-colors">
                   <div className="space-y-2 text-center">
-                    <CloudUpload className="mx-auto h-8 w-8 text-muted-foreground" />
+                    <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
                     <div className="flex flex-col sm:flex-row text-sm text-muted-foreground gap-1">
                       <label className="relative cursor-pointer text-primary font-medium hover:underline">
                         <span>Upload a file</span>
