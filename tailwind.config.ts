@@ -63,6 +63,14 @@ const config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Chart colors
+        'chart-teal': '#2DD4BF',
+        'chart-rose': '#F43F5E',
+        'chart-amber': '#FBBF24',
+        'chart-blue': '#60A5FA',
+        'chart-sky': '#7DD3FC',
+        'chart-mint': '#6EE7B7',
+        'chart-pink': '#F472B6',
       },
       borderRadius: {
         lg: 'var(--radius)',

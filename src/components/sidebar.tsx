@@ -5,17 +5,21 @@ import { usePathname } from 'next/navigation'
 import {
   Home,
   Users,
-  Briefcase,
   Calendar,
   FileText,
   DollarSign,
-  Shield,
   Settings,
   LogOut,
   HelpCircle,
   Menu,
   X,
   ChevronDown,
+  Building2,
+  Clock,
+  PieChart,
+  Coffee,
+  Mail,
+  Folder,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -54,34 +58,24 @@ const EMPLOYER_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'ADMIN',
+    title: 'TEAM',
     items: [
-      { label: 'Clients', href: '/employer/clients', icon: <Briefcase className="h-4 w-4" /> },
-      { label: 'Access control', href: '/employer/access-control', icon: <Shield className="h-4 w-4" /> },
-      { label: 'Audit logs', href: '/employer/audit-logs', icon: <FileText className="h-4 w-4" /> },
-      { label: 'Services', href: '/employer/services', icon: <Settings className="h-4 w-4" /> },
-      { label: 'Requests', href: '/employer/requests', icon: <FileText className="h-4 w-4" /> },
+      { label: 'Employees', href: '/employer/employees', icon: <Building2 className="h-4 w-4" /> },
+      { label: 'Contractors', href: '/employer/contractors', icon: <Users className="h-4 w-4" /> },
+      { label: 'Contracts', href: '/employer/contracts', icon: <FileText className="h-4 w-4" /> },
+      { label: 'Timesheet', href: '/employer/timesheet', icon: <Clock className="h-4 w-4" /> },
+      { label: 'Reports', href: '/employer/reports', icon: <PieChart className="h-4 w-4" /> },
+      { label: 'Perks & Benefits', href: '/employer/perks', icon: <Coffee className="h-4 w-4" /> },
+      { label: 'Requests', href: '/employer/requests', icon: <Mail className="h-4 w-4" /> },
+      { label: 'Leaves', href: '/employer/leave/requests', icon: <Calendar className="h-4 w-4" /> },
     ],
   },
   {
-    title: 'FINANCE',
+    title: 'COMPANY',
     items: [
       { label: 'Invoices', href: '/employer/invoices', icon: <DollarSign className="h-4 w-4" /> },
-      { label: 'Payroll', href: '/employer/payroll/dashboard', icon: <DollarSign className="h-4 w-4" /> },
-      { label: 'Expenses', href: '/employer/expenses/requests', icon: <FileText className="h-4 w-4" /> },
-    ],
-  },
-  {
-    title: 'ACCOUNT',
-    items: [
-      { label: 'Company', href: '/employer/company', icon: <Briefcase className="h-4 w-4" /> },
-      { label: 'Leaves', href: '/employer/leave/requests', icon: <Calendar className="h-4 w-4" /> },
-      { label: 'Profile', href: '/employer/profile', icon: <Users className="h-4 w-4" /> },
-    ],
-  },
-  {
-    items: [
-      { label: 'Help & Support', href: '/help', icon: <HelpCircle className="h-4 w-4" /> },
+      { label: 'Documents', href: '/employer/documents', icon: <Folder className="h-4 w-4" /> },
+      { label: 'Settings', href: '/employer/settings', icon: <Settings className="h-4 w-4" /> },
     ],
   },
 ]
@@ -190,11 +184,20 @@ export function Sidebar({
         )}
       >
         {/* Logo Section */}
-        <div className="border-b border-border p-6">
+        <div className="border-b border-border p-6 space-y-4">
           <h1 className="text-2xl font-bold text-primary">rapid</h1>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-            {role === 'employer' ? 'Employer' : role === 'employee' ? 'Employee' : 'Contractor'}
-          </p>
+          {role === 'employer' && (
+            <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">☀️</span>
+                <div className="text-left">
+                  <p className="text-xs text-muted-foreground">India</p>
+                  <p className="text-xs font-medium">09:30 IST</p>
+                </div>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </div>
 
         {/* Navigation */}
@@ -233,7 +236,7 @@ export function Sidebar({
         </nav>
 
         {/* User Profile Section */}
-        <div className="border-t border-border p-4">
+        <div className="border-t border-border p-4 space-y-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-3 rounded-md p-2 hover:bg-white transition-colors text-left">
@@ -268,6 +271,12 @@ export function Sidebar({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button asChild variant="outline" size="sm" className="w-full justify-start text-destructive hover:text-destructive">
+            <a href="/api/auth/logout" className="flex items-center gap-2">
+              <LogOut className="h-4 w-4" />
+              Logout
+            </a>
+          </Button>
         </div>
       </aside>
 
