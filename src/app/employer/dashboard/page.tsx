@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { CSSProperties, useState } from 'react'
 import {
   Bell,
   ChevronRight,
@@ -28,7 +28,7 @@ import Link from 'next/link'
 // Data for Team Overview (Semi-circle gauge)
 const teamData = [
   { name: 'Employees', value: 14, fill: '#2DD4BF' },
-  { name: 'Contractors', value: 6, fill: '#F43F5E' },
+  { name: 'Contractors', value: 6, fill: '#FF7373' },
 ]
 
 // Data for Cost Overview (Bar Chart)
@@ -154,59 +154,83 @@ export default function EmployerDashboard() {
       </div>
 
       {/* ROW 1: Team Overview & Updates */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Team Overview */}
-        <div className="lg:col-span-1">
-          <Card className="rounded-2xl shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex gap-6">
-                {/* Semi-circle Gauge */}
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={teamData}
-                        cx="50%"
-                        cy="100%"
-                        startAngle={180}
-                        endAngle={0}
-                        innerRadius={50}
-                        outerRadius={80}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {teamData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="text-center mt-2">
-                    <p className="text-2xl font-bold text-gray-900">20</p>
-                    <p className="text-xs text-gray-400">TOTAL DAYS</p>
+        <div className="lg:col-span-3">
+          <Card className="rounded-2xl border-0 h-full bg-[#EBF5FF]">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-gray-900">Team</CardTitle>
+                <Link href="/employer/employees" className="text-sm font-medium text-[#586AF5] hover:underline flex items-center gap-1">
+                  View <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0 pb-6">
+              <div className="flex flex-col sm:flex-row">
+                {/* Left: Semi-circle Gauge */}
+                <div className="flex-1 sm:pr-8 sm:border-r border-[#DEE4EB]">
+                  <div className="relative">
+                    <ResponsiveContainer width="100%" height={160}>
+                      <PieChart>
+                        <Pie
+                          data={teamData}
+                          cx="50%"
+                          cy="100%"
+                          startAngle={180}
+                          endAngle={0}
+                          innerRadius={55}
+                          outerRadius={85}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {teamData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    {/* Centered text inside gauge */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
+                      <p className="text-4xl font-bold text-gray-900">20</p>
+                      <p className="text-[10px] text-[#8593A3] tracking-wider font-medium">TOTAL DAYS</p>
+                    </div>
+                  </div>
+                  {/* Legend */}
+                  <div className="flex justify-center gap-6 mt-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#2DD4BF]"></div>
+                      <span className="text-[#8593A3]">Employees: 14</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#FF7373]"></div>
+                      <span className="text-[#8593A3]">Contractors: 6</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Joining This Month */}
-                <div className="flex-1 space-y-4">
-                  <p className="text-sm font-bold text-gray-900">JOINING THIS MONTH</p>
-                  <div className="space-y-3">
-                    {[
-                      { label: 'Employees', count: 2 },
-                      { label: 'Contractors', count: 2 },
-                    ].map((item) => (
-                      <div
-                        key={item.label}
-                        className="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
-                      >
-                        <span className="text-sm text-gray-700">{item.label}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-gray-900">{item.count}</span>
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                {/* Right: Joining This Month */}
+                <div className="flex-1 sm:pl-8 mt-6 sm:mt-0 pt-6 sm:pt-0 border-t sm:border-t-0 border-[#DEE4EB]">
+                  <p className="text-[11px] font-semibold text-[#8593A3] mb-5 tracking-wider">JOINING THIS MONTH</p>
+                  <div>
+                    <div className="flex items-center justify-between py-4 border-b border-[#DEE4EB]">
+                      <span className="text-sm text-gray-700">Employees</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl font-bold text-gray-900">2</span>
+                        <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
+                          <ChevronRight className="h-4 w-4 text-[#8593A3]" />
                         </div>
                       </div>
-                    ))}
+                    </div>
+                    <div className="flex items-center justify-between py-4">
+                      <span className="text-sm text-gray-700">Contractors</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl font-bold text-gray-900">2</span>
+                        <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
+                          <ChevronRight className="h-4 w-4 text-[#8593A3]" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -216,27 +240,26 @@ export default function EmployerDashboard() {
 
         {/* Updates */}
         <div className="lg:col-span-2">
-          <Card className="rounded-2xl shadow-sm">
-            <CardHeader className="pb-3">
+          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none h-full bg-white">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle>Updates</CardTitle>
-                <Link href="/employer/updates" className="text-sm text-violet-600 hover:underline">
-                  View all &gt;
+                <CardTitle className="text-gray-900">Updates</CardTitle>
+                <Link href="/employer/updates" className="text-sm font-medium text-[#586AF5] hover:underline flex items-center gap-1">
+                  View all <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-1 pb-6">
               {updatesData.map((update) => (
                 <div
                   key={update.id}
-                  className="flex gap-3 p-3 rounded-lg hover:bg-gray-50 transition"
+                  className="flex gap-3 py-3 px-2 rounded-lg hover:bg-gray-50 transition"
                 >
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <div className="flex-shrink-0 mt-0.5">
+                    <Bell className="h-5 w-5 text-[#2DD4BF]" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-700">{update.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{update.timestamp}</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{update.message}</p>
                   </div>
                 </div>
               ))}
@@ -325,11 +348,11 @@ export default function EmployerDashboard() {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="cost" radius={[10, 10, 0, 0]}>
-                    {costData.map((_, index) => (
+                  <Bar dataKey="cost" radius={[10, 10, 10, 10]} style={{ width: '100px' } as CSSProperties}>
+                        {costData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={costColors[index]} />
                     ))}
-                  </Bar>
+                    </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

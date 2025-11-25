@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { Clock, DollarSign, CheckCircle, Calendar, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface Timesheet {
   id: string;
@@ -82,262 +85,276 @@ export default function TimesheetsPage() {
     .reduce((sum, ts) => sum + ts.totalAmount, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Timesheet Approvals</h1>
-          <p className="text-gray-600 mt-2">Review and approve contractor timesheets</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Timesheet Approvals</h1>
+          <p className="text-[#8593A3] mt-1">Review and approve contractor timesheets</p>
         </div>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Pending Timesheets</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">{pendingCount}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Pending Amount</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">₹{pendingAmount.toLocaleString('en-IN')}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Approved This Week</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">₹1.26L</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total This Month</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">₹5.2L</p>
-          </div>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PENDING TIMESHEETS</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{pendingCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setFilterStatus('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilterStatus('pending')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'pending'
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Pending
-              </button>
-              <button
-                onClick={() => setFilterStatus('approved')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'approved'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Approved
-              </button>
-              <button
-                onClick={() => setFilterStatus('rejected')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'rejected'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Rejected
-              </button>
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PENDING AMOUNT</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">₹{pendingAmount.toLocaleString('en-IN')}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">APPROVED THIS WEEK</p>
+                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">₹1.26L</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-[#2DD4BF]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL THIS MONTH</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">₹5.2L</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-4">
+            <span className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FILTER BY STATUS:</span>
+            <div className="flex gap-2">
+              {[
+                { key: 'all', label: 'All', color: '#586AF5' },
+                { key: 'pending', label: 'Pending', color: '#CC7A00' },
+                { key: 'approved', label: 'Approved', color: '#2DD4BF' },
+                { key: 'rejected', label: 'Rejected', color: '#FF7373' },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setFilterStatus(item.key)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterStatus === item.key
+                      ? 'text-white'
+                      : 'bg-[#F4F7FA] text-[#8593A3] hover:bg-[#DEE4EB]'
+                  }`}
+                  style={filterStatus === item.key ? { backgroundColor: item.color } : {}}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Timesheets List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contractor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Week Ending
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Hours Worked
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rate
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTimesheets.map((timesheet) => (
-                <tr key={timesheet.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{timesheet.contractorName}</div>
-                      <div className="text-sm text-gray-500">{timesheet.contractorId}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {new Date(timesheet.weekEnding).toLocaleDateString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{timesheet.hoursWorked} hrs</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">₹{timesheet.rate.toLocaleString('en-IN')}/hr</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      ₹{timesheet.totalAmount.toLocaleString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      timesheet.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                      timesheet.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {timesheet.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => setSelectedTimesheet(timesheet)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      View
-                    </button>
-                    {timesheet.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => handleApprove(timesheet.id)}
-                          className="text-green-600 hover:text-green-900 mr-4"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleReject(timesheet.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </td>
+      {/* Timesheets List */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-gray-900">Timesheets</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">CONTRACTOR</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">WEEK ENDING</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">HOURS WORKED</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">RATE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL AMOUNT</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#DEE4EB]">
+                {filteredTimesheets.map((timesheet) => (
+                  <tr key={timesheet.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{timesheet.contractorName}</div>
+                        <div className="text-sm text-[#8593A3]">{timesheet.contractorId}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {new Date(timesheet.weekEnding).toLocaleDateString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{timesheet.hoursWorked} hrs</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">₹{timesheet.rate.toLocaleString('en-IN')}/hr</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        ₹{timesheet.totalAmount.toLocaleString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+                        timesheet.status === 'pending' ? 'bg-[#CC7A00]/10 text-[#CC7A00]' :
+                        timesheet.status === 'approved' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' :
+                        'bg-[#FF7373]/10 text-[#FF7373]'
+                      }`}>
+                        {timesheet.status.charAt(0).toUpperCase() + timesheet.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedTimesheet(timesheet)}
+                          className="text-[#586AF5] hover:underline font-medium"
+                        >
+                          View
+                        </button>
+                        {timesheet.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(timesheet.id)}
+                              className="text-[#2DD4BF] hover:underline font-medium"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(timesheet.id)}
+                              className="text-[#FF7373] hover:underline font-medium"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {filteredTimesheets.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No timesheets found.</p>
+              <p className="text-[#8593A3]">No timesheets found.</p>
             </div>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Detail Modal */}
-        {selectedTimesheet && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">Timesheet Details</h2>
-                <button
-                  onClick={() => setSelectedTimesheet(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+      {/* Detail Modal */}
+      {selectedTimesheet && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Timesheet Details</h2>
+              <button
+                onClick={() => setSelectedTimesheet(null)}
+                className="w-8 h-8 rounded-lg bg-[#F4F7FA] hover:bg-[#DEE4EB] flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-[#8593A3]" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">CONTRACTOR NAME</p>
+                  <p className="text-base font-medium text-gray-900">{selectedTimesheet.contractorName}</p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">CONTRACTOR ID</p>
+                  <p className="text-base font-medium text-gray-900">{selectedTimesheet.contractorId}</p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">WEEK ENDING</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {new Date(selectedTimesheet.weekEnding).toLocaleDateString('en-IN')}
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">SUBMITTED ON</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {new Date(selectedTimesheet.submittedOn).toLocaleDateString('en-IN')}
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">HOURS WORKED</p>
+                  <p className="text-base font-medium text-gray-900">{selectedTimesheet.hoursWorked} hours</p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">HOURLY RATE</p>
+                  <p className="text-base font-medium text-gray-900">
+                    ₹{selectedTimesheet.rate.toLocaleString('en-IN')}/hr
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">TOTAL AMOUNT</p>
+                  <p className="text-base font-medium text-[#2DD4BF]">
+                    ₹{selectedTimesheet.totalAmount.toLocaleString('en-IN')}
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Contractor Name</p>
-                    <p className="text-base font-medium text-gray-900">{selectedTimesheet.contractorName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Contractor ID</p>
-                    <p className="text-base font-medium text-gray-900">{selectedTimesheet.contractorId}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Week Ending</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {new Date(selectedTimesheet.weekEnding).toLocaleDateString('en-IN')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Submitted On</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {new Date(selectedTimesheet.submittedOn).toLocaleDateString('en-IN')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Hours Worked</p>
-                    <p className="text-base font-medium text-gray-900">{selectedTimesheet.hoursWorked} hours</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Hourly Rate</p>
-                    <p className="text-base font-medium text-gray-900">
-                      ₹{selectedTimesheet.rate.toLocaleString('en-IN')}/hr
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Amount</p>
-                    <p className="text-base font-medium text-green-600">
-                      ₹{selectedTimesheet.totalAmount.toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Work Description</p>
-                  <p className="text-base text-gray-900 bg-gray-50 p-4 rounded-lg">{selectedTimesheet.description}</p>
-                </div>
-
-                {selectedTimesheet.status === 'pending' && (
-                  <div className="flex justify-end space-x-4 pt-4">
-                    <button
-                      onClick={() => handleReject(selectedTimesheet.id)}
-                      className="px-6 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => handleApprove(selectedTimesheet.id)}
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Approve
-                    </button>
-                  </div>
-                )}
+              <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">WORK DESCRIPTION</p>
+                <p className="text-base text-gray-900">{selectedTimesheet.description}</p>
               </div>
+
+              {selectedTimesheet.status === 'pending' && (
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleReject(selectedTimesheet.id)}
+                    className="border-[#FF7373] text-[#FF7373] hover:bg-[#FF7373]/10"
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    onClick={() => handleApprove(selectedTimesheet.id)}
+                    className="bg-[#2DD4BF] hover:bg-[#2DD4BF]/90 text-white"
+                  >
+                    Approve
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

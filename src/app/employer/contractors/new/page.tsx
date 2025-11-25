@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, UserPlus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ContractorForm {
   firstName: string;
@@ -62,324 +68,318 @@ export default function NewContractorPage() {
     });
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Add New Contractor</h1>
-          <p className="text-gray-600 mt-2">Fill in the details to onboard a new contractor</p>
-        </div>
+  const inputClass = "w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";
+  const selectClass = "w-full h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Information */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Personal Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name *
-                </label>
-                <input
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/employer/contractors">
+            <Button variant="outline" size="icon" className="border-[#DEE4EB] hover:bg-[#F4F7FA]">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Add New Contractor</h1>
+            <p className="text-[#8593A3] mt-1">Fill in the details to onboard a new contractor</p>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Personal Information */}
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+          <CardHeader>
+            <CardTitle className="text-gray-900">Personal Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FIRST NAME *</Label>
+                <Input
                   type="text"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">LAST NAME *</Label>
+                <Input
                   type="text"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">EMAIL *</Label>
+                <Input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PHONE NUMBER *</Label>
+                <Input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Contract Details */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Contract Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contractor ID *
-                </label>
-                <input
+        {/* Contract Details */}
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+          <CardHeader>
+            <CardTitle className="text-gray-900">Contract Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">CONTRACTOR ID *</Label>
+                <Input
                   type="text"
                   name="contractorId"
                   value={formData.contractorId}
                   onChange={handleChange}
                   required
                   placeholder="CON001"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Specialty *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">SPECIALTY *</Label>
+                <Input
                   type="text"
                   name="specialty"
                   value={formData.specialty}
                   onChange={handleChange}
                   required
                   placeholder="e.g., Frontend Development"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">START DATE *</Label>
+                <Input
                   type="date"
                   name="startDate"
                   value={formData.startDate}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">END DATE</Label>
+                <Input
                   type="date"
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rate Type *
-                </label>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">RATE TYPE *</Label>
                 <select
                   name="rateType"
                   value={formData.rateType}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={selectClass}
                 >
                   <option value="hourly">Hourly</option>
                   <option value="daily">Daily</option>
                   <option value="monthly">Monthly</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rate Amount *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">RATE AMOUNT *</Label>
+                <Input
                   type="number"
                   name="rate"
                   value={formData.rate}
                   onChange={handleChange}
                   required
                   placeholder="2500"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Bank Details */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Bank Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bank Name *
-                </label>
-                <input
+        {/* Bank Details */}
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+          <CardHeader>
+            <CardTitle className="text-gray-900">Bank Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">BANK NAME *</Label>
+                <Input
                   type="text"
                   name="bankName"
                   value={formData.bankName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Account Number *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">ACCOUNT NUMBER *</Label>
+                <Input
                   type="text"
                   name="accountNumber"
                   value={formData.accountNumber}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  IFSC Code *
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">IFSC CODE *</Label>
+                <Input
                   type="text"
                   name="ifscCode"
                   value={formData.ifscCode}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Tax Details */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Tax Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  PAN Number *
-                </label>
-                <input
+        {/* Tax Details */}
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+          <CardHeader>
+            <CardTitle className="text-gray-900">Tax Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PAN NUMBER *</Label>
+                <Input
                   type="text"
                   name="panNumber"
                   value={formData.panNumber}
                   onChange={handleChange}
                   required
                   placeholder="ABCDE1234F"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  GST Number
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">GST NUMBER</Label>
+                <Input
                   type="text"
                   name="gstNumber"
                   value={formData.gstNumber}
                   onChange={handleChange}
                   placeholder="22AAAAA0000A1Z5"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={inputClass}
                 />
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Address */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Address</h2>
+        {/* Address */}
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+          <CardHeader>
+            <CardTitle className="text-gray-900">Address</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Street Address *
-                </label>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">STREET ADDRESS *</Label>
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
                   required
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City *
-                  </label>
-                  <input
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">CITY *</Label>
+                  <Input
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={inputClass}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    State *
-                  </label>
-                  <input
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">STATE *</Label>
+                  <Input
                     type="text"
                     name="state"
                     value={formData.state}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={inputClass}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pincode *
-                  </label>
-                  <input
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PINCODE *</Label>
+                  <Input
                     type="text"
                     name="pincode"
                     value={formData.pincode}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={inputClass}
                   />
                 </div>
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Add Contractor
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Actions */}
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add Contractor
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

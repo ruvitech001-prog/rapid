@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Activity, CheckCircle, XCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AuditLog {
   id: string;
@@ -53,98 +55,129 @@ export default function AuditLogsPage() {
     filterStatus === 'all' || log.status === filterStatus
   );
 
+  const selectClass = "h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
-          <p className="text-gray-600 mt-2">Track all system activities and changes</p>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Activities</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{logs.length}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Successful</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">
-              {logs.filter(l => l.status === 'success').length}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Failed</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">
-              {logs.filter(l => l.status === 'failure').length}
-            </p>
-          </div>
-        </div>
-
-        {/* Filter */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">All Status</option>
-            <option value="success">Success</option>
-            <option value="failure">Failure</option>
-          </select>
-        </div>
-
-        {/* Logs Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Timestamp
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Details
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{log.action}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{log.user}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{log.timestamp}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{log.details}</div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
+        <p className="text-[#8593A3] mt-1">Track all system activities and changes</p>
       </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL ACTIVITIES</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{logs.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+                <Activity className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">SUCCESSFUL</p>
+                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">
+                  {logs.filter(l => l.status === 'success').length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-[#2DD4BF]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FAILED</p>
+                <p className="text-3xl font-bold text-[#FF7373] mt-2">
+                  {logs.filter(l => l.status === 'failure').length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
+                <XCircle className="h-6 w-6 text-[#FF7373]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-4">
+            <span className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FILTER BY STATUS:</span>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className={selectClass}
+            >
+              <option value="all">All Status</option>
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Logs Table */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-gray-900">Activity Log</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTION</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">USER</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">TIMESTAMP</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DETAILS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#DEE4EB]">
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{log.action}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{log.user}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-[#8593A3]">{log.timestamp}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+                        log.status === 'success' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[#FF7373]/10 text-[#FF7373]'
+                      }`}>
+                        {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-[#8593A3]">{log.details}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

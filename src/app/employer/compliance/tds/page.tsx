@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { Users, DollarSign, TrendingUp, Download, CheckCircle, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface TDSRecord {
   employeeId: string;
@@ -49,206 +53,244 @@ export default function TDSReportPage() {
   const totalTaxableIncome = tdsRecords.reduce((sum, rec) => sum + rec.taxableIncome, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">TDS Compliance Report</h1>
-            <p className="text-gray-600 mt-2">Tax Deducted at Source reporting and compliance</p>
-          </div>
-          <div className="flex space-x-4">
-            <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
-              Download Form 24Q
-            </button>
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-              Export Report
-            </button>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">TDS Compliance Report</h1>
+          <p className="text-[#8593A3] mt-1">Tax Deducted at Source reporting and compliance</p>
         </div>
-
-        {/* Quarter Selection */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Quarter
-          </label>
-          <select
-            value={selectedQuarter}
-            onChange={(e) => setSelectedQuarter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="Q1-2024">Q1 2024 (Apr-Jun)</option>
-            <option value="Q2-2024">Q2 2024 (Jul-Sep)</option>
-            <option value="Q3-2024">Q3 2024 (Oct-Dec)</option>
-            <option value="Q4-2024">Q4 2024 (Jan-Mar)</option>
-          </select>
+        <div className="flex gap-3">
+          <Button variant="outline" size="lg" className="gap-2 border-[#2DD4BF] text-[#2DD4BF] hover:bg-[#2DD4BF]/10">
+            <Download className="h-4 w-4" />
+            Download Form 24Q
+          </Button>
+          <Button size="lg" className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]">
+            <Download className="h-4 w-4" />
+            Export Report
+          </Button>
         </div>
+      </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Employees</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{tdsRecords.length}</p>
+      {/* Quarter Selection */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardContent className="p-5">
+          <div className="space-y-2">
+            <Label htmlFor="quarter" className="text-[11px] font-semibold text-[#8593A3] tracking-wider">SELECT QUARTER</Label>
+            <select
+              id="quarter"
+              value={selectedQuarter}
+              onChange={(e) => setSelectedQuarter(e.target.value)}
+              className="w-64 h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
+            >
+              <option value="Q1-2024">Q1 2024 (Apr-Jun)</option>
+              <option value="Q2-2024">Q2 2024 (Jul-Sep)</option>
+              <option value="Q3-2024">Q3 2024 (Oct-Dec)</option>
+              <option value="Q4-2024">Q4 2024 (Jan-Mar)</option>
+            </select>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Taxable Income</p>
-            <p className="text-3xl font-bold text-blue-600 mt-2">₹{totalTaxableIncome.toLocaleString('en-IN')}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total TDS Deducted</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">₹{totalTDS.toLocaleString('en-IN')}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Avg Tax Rate</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">
-              {((totalTDS / totalTaxableIncome) * 100).toFixed(1)}%
-            </p>
-          </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* TDS Details Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">TDS Deduction Details</h2>
-          </div>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  PAN
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Gross Salary
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Taxable Income
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  TDS Deducted
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tax Regime
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {tdsRecords.map((record) => (
-                <tr key={record.employeeId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{record.employeeName}</div>
-                      <div className="text-sm text-gray-500">{record.employeeId}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{record.pan}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      ₹{record.grossSalary.toLocaleString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-blue-600">
-                      ₹{record.taxableIncome.toLocaleString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-red-600">
-                      ₹{record.tdsDeducted.toLocaleString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      record.taxRegime === 'new' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {record.taxRegime === 'new' ? 'New Regime' : 'Old Regime'}
-                    </span>
-                  </td>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL EMPLOYEES</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{tdsRecords.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+                <Users className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL TAXABLE INCOME</p>
+                <p className="text-3xl font-bold text-[#586AF5] mt-2">₹{totalTaxableIncome.toLocaleString('en-IN')}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL TDS DEDUCTED</p>
+                <p className="text-3xl font-bold text-[#FF7373] mt-2">₹{totalTDS.toLocaleString('en-IN')}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-[#FF7373]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">AVG TAX RATE</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">
+                  {((totalTDS / totalTaxableIncome) * 100).toFixed(1)}%
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* TDS Details Table */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-gray-900">TDS Deduction Details</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">EMPLOYEE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">PAN</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">GROSS SALARY</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">TAXABLE INCOME</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">TDS DEDUCTED</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">TAX REGIME</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-gray-50">
-              <tr>
-                <td colSpan={3} className="px-6 py-4 text-sm font-bold text-gray-900 text-right">
-                  Total:
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-bold text-blue-600">
-                    ₹{totalTaxableIncome.toLocaleString('en-IN')}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-bold text-red-600">
-                    ₹{totalTDS.toLocaleString('en-IN')}
-                  </div>
-                </td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#DEE4EB]">
+                {tdsRecords.map((record) => (
+                  <tr key={record.employeeId} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{record.employeeName}</div>
+                        <div className="text-sm text-[#8593A3]">{record.employeeId}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{record.pan}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        ₹{record.grossSalary.toLocaleString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[#586AF5]">
+                        ₹{record.taxableIncome.toLocaleString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[#FF7373]">
+                        ₹{record.tdsDeducted.toLocaleString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+                        record.taxRegime === 'new' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[#586AF5]/10 text-[#586AF5]'
+                      }`}>
+                        {record.taxRegime === 'new' ? 'New Regime' : 'Old Regime'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-[#F4F7FA] border-t border-[#DEE4EB]">
+                <tr>
+                  <td colSpan={3} className="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                    Total:
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-bold text-[#586AF5]">
+                      ₹{totalTaxableIncome.toLocaleString('en-IN')}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-bold text-[#FF7373]">
+                      ₹{totalTDS.toLocaleString('en-IN')}
+                    </div>
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Compliance Information */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Compliance Information</h2>
+      {/* Compliance Information */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardHeader>
+          <CardTitle className="text-gray-900">Compliance Information</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900">Filing Details</h3>
-              <div className="flex items-start space-x-3">
+              <h3 className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FILING DETAILS</h3>
+              <div className="flex items-start gap-3 p-4 bg-[#F4F7FA] rounded-xl">
                 <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-8 h-8 rounded-lg bg-[#2DD4BF]/10 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-[#2DD4BF]" />
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Form 24Q</p>
-                  <p className="text-sm text-gray-600">Quarterly TDS return for salary income</p>
+                  <p className="text-sm text-[#8593A3]">Quarterly TDS return for salary income</p>
                 </div>
               </div>
-              <div className="flex items-start space-x-3">
+              <div className="flex items-start gap-3 p-4 bg-[#F4F7FA] rounded-xl">
                 <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-8 h-8 rounded-lg bg-[#2DD4BF]/10 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-[#2DD4BF]" />
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Form 16</p>
-                  <p className="text-sm text-gray-600">Annual TDS certificate for employees</p>
+                  <p className="text-sm text-[#8593A3]">Annual TDS certificate for employees</p>
                 </div>
               </div>
             </div>
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900">Due Dates</h3>
-              <div className="flex items-start space-x-3">
+              <h3 className="text-[11px] font-semibold text-[#8593A3] tracking-wider">DUE DATES</h3>
+              <div className="flex items-start gap-3 p-4 bg-[#F4F7FA] rounded-xl">
                 <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-8 h-8 rounded-lg bg-[#CC7A00]/10 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-[#CC7A00]" />
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">TDS Payment</p>
-                  <p className="text-sm text-gray-600">7th of following month</p>
+                  <p className="text-sm text-[#8593A3]">7th of following month</p>
                 </div>
               </div>
-              <div className="flex items-start space-x-3">
+              <div className="flex items-start gap-3 p-4 bg-[#F4F7FA] rounded-xl">
                 <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-8 h-8 rounded-lg bg-[#CC7A00]/10 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-[#CC7A00]" />
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Quarterly Return</p>
-                  <p className="text-sm text-gray-600">31st of month following quarter end</p>
+                  <p className="text-sm text-[#8593A3]">31st of month following quarter end</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

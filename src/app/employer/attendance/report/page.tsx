@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { Users, CheckCircle, XCircle, Clock, Download } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface AttendanceRecord {
   employeeId: string;
@@ -77,41 +81,40 @@ export default function AttendanceReportPage() {
   const avgAttendance = filteredData.reduce((sum, emp) => sum + emp.attendancePercentage, 0) / filteredData.length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Attendance Report</h1>
-            <p className="text-gray-600 mt-2">View and analyze employee attendance data</p>
-          </div>
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-            Export Report
-          </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Attendance Report</h1>
+          <p className="text-[#8593A3] mt-1">View and analyze employee attendance data</p>
         </div>
+        <Button size="lg" className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]">
+          <Download className="h-4 w-4" />
+          Export Report
+        </Button>
+      </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Month
-              </label>
+      {/* Filters */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardContent className="p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="month" className="text-[11px] font-semibold text-[#8593A3] tracking-wider">SELECT MONTH</Label>
               <input
+                id="month"
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Department
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="department" className="text-[11px] font-semibold text-[#8593A3] tracking-wider">DEPARTMENT</Label>
               <select
+                id="department"
                 value={filterDepartment}
                 onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
               >
                 {departments.map(dept => (
                   <option key={dept} value={dept}>
@@ -121,133 +124,169 @@ export default function AttendanceReportPage() {
               </select>
             </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Present</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">{totalPresent}</p>
-            <p className="text-xs text-gray-500 mt-1">Days</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Absent</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">{totalAbsent}</p>
-            <p className="text-xs text-gray-500 mt-1">Days</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Leave</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">{totalLeave}</p>
-            <p className="text-xs text-gray-500 mt-1">Days</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Avg Attendance</p>
-            <p className="text-3xl font-bold text-blue-600 mt-2">{avgAttendance.toFixed(1)}%</p>
-            <p className="text-xs text-gray-500 mt-1">Percentage</p>
-          </div>
-        </div>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL PRESENT</p>
+                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">{totalPresent}</p>
+                <p className="text-xs text-[#8593A3] mt-1">Days</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-[#2DD4BF]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Attendance Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Department
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Present
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Absent
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Leave
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Late Arrival
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Attendance %
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredData.map((record) => (
-                <tr key={record.employeeId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{record.employeeName}</div>
-                      <div className="text-sm text-gray-500">{record.employeeId}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{record.department}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      {record.present} days
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      {record.absent} days
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                      {record.leave} days
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      {record.lateArrival} times
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="text-sm font-medium text-gray-900 mr-2">
-                        {record.attendancePercentage}%
-                      </div>
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            record.attendancePercentage >= 90 ? 'bg-green-600' :
-                            record.attendancePercentage >= 75 ? 'bg-yellow-600' :
-                            'bg-red-600'
-                          }`}
-                          style={{ width: `${record.attendancePercentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL ABSENT</p>
+                <p className="text-3xl font-bold text-[#FF7373] mt-2">{totalAbsent}</p>
+                <p className="text-xs text-[#8593A3] mt-1">Days</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
+                <XCircle className="h-6 w-6 text-[#FF7373]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL LEAVE</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{totalLeave}</p>
+                <p className="text-xs text-[#8593A3] mt-1">Days</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">AVG ATTENDANCE</p>
+                <p className="text-3xl font-bold text-[#586AF5] mt-2">{avgAttendance.toFixed(1)}%</p>
+                <p className="text-xs text-[#8593A3] mt-1">Percentage</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Attendance Table */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-gray-900">Attendance Details</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">EMPLOYEE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DEPARTMENT</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">PRESENT</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ABSENT</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">LEAVE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">LATE ARRIVAL</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ATTENDANCE %</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#DEE4EB]">
+                {filteredData.map((record) => (
+                  <tr key={record.employeeId} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{record.employeeName}</div>
+                        <div className="text-sm text-[#8593A3]">{record.employeeId}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{record.department}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-[#2DD4BF]/10 text-[#2DD4BF]">
+                        {record.present} days
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-[#FF7373]/10 text-[#FF7373]">
+                        {record.absent} days
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-[#CC7A00]/10 text-[#CC7A00]">
+                        {record.leave} days
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-[#586AF5]/10 text-[#586AF5]">
+                        {record.lateArrival} times
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-medium text-gray-900">
+                          {record.attendancePercentage}%
+                        </div>
+                        <div className="w-16 bg-[#DEE4EB] rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              record.attendancePercentage >= 90 ? 'bg-[#2DD4BF]' :
+                              record.attendancePercentage >= 75 ? 'bg-[#CC7A00]' :
+                              'bg-[#FF7373]'
+                            }`}
+                            style={{ width: `${record.attendancePercentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Department-wise Summary */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Department-wise Summary</h2>
+      {/* Department-wise Summary */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardHeader>
+          <CardTitle className="text-gray-900">Department-wise Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {departments.filter(d => d !== 'all').map((dept) => {
               const deptData = attendanceData.filter(emp => emp.department === dept);
               const deptAvg = deptData.reduce((sum, emp) => sum + emp.attendancePercentage, 0) / deptData.length;
               return (
-                <div key={dept} className="p-4 border border-gray-200 rounded-lg">
+                <div key={dept} className="p-4 border border-[#DEE4EB] rounded-xl hover:border-[#586AF5] transition-colors">
                   <p className="text-sm font-medium text-gray-900">{dept}</p>
-                  <p className="text-2xl font-bold text-blue-600 mt-2">{deptAvg.toFixed(1)}%</p>
-                  <p className="text-xs text-gray-500 mt-1">{deptData.length} employees</p>
+                  <p className="text-2xl font-bold text-[#586AF5] mt-2">{deptAvg.toFixed(1)}%</p>
+                  <p className="text-xs text-[#8593A3] mt-1">{deptData.length} employees</p>
                 </div>
               );
             })}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

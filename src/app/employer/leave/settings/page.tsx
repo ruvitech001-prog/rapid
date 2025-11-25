@@ -1,6 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { Plus, Settings, Calendar, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface LeavePolicy {
   id: string;
@@ -107,212 +112,271 @@ export default function LeaveSettingsPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Leave Policy Settings</h1>
-            <p className="text-gray-600 mt-2">Configure leave policies for your organization</p>
-          </div>
-          <button
-            onClick={handleAddNew}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Add New Policy
-          </button>
-        </div>
+  const inputClass = "w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";
 
-        {/* Edit/Add Form */}
-        {(editingPolicy || isAddingNew) && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              {isAddingNew ? 'Add New Policy' : 'Edit Policy'}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Leave Policy Settings</h1>
+          <p className="text-[#8593A3] mt-1">Configure leave policies for your organization</p>
+        </div>
+        <Button
+          onClick={handleAddNew}
+          className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]"
+        >
+          <Plus className="h-4 w-4" />
+          Add New Policy
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Policy Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL POLICIES</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{policies.length}</p>
               </div>
+              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+                <Settings className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Annual Days *
-                </label>
-                <input
-                  type="number"
-                  value={formData.days}
-                  onChange={(e) => setFormData({ ...formData, days: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">WITH CARRY FORWARD</p>
+                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">{policies.filter(p => p.carryForward).length}</p>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
+              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-[#2DD4BF]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL ANNUAL DAYS</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{policies.reduce((sum, p) => sum + p.days, 0)}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Edit/Add Form Modal */}
+      {(editingPolicy || isAddingNew) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                {isAddingNew ? 'Add New Policy' : 'Edit Policy'}
+              </h2>
+              <button
+                onClick={handleCancel}
+                className="w-8 h-8 rounded-lg bg-[#F4F7FA] hover:bg-[#DEE4EB] flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-[#8593A3]" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">POLICY NAME *</Label>
+                  <Input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">ANNUAL DAYS *</Label>
+                  <Input
+                    type="number"
+                    value={formData.days}
+                    onChange={(e) => setFormData({ ...formData, days: parseInt(e.target.value) })}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">DESCRIPTION</Label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
                 />
               </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.carryForward}
-                  onChange={(e) => setFormData({ ...formData, carryForward: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-900">
-                  Allow Carry Forward
-                </label>
-              </div>
-              {formData.carryForward && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Carry Forward Days
-                  </label>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-4 bg-[#F4F7FA] rounded-xl">
                   <input
-                    type="number"
-                    value={formData.maxCarryForward}
-                    onChange={(e) => setFormData({ ...formData, maxCarryForward: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    type="checkbox"
+                    checked={formData.carryForward}
+                    onChange={(e) => setFormData({ ...formData, carryForward: e.target.checked })}
+                    className="h-4 w-4 text-[#586AF5] focus:ring-[#586AF5] border-[#DEE4EB] rounded"
                   />
+                  <label className="text-sm font-medium text-gray-900">
+                    Allow Carry Forward
+                  </label>
                 </div>
-              )}
-            </div>
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                onClick={handleCancel}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Save Policy
-              </button>
+
+                {formData.carryForward && (
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">MAX CARRY FORWARD DAYS</Label>
+                    <Input
+                      type="number"
+                      value={formData.maxCarryForward}
+                      onChange={(e) => setFormData({ ...formData, maxCarryForward: parseInt(e.target.value) })}
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="bg-[#642DFC] hover:bg-[#5020d9]"
+                >
+                  Save Policy
+                </Button>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Policies List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Policy Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Annual Days
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Carry Forward
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Max Carry Forward
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {policies.map((policy) => (
-                <tr key={policy.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{policy.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{policy.days} days</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      policy.carryForward ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {policy.carryForward ? 'Yes' : 'No'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {policy.carryForward ? `${policy.maxCarryForward} days` : '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{policy.description}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(policy)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(policy.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
+      {/* Policies List */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-gray-900">Leave Policies</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">POLICY NAME</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ANNUAL DAYS</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">CARRY FORWARD</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">MAX CARRY FORWARD</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DESCRIPTION</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Additional Settings */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">General Settings</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Weekend Policy</p>
-                <p className="text-sm text-gray-500">Configure which days are considered weekends</p>
-              </div>
-              <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option>Saturday & Sunday</option>
-                <option>Sunday Only</option>
-                <option>Custom</option>
-              </select>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Leave Approval</p>
-                <p className="text-sm text-gray-500">Require manager approval for leave requests</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Negative Balance</p>
-                <p className="text-sm text-gray-500">Allow employees to take leave with negative balance</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
+              </thead>
+              <tbody className="divide-y divide-[#DEE4EB]">
+                {policies.map((policy) => (
+                  <tr key={policy.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{policy.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{policy.days} days</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+                        policy.carryForward ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'bg-[#F4F7FA] text-[#8593A3]'
+                      }`}>
+                        {policy.carryForward ? 'Yes' : 'No'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {policy.carryForward ? `${policy.maxCarryForward} days` : '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-[#8593A3] max-w-xs truncate">{policy.description}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEdit(policy)}
+                          className="text-[#586AF5] hover:underline font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(policy.id)}
+                          className="text-[#FF7373] hover:underline font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* General Settings */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardHeader>
+          <CardTitle className="text-gray-900">General Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-[#F4F7FA] rounded-xl">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Weekend Policy</p>
+              <p className="text-sm text-[#8593A3]">Configure which days are considered weekends</p>
+            </div>
+            <select className="h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20">
+              <option>Saturday & Sunday</option>
+              <option>Sunday Only</option>
+              <option>Custom</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-[#F4F7FA] rounded-xl">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Leave Approval</p>
+              <p className="text-sm text-[#8593A3]">Require manager approval for leave requests</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <div className="w-11 h-6 bg-[#DEE4EB] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#586AF5]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#DEE4EB] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#586AF5]"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-[#F4F7FA] rounded-xl">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Negative Balance</p>
+              <p className="text-sm text-[#8593A3]">Allow employees to take leave with negative balance</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" />
+              <div className="w-11 h-6 bg-[#DEE4EB] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#586AF5]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#DEE4EB] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#586AF5]"></div>
+            </label>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

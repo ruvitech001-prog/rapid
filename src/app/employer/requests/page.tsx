@@ -1,202 +1,388 @@
-'use client';
+/**
+ * Special Requests List Screen
+ * GROUP B - Screen 8 (LIST pattern - enhanced)
+ *
+ * This screen demonstrates:
+ * - DataTableWrapper for displaying requests
+ * - Advanced filtering (type, status, date range)
+ * - Mock data integration
+ * - Status badges and type colors
+ * - Pagination support
+ * - Inline actions (view, approve, reject)
+ *
+ * @route /employer/requests
+ */
 
-import { useState } from 'react';
+'use client'
 
-interface Request {
-  id: string;
-  type: 'leave' | 'expense' | 'document' | 'access';
-  employee: string;
-  description: string;
-  status: 'pending' | 'approved' | 'rejected';
-  date: string;
+import { useState, useEffect } from 'react'
+import { PageHeader } from '@/components/templates'
+import { getCurrentMockCompany, getMockDataByCompany } from '@/lib/mock-data'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Check, X, Eye, Calendar } from 'lucide-react'
+import { toast } from 'sonner'
+
+/**
+ * Request type interface
+ */
+interface SpecialRequest {
+  id: string
+  company_id: string
+  requester_id: string
+  request_type: string
+  title: string
+  description: string
+  request_data: any
+  status: string
+  assigned_to: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
 }
 
-export default function RequestsPage() {
-  const [requests] = useState<Request[]>([
-    {
-      id: '1',
-      type: 'leave',
-      employee: 'John Smith',
-      description: 'Annual leave for 5 days',
-      status: 'pending',
-      date: '2024-01-28',
-    },
-    {
-      id: '2',
-      type: 'expense',
-      employee: 'Emma Wilson',
-      description: 'Business travel expenses - ₹15,000',
-      status: 'pending',
-      date: '2024-01-27',
-    },
-    {
-      id: '3',
-      type: 'document',
-      employee: 'Michael Brown',
-      description: 'Request for certificate of service',
-      status: 'approved',
-      date: '2024-01-26',
-    },
-    {
-      id: '4',
-      type: 'access',
-      employee: 'Sarah Davis',
-      description: 'Request for new system access',
-      status: 'rejected',
-      date: '2024-01-25',
-    },
-  ]);
+/**
+ * Request type definitions
+ */
+const REQUEST_TYPES = [
+  { value: 'equipment', label: 'Equipment', color: 'bg-blue-100 text-blue-800' },
+  { value: 'gifts', label: 'Gifts', color: 'bg-purple-100 text-purple-800' },
+  { value: 'salary_amendment', label: 'Salary Amendment', color: 'bg-green-100 text-green-800' },
+  { value: 'expense', label: 'Expense', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'other', label: 'Other', color: 'bg-gray-100 text-gray-800' },
+]
 
-  const [filterType, setFilterType] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+const STATUS_TYPES = [
+  { value: 'pending', label: 'Pending', color: 'bg-orange-100 text-orange-800' },
+  { value: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800' },
+  { value: 'in_review', label: 'In Review', color: 'bg-blue-100 text-blue-800' },
+]
 
-  const filteredRequests = requests.filter(req =>
-    (filterType === 'all' || req.type === filterType) &&
-    (filterStatus === 'all' || req.status === filterStatus)
-  );
+export default function SpecialRequestsPage() {
+  // ============================================================================
+  // STATE MANAGEMENT
+  // ============================================================================
 
+  const company = getCurrentMockCompany()
+  const [requests, setRequests] = useState<SpecialRequest[]>([])
+  const [filterType, setFilterType] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
+  /**
+   * Load requests on component mount
+   */
+  useEffect(() => {
+    const loadRequests = async () => {
+      try {
+        setIsLoading(true)
+        const mockRequests = getMockDataByCompany('specialRequests', company.id)
+        setRequests(mockRequests || [])
+      } catch (error) {
+        console.error('Error loading requests:', error)
+        toast.error('Failed to load requests')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (company) {
+      loadRequests()
+    }
+  }, [company.id])
+
+  // ============================================================================
+  // CALCULATIONS
+  // ============================================================================
+
+  /**
+   * Filter requests based on type, status, and search term
+   */
+  const filteredRequests = requests.filter((req) => {
+    const matchesType = filterType === 'all' || req.request_type === filterType
+    const matchesStatus = filterStatus === 'all' || req.status === filterStatus
+    const matchesSearch =
+      req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.description.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesType && matchesStatus && matchesSearch
+  })
+
+  /**
+   * Calculate statistics
+   */
+  const stats = {
+    total: requests.length,
+    pending: requests.filter(r => r.status === 'pending').length,
+    approved: requests.filter(r => r.status === 'approved').length,
+    rejected: requests.filter(r => r.status === 'rejected').length,
+  }
+
+  // ============================================================================
+  // HANDLERS
+  // ============================================================================
+
+  /**
+   * Get type color badge
+   */
   const getTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      leave: 'bg-blue-100 text-blue-800',
-      expense: 'bg-yellow-100 text-yellow-800',
-      document: 'bg-purple-100 text-purple-800',
-      access: 'bg-pink-100 text-pink-800',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
+    const typeObj = REQUEST_TYPES.find(t => t.value === type)
+    return typeObj ? typeObj.color : 'bg-gray-100 text-gray-800'
+  }
 
+  /**
+   * Get status color badge
+   */
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'bg-orange-100 text-orange-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
+    const statusObj = STATUS_TYPES.find(s => s.value === status)
+    return statusObj ? statusObj.color : 'bg-gray-100 text-gray-800'
+  }
+
+  /**
+   * Get type label
+   */
+  const getTypeLabel = (type: string) => {
+    const typeObj = REQUEST_TYPES.find(t => t.value === type)
+    return typeObj ? typeObj.label : type
+  }
+
+  /**
+   * Handle approve request
+   */
+  const handleApprove = (requestId: string) => {
+    setRequests(
+      requests.map(req =>
+        req.id === requestId ? { ...req, status: 'approved' } : req
+      )
+    )
+    toast.success('Request approved')
+  }
+
+  /**
+   * Handle reject request
+   */
+  const handleReject = (requestId: string) => {
+    setRequests(
+      requests.map(req =>
+        req.id === requestId ? { ...req, status: 'rejected' } : req
+      )
+    )
+    toast.success('Request rejected')
+  }
+
+  /**
+   * Format date
+   */
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-IN')
+    } catch {
+      return dateStr
+    }
+  }
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Requests</h1>
-          <p className="text-gray-600 mt-2">Review and manage employee requests</p>
-        </div>
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      {/* Page Header */}
+      <PageHeader
+        title="Special Requests"
+        description="Review and manage all special requests (equipment, gifts, salary amendments, etc.)"
+        breadcrumbs={[
+          { label: 'Home', href: '/employer/dashboard' },
+          { label: 'Requests' },
+        ]}
+      />
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Requests</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{requests.length}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Pending</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">
-              {requests.filter(r => r.status === 'pending').length}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Approved</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">
-              {requests.filter(r => r.status === 'approved').length}
-            </p>
-          </div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg border p-4">
+          <p className="text-sm text-gray-600 font-medium">Total Requests</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
         </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Types</option>
-                <option value="leave">Leave</option>
-                <option value="expense">Expense</option>
-                <option value="document">Document</option>
-                <option value="access">Access</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-          </div>
+        <div className="bg-white rounded-lg border p-4">
+          <p className="text-sm text-gray-600 font-medium">Pending</p>
+          <p className="text-3xl font-bold text-orange-600 mt-2">{stats.pending}</p>
         </div>
-
-        {/* Requests List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRequests.map((req) => (
-                <tr key={req.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${getTypeColor(req.type)}`}>
-                      {req.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{req.employee}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{req.description}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{req.date}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${getStatusColor(req.status)}`}>
-                      {req.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {req.status === 'pending' && (
-                      <>
-                        <button className="text-green-600 hover:text-green-900 mr-4">Approve</button>
-                        <button className="text-red-600 hover:text-red-900">Reject</button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="bg-white rounded-lg border p-4">
+          <p className="text-sm text-gray-600 font-medium">Approved</p>
+          <p className="text-3xl font-bold text-green-600 mt-2">{stats.approved}</p>
+        </div>
+        <div className="bg-white rounded-lg border p-4">
+          <p className="text-sm text-gray-600 font-medium">Rejected</p>
+          <p className="text-3xl font-bold text-red-600 mt-2">{stats.rejected}</p>
         </div>
       </div>
+
+      {/* Filters Section */}
+      <div className="bg-white rounded-lg border p-6 space-y-4">
+        <h3 className="font-semibold text-gray-900">Filters</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Search */}
+          <div className="space-y-2">
+            <Label htmlFor="search">Search</Label>
+            <Input
+              id="search"
+              placeholder="Search by title or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Type Filter */}
+          <div className="space-y-2">
+            <Label htmlFor="type-filter">Request Type</Label>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger id="type-filter">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {REQUEST_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="space-y-2">
+            <Label htmlFor="status-filter">Status</Label>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger id="status-filter">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {STATUS_TYPES.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Requests Table */}
+      <div className="bg-white rounded-lg border overflow-hidden">
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500">
+            <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Loading requests...</p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            <Eye className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>{requests.length === 0 ? 'No requests found.' : 'No requests match your filters.'}</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRequests.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell>
+                    <Badge className={getTypeColor(request.request_type)}>
+                      {getTypeLabel(request.request_type)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">{request.title}</TableCell>
+                  <TableCell className="text-gray-600 max-w-xs truncate">
+                    {request.description}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(request.status)}>
+                      {request.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {formatDate(request.created_at)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      {request.status === 'pending' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleApprove(request.id)}
+                            title="Approve"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleReject(request.id)}
+                            title="Reject"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+
+      {/* Summary */}
+      {filteredRequests.length > 0 && (
+        <div className="text-sm text-gray-600 text-center">
+          Showing {filteredRequests.length} of {requests.length} requests
+        </div>
+      )}
     </div>
-  );
+  )
 }

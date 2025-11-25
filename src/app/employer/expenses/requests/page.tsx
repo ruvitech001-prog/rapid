@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { Clock, CheckCircle, XCircle, DollarSign, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface ExpenseRequest {
   id: string;
@@ -94,271 +97,280 @@ export default function ExpenseRequestsPage() {
     .reduce((sum, req) => sum + req.amount, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Expense Requests</h1>
-          <p className="text-gray-600 mt-2">Review and approve employee expense claims</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Expense Requests</h1>
+          <p className="text-[#8593A3] mt-1">Review and approve employee expense claims</p>
         </div>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Pending Requests</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">{pendingCount}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Pending Amount</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">₹{pendingAmount.toLocaleString('en-IN')}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Approved This Month</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">₹45,000</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total This Month</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">₹74,000</p>
-          </div>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PENDING REQUESTS</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{pendingCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setFilterStatus('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilterStatus('pending')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'pending'
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Pending
-              </button>
-              <button
-                onClick={() => setFilterStatus('approved')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'approved'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Approved
-              </button>
-              <button
-                onClick={() => setFilterStatus('rejected')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filterStatus === 'rejected'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Rejected
-              </button>
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PENDING AMOUNT</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">₹{pendingAmount.toLocaleString('en-IN')}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">APPROVED THIS MONTH</p>
+                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">₹45,000</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-[#2DD4BF]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL THIS MONTH</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">₹74,000</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-4">
+            <span className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FILTER BY STATUS:</span>
+            <div className="flex gap-2">
+              {[
+                { key: 'all', label: 'All', color: '#586AF5' },
+                { key: 'pending', label: 'Pending', color: '#CC7A00' },
+                { key: 'approved', label: 'Approved', color: '#2DD4BF' },
+                { key: 'rejected', label: 'Rejected', color: '#FF7373' },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setFilterStatus(item.key)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterStatus === item.key
+                      ? 'text-white'
+                      : 'bg-[#F4F7FA] text-[#8593A3] hover:bg-[#DEE4EB]'
+                  }`}
+                  style={filterStatus === item.key ? { backgroundColor: item.color } : {}}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Requests List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Submitted On
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRequests.map((request) => (
-                <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{request.employeeName}</div>
-                      <div className="text-sm text-gray-500">{request.employeeId}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{request.category}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      ₹{request.amount.toLocaleString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {new Date(request.date).toLocaleDateString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {new Date(request.submittedOn).toLocaleDateString('en-IN')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      request.status === 'pending' ? 'bg-orange-100 text-orange-800' :
-                      request.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {request.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => setSelectedRequest(request)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      View
-                    </button>
-                    {request.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => handleApprove(request.id)}
-                          className="text-green-600 hover:text-green-900 mr-4"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleReject(request.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </td>
+      {/* Requests List */}
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-gray-900">Expense Requests</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">EMPLOYEE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">CATEGORY</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">AMOUNT</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DATE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">SUBMITTED ON</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#DEE4EB]">
+                {filteredRequests.map((request) => (
+                  <tr key={request.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{request.employeeName}</div>
+                        <div className="text-sm text-[#8593A3]">{request.employeeId}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{request.category}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        ₹{request.amount.toLocaleString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-[#8593A3]">
+                        {new Date(request.date).toLocaleDateString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-[#8593A3]">
+                        {new Date(request.submittedOn).toLocaleDateString('en-IN')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+                        request.status === 'pending' ? 'bg-[#CC7A00]/10 text-[#CC7A00]' :
+                        request.status === 'approved' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' :
+                        'bg-[#FF7373]/10 text-[#FF7373]'
+                      }`}>
+                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedRequest(request)}
+                          className="text-[#586AF5] hover:underline font-medium"
+                        >
+                          View
+                        </button>
+                        {request.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(request.id)}
+                              className="text-[#2DD4BF] hover:underline font-medium"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(request.id)}
+                              className="text-[#FF7373] hover:underline font-medium"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {filteredRequests.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No expense requests found.</p>
+              <p className="text-[#8593A3]">No expense requests found.</p>
             </div>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Detail Modal */}
-        {selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">Expense Request Details</h2>
-                <button
-                  onClick={() => setSelectedRequest(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+      {/* Detail Modal */}
+      {selectedRequest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Expense Request Details</h2>
+              <button
+                onClick={() => setSelectedRequest(null)}
+                className="w-8 h-8 rounded-lg bg-[#F4F7FA] hover:bg-[#DEE4EB] flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-[#8593A3]" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">EMPLOYEE NAME</p>
+                  <p className="text-base font-medium text-gray-900">{selectedRequest.employeeName}</p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">EMPLOYEE ID</p>
+                  <p className="text-base font-medium text-gray-900">{selectedRequest.employeeId}</p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">CATEGORY</p>
+                  <p className="text-base font-medium text-gray-900">{selectedRequest.category}</p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">AMOUNT</p>
+                  <p className="text-base font-medium text-gray-900">₹{selectedRequest.amount.toLocaleString('en-IN')}</p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">EXPENSE DATE</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {new Date(selectedRequest.date).toLocaleDateString('en-IN')}
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">SUBMITTED ON</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {new Date(selectedRequest.submittedOn).toLocaleDateString('en-IN')}
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Employee Name</p>
-                    <p className="text-base font-medium text-gray-900">{selectedRequest.employeeName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Employee ID</p>
-                    <p className="text-base font-medium text-gray-900">{selectedRequest.employeeId}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Category</p>
-                    <p className="text-base font-medium text-gray-900">{selectedRequest.category}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Amount</p>
-                    <p className="text-base font-medium text-gray-900">
-                      ₹{selectedRequest.amount.toLocaleString('en-IN')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Expense Date</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {new Date(selectedRequest.date).toLocaleDateString('en-IN')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Submitted On</p>
-                    <p className="text-base font-medium text-gray-900">
-                      {new Date(selectedRequest.submittedOn).toLocaleDateString('en-IN')}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Description</p>
-                  <p className="text-base text-gray-900 bg-gray-50 p-4 rounded-lg">{selectedRequest.description}</p>
-                </div>
-
-                {selectedRequest.receipt && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Receipt</p>
-                    <div className="flex items-center space-x-2 bg-gray-50 p-4 rounded-lg">
-                      <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm text-gray-900">{selectedRequest.receipt}</span>
-                      <button className="ml-auto text-blue-600 hover:text-blue-900 text-sm">Download</button>
-                    </div>
-                  </div>
-                )}
-
-                {selectedRequest.status === 'pending' && (
-                  <div className="flex justify-end space-x-4 pt-4">
-                    <button
-                      onClick={() => handleReject(selectedRequest.id)}
-                      className="px-6 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => handleApprove(selectedRequest.id)}
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Approve
-                    </button>
-                  </div>
-                )}
+              <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">DESCRIPTION</p>
+                <p className="text-base text-gray-900">{selectedRequest.description}</p>
               </div>
+
+              {selectedRequest.receipt && (
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">RECEIPT</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-900">{selectedRequest.receipt}</span>
+                    <button className="text-[#586AF5] hover:underline text-sm font-medium">Download</button>
+                  </div>
+                </div>
+              )}
+
+              {selectedRequest.status === 'pending' && (
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleReject(selectedRequest.id)}
+                    className="border-[#FF7373] text-[#FF7373] hover:bg-[#FF7373]/10"
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    onClick={() => handleApprove(selectedRequest.id)}
+                    className="bg-[#2DD4BF] hover:bg-[#2DD4BF]/90 text-white"
+                  >
+                    Approve
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

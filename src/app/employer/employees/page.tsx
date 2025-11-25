@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Users, UserCheck, UserX, ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -171,17 +171,21 @@ export default function EmployeesPage() {
     },
   ]
 
+  const activeCount = employees.filter(e => e.status === 'active').length
+  const onLeaveCount = employees.filter(e => e.status === 'on-leave').length
+  const inactiveCount = employees.filter(e => e.status === 'inactive').length
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your organization's employees
+          <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
+          <p className="text-[#8593A3] mt-1">
+            Manage your organization&apos;s employees
           </p>
         </div>
-        <Button asChild size="lg" className="gap-2">
+        <Button asChild size="lg" className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]">
           <Link href="/employer/employees/new">
             <Plus className="h-4 w-4" />
             Add Employee
@@ -189,26 +193,86 @@ export default function EmployeesPage() {
         </Button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL EMPLOYEES</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{employees.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
+                <Users className="h-6 w-6 text-[#586AF5]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTIVE</p>
+                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">{activeCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
+                <UserCheck className="h-6 w-6 text-[#2DD4BF]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">ON LEAVE</p>
+                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{onLeaveCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
+                <Users className="h-6 w-6 text-[#CC7A00]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">INACTIVE</p>
+                <p className="text-3xl font-bold text-[#FF7373] mt-2">{inactiveCount}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
+                <UserX className="h-6 w-6 text-[#FF7373]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters Card */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardContent className="p-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
+              <Label htmlFor="search" className="text-[11px] font-semibold text-[#8593A3] tracking-wider">SEARCH</Label>
               <Input
                 id="search"
                 placeholder="Search by name, email, or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-[#DEE4EB] focus:border-[#586AF5] focus:ring-[#586AF5]/20"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
+              <Label htmlFor="department" className="text-[11px] font-semibold text-[#8593A3] tracking-wider">DEPARTMENT</Label>
               <select
                 id="department"
                 value={filterDepartment}
                 onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="w-full h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
               >
                 {departments.map((dept) => (
                   <option key={dept} value={dept}>
@@ -218,12 +282,12 @@ export default function EmployeesPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status" className="text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</Label>
               <select
                 id="status"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="w-full h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -236,18 +300,26 @@ export default function EmployeesPage() {
       </Card>
 
       {/* Employees Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Employee List ({filteredEmployees.length} of {employees.length})
-          </CardTitle>
+      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-gray-900">
+              Employee List
+              <span className="ml-2 text-sm font-normal text-[#8593A3]">
+                ({filteredEmployees.length} of {employees.length})
+              </span>
+            </CardTitle>
+            <Link href="/employer/employees" className="text-sm font-medium text-[#586AF5] hover:underline flex items-center gap-1">
+              View all <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           {filteredEmployees.length > 0 ? (
             <DataTable columns={columns} data={filteredEmployees} />
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">
+              <p className="text-[#8593A3]">
                 No employees found matching your criteria.
               </p>
             </div>
