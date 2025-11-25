@@ -72,7 +72,7 @@ export default function CompanyOnboardingPage() {
     { number: 5, label: 'Review' },
   ];
 
-  const stepTitles: Record<number, { title: string; description: string }> = {
+  const stepTitles: Record<Step, { title: string; description: string }> = {
     1: { title: 'Company Details', description: 'Basic information about your company' },
     2: { title: 'Tax Information', description: 'PAN, GSTIN, and TAN details' },
     3: { title: 'Statutory Details', description: 'EPF, ESIC, and PT registration details' },
