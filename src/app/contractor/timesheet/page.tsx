@@ -8,12 +8,15 @@ import {
   AlertCircle,
   ChevronDown,
   Plus,
+  Edit2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
+import { AddTimeModal } from '@/components/timesheet'
+import { RejectionReasonModal } from '@/components/timesheet'
 
 // Mock Data
 const mockTimesheetEntries = [
@@ -25,6 +28,7 @@ const mockTimesheetEntries = [
     dayOfWeek: 'Mon',
     hours: 6,
     status: 'approved' as const,
+    description: 'Simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever..',
   },
   {
     id: '2',
@@ -34,6 +38,7 @@ const mockTimesheetEntries = [
     dayOfWeek: 'Tue',
     hours: 7,
     status: 'approved' as const,
+    description: 'Simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text.',
   },
   {
     id: '3',
@@ -43,6 +48,8 @@ const mockTimesheetEntries = [
     dayOfWeek: 'Wed',
     hours: 5,
     status: 'rejected' as const,
+    description: 'Simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text.',
+    rejectionReason: 'The submitted hours do not match the project requirements. Please verify your time tracking and resubmit.',
   },
   {
     id: '4',
@@ -52,6 +59,7 @@ const mockTimesheetEntries = [
     dayOfWeek: 'Thu',
     hours: 8,
     status: 'approved' as const,
+    description: 'Simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text.',
   },
   {
     id: '5',
@@ -61,6 +69,7 @@ const mockTimesheetEntries = [
     dayOfWeek: 'Fri',
     hours: 6,
     status: 'approved' as const,
+    description: 'Simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text.',
   },
   {
     id: '6',
@@ -70,6 +79,7 @@ const mockTimesheetEntries = [
     dayOfWeek: 'Sat',
     hours: 8,
     status: 'in_review' as const,
+    description: 'Simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text.',
   },
   {
     id: '7',
@@ -79,6 +89,7 @@ const mockTimesheetEntries = [
     dayOfWeek: 'Sun',
     hours: 4,
     status: 'approved' as const,
+    description: 'Simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text.',
   },
 ]
 
@@ -90,6 +101,10 @@ export default function TimesheetPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [showAddTime, setShowAddTime] = useState(false)
+  const [rejectionModal, setRejectionModal] = useState<{
+    isOpen: boolean
+    reason: string
+  }>({ isOpen: false, reason: '' })
 
   // Filter entries
   const filteredEntries = mockTimesheetEntries.filter((entry) => {
@@ -228,10 +243,10 @@ export default function TimesheetPage() {
                         Date & Day
                       </th>
                       <th className="px-6 py-3 text-left font-semibold text-gray-900 text-xs uppercase tracking-wide">
-                        Project
+                        Hours Worked
                       </th>
                       <th className="px-6 py-3 text-left font-semibold text-gray-900 text-xs uppercase tracking-wide">
-                        Hours Worked
+                        Description
                       </th>
                       <th className="px-6 py-3 text-left font-semibold text-gray-900 text-xs uppercase tracking-wide">
                         Status
@@ -248,9 +263,16 @@ export default function TimesheetPage() {
                           <div className="font-medium">{entry.date}</div>
                           <div className="text-xs text-gray-500">{entry.dayOfWeek}</div>
                         </td>
-                        <td className="px-6 py-4 text-gray-900">{entry.project}</td>
                         <td className="px-6 py-4 font-semibold text-gray-900">
                           {entry.hours} hours
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          <div className="line-clamp-2">{entry.description}</div>
+                          {entry.description.length > 50 && (
+                            <button className="text-primary hover:underline text-xs mt-1">
+                              Read more
+                            </button>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <Badge
@@ -269,8 +291,25 @@ export default function TimesheetPage() {
                                 : 'Rejected'}
                           </Badge>
                         </td>
-                        <td className="px-6 py-4 text-right text-primary hover:underline cursor-pointer">
-                          View details
+                        <td className="px-6 py-4 text-right space-x-2">
+                          {entry.status === 'rejected' && entry.rejectionReason && (
+                            <button
+                              onClick={() =>
+                                setRejectionModal({
+                                  isOpen: true,
+                                  reason: entry.rejectionReason!,
+                                })
+                              }
+                              className="text-red-600 hover:underline text-xs font-medium"
+                            >
+                              See why?
+                            </button>
+                          )}
+                          {entry.status === 'rejected' && (
+                            <button className="text-gray-600 hover:text-primary transition-colors p-1 inline-flex">
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -296,20 +335,6 @@ export default function TimesheetPage() {
             </div>
           )}
 
-          {/* Client Sections */}
-          <div className="space-y-3">
-            {Object.entries(groupedByClient).map(([client, entries]) => (
-              <Card key={client} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{client}</h3>
-                    <p className="text-sm text-gray-500">{entries.length} entries</p>
-                  </div>
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </TabsContent>
       </Tabs>
 
@@ -322,6 +347,23 @@ export default function TimesheetPage() {
           <Plus className="h-6 w-6" />
         </Button>
       </div>
+
+      {/* Add Time Modal */}
+      <AddTimeModal
+        isOpen={showAddTime}
+        onClose={() => setShowAddTime(false)}
+        onSubmit={(data) => {
+          console.log('Timesheet submission:', data)
+          setShowAddTime(false)
+        }}
+      />
+
+      {/* Rejection Reason Modal */}
+      <RejectionReasonModal
+        isOpen={rejectionModal.isOpen}
+        onClose={() => setRejectionModal({ isOpen: false, reason: '' })}
+        reason={rejectionModal.reason}
+      />
     </div>
   )
 }
