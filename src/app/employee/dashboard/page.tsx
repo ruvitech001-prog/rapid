@@ -2,236 +2,273 @@
 
 import Link from 'next/link'
 import {
-  Calendar,
-  Clock,
-  CreditCard,
-  User,
-  AlertCircle,
-  DollarSign,
+  Bell,
   ChevronRight,
+  HelpCircle,
+  MessageCircle,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 export default function EmployeeDashboard() {
-  // Mock data
-  const leaveBalance = [
-    { type: 'Earned Leave', balance: 12, total: 18 },
-    { type: 'Casual Leave', balance: 5, total: 12 },
-    { type: 'Sick Leave', balance: 7, total: 12 },
+  const userName = 'Navin'
+
+  // Leaves data
+  const leavesData = {
+    totalDays: 20,
+    taken: 14,
+    available: 6,
+    leaves: [
+      { type: 'Casual', available: 2 },
+      { type: 'Sick', available: 2 },
+    ],
+  }
+
+  // Requests for approval
+  const approvalRequests = [
+    {
+      id: 1,
+      type: 'LEAVE',
+      dateRange: '21/Oct/2022 - 22/Nov/2023',
+      description: 'Vidushi Maheshwari • Employee',
+    },
+    {
+      id: 2,
+      type: 'EXPENSE',
+      amount: 'INR 5000',
+      description: 'Vidushi Maheshwari • Employee',
+    },
+    {
+      id: 3,
+      type: 'LEAVE',
+      dateRange: '21/Oct/2022 - 22/Nov/2023',
+      description: 'Vidushi Maheshwari • Contractor',
+    },
   ]
 
-  const upcomingLeaves = [
-    { dates: 'Feb 15-16, 2024', type: 'Casual Leave', status: 'Approved', days: 2 },
+  const updates = [
+    { id: 1, text: 'Time-off request for 23 Nov 22 has been approved.' },
+    { id: 2, text: 'Time-off request for 23 Nov 22 has been approved.' },
   ]
 
-  const recentPayslips = [
-    { month: 'January 2024', netPay: '₹44,400', status: 'Paid', date: '1st Feb' },
-    { month: 'December 2023', netPay: '₹44,400', status: 'Paid', date: '1st Jan' },
+  const holidays = [
+    { date: 'Sat, 14/Jan/2023', name: 'MAKAR SANKRANTI' },
+    { date: 'Wed, 26/Jan/2023', name: 'REPUBLIC DAY' },
   ]
+
+  const getRequestBadgeColor = (type: string) => {
+    if (type === 'LEAVE') return 'bg-orange-100 text-orange-800'
+    if (type === 'EXPENSE') return 'bg-blue-100 text-blue-800'
+    return 'bg-gray-100 text-gray-800'
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="border border-border rounded-lg p-6">
-        <h1 className="text-2xl font-semibold text-foreground">Welcome back, John!</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Here's your overview for today</p>
-      </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Hi {userName}!</h1>
+          <Button variant="outline" size="icon">
+            <Bell className="w-5 h-5" />
+          </Button>
+        </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Attendance This Month</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline justify-between">
-              <div>
-                <p className="text-2xl font-semibold">22/24</p>
-                <p className="text-xs text-primary mt-1">91.6%</p>
-              </div>
-              <Calendar className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline justify-between">
-              <div>
-                <p className="text-2xl font-semibold">2</p>
-                <p className="text-xs text-muted-foreground mt-1">Awaiting approval</p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Last Payslip</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline justify-between">
-              <div>
-                <p className="text-2xl font-semibold">₹44.4K</p>
-                <p className="text-xs text-muted-foreground mt-1">January 2024</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Leave Balance */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Leave Balance</CardTitle>
-          </div>
-          <Link href="/employee/leave/apply">
-            <Button variant="ghost" size="sm" className="text-primary">
-              Apply Leave <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {leaveBalance.map((leave) => (
-              <div key={leave.type} className="border border-border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium">{leave.type}</p>
-                  <span className="text-xs text-muted-foreground">
-                    {leave.balance}/{leave.total}
-                  </span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2 mb-2">
-                  <div
-                    className="bg-primary h-2 rounded-full transition-all"
-                    style={{ width: `${(leave.balance / leave.total) * 100}%` }}
-                  />
-                </div>
-                <p className="text-sm font-semibold">{leave.balance} days left</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upcoming Leaves */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Leaves</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {upcomingLeaves.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingLeaves.map((leave, index) => (
-                  <div key={index} className="flex items-center justify-between pb-4 last:pb-0 border-b last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{leave.dates}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {leave.type} • {leave.days} days
-                      </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Leaves Summary */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Leaves summary</h2>
+              <div className="grid grid-cols-2 gap-6">
+                {/* Donut Chart Area */}
+                <div className="flex flex-col items-center justify-center">
+                  <div className="relative w-32 h-32">
+                    <svg className="w-full h-full" viewBox="0 0 100 100">
+                      {/* Available (red) */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        fill="none"
+                        stroke="#ef4444"
+                        strokeWidth="12"
+                        strokeDasharray={`${(leavesData.available / leavesData.totalDays) * 251.2} 251.2`}
+                        transform="rotate(-90 50 50)"
+                      />
+                      {/* Taken (teal) */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        fill="none"
+                        stroke="#0d9488"
+                        strokeWidth="12"
+                        strokeDasharray={`${(leavesData.taken / leavesData.totalDays) * 251.2} 251.2`}
+                        strokeDashoffset={-((leavesData.available / leavesData.totalDays) * 251.2)}
+                        transform="rotate(-90 50 50)"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <p className="text-2xl font-bold text-gray-900">20</p>
+                      <p className="text-xs text-gray-600">TOTAL DAYS</p>
                     </div>
-                    <Badge variant="default">{leave.status}</Badge>
+                  </div>
+                  <div className="mt-4 space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
+                      <span className="text-gray-700">Leaves taken: 14</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span className="text-gray-700">Leaves available: 6</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Available Leaves */}
+                <div className="space-y-4">
+                  <p className="text-sm font-medium text-gray-700">Available leaves</p>
+                  {leavesData.leaves.map((leave) => (
+                    <div key={leave.type} className="space-y-1">
+                      <p className="text-sm text-gray-600">{leave.type}</p>
+                      <p className="text-2xl font-semibold text-gray-900">{leave.available}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Requests Section */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="mb-6">
+                <div className="flex gap-8 border-b border-gray-200">
+                  <button className="text-gray-500 pb-4 relative">
+                    My requests (10)
+                  </button>
+                  <button className="text-blue-600 pb-4 font-medium border-b-2 border-blue-600">
+                    For your approval (6)
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {approvalRequests.map((request) => (
+                  <div key={request.id} className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <Badge className={`${getRequestBadgeColor(request.type)} font-semibold`}>
+                        {request.type}
+                      </Badge>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {request.type === 'EXPENSE' ? request.amount : request.dateRange}
+                        </p>
+                        <p className="text-sm text-gray-600">{request.description}</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="ml-4">
+                      Approve
+                    </Button>
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">No upcoming leaves</p>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Recent Payslips */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Payslips</CardTitle>
-            <Link href="/employee/payslips">
-              <Button variant="ghost" size="sm" className="text-primary">
-                View All <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentPayslips.map((payslip) => (
-                <div key={payslip.month} className="flex items-center justify-between pb-4 last:pb-0 border-b last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{payslip.month}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Paid on {payslip.date}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold">{payslip.netPay}</p>
-                    <Link
-                      href={`/employee/payslips/${payslip.month.replace(' ', '-').toLowerCase()}`}
-                      className="text-xs text-primary hover:underline mt-1 block"
-                    >
-                      Download
-                    </Link>
-                  </div>
-                </div>
-              ))}
+              <button className="w-full mt-6 py-2 text-blue-600 font-medium hover:bg-gray-50 rounded">
+                View all requests
+              </button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link href="/employee/attendance/clockin">
-              <Button
-                variant="outline"
-                className="w-full h-auto flex flex-col items-center justify-center py-4 gap-2"
-              >
-                <Clock className="h-5 w-5" />
-                <span className="text-xs font-medium">Clock In</span>
-              </Button>
-            </Link>
-
-            <Link href="/employee/leave/apply">
-              <Button
-                variant="outline"
-                className="w-full h-auto flex flex-col items-center justify-center py-4 gap-2"
-              >
-                <Calendar className="h-5 w-5" />
-                <span className="text-xs font-medium">Apply Leave</span>
-              </Button>
-            </Link>
-
-            <Link href="/employee/expenses/submit">
-              <Button
-                variant="outline"
-                className="w-full h-auto flex flex-col items-center justify-center py-4 gap-2"
-              >
-                <CreditCard className="h-5 w-5" />
-                <span className="text-xs font-medium">Submit Expense</span>
-              </Button>
-            </Link>
-
-            <Link href="/employee/profile">
-              <Button
-                variant="outline"
-                className="w-full h-auto flex flex-col items-center justify-center py-4 gap-2"
-              >
-                <User className="h-5 w-5" />
-                <span className="text-xs font-medium">My Profile</span>
-              </Button>
-            </Link>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Updates */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Updates</h3>
+                <Link href="#" className="text-blue-600 text-sm font-medium flex items-center gap-1">
+                  View all <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {updates.map((update) => (
+                  <div key={update.id} className="flex gap-3">
+                    <Bell className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                    <p className="text-sm text-gray-700">{update.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tax Declaration */}
+            <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Tax declaration</h3>
+              <p className="text-sm text-gray-700 mb-4">
+                Last date for tax declaration is pending, last date to submit is 26/Feb/23.
+              </p>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                Upload declarations
+              </Button>
+            </div>
+
+            {/* Health Insurance */}
+            <div className="bg-pink-50 rounded-lg border border-pink-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Health insurance</h3>
+              <p className="text-sm text-gray-700 mb-4">
+                Hi {userName}, you're eligible for health insurance.
+              </p>
+              <Button variant="outline" className="w-full">
+                View and update details
+              </Button>
+            </div>
+
+            {/* Welcome Kit */}
+            <div className="bg-cyan-50 rounded-lg border border-cyan-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Welcome Kit</h3>
+              <p className="text-sm text-gray-700 mb-4">
+                Hi {userName}, you're eligible for our welcome kit.
+              </p>
+              <Button variant="outline" className="w-full">
+                View and update details
+              </Button>
+            </div>
+
+            {/* Upcoming Holidays */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Upcoming holidays</h3>
+              <div className="space-y-4">
+                {holidays.map((holiday, idx) => (
+                  <div key={idx} className="pb-4 last:pb-0 border-b last:border-0">
+                    <p className="text-sm text-gray-600">{holiday.date}</p>
+                    <p className="text-sm font-medium text-gray-900">{holiday.name}</p>
+                  </div>
+                ))}
+              </div>
+              <button className="w-full mt-4 py-2 text-blue-600 text-sm font-medium hover:bg-gray-50 rounded">
+                View holiday calendar <ChevronRight className="w-4 h-4 inline" />
+              </button>
+            </div>
+
+            {/* Help & Support */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Help & Support</h3>
+              <div className="space-y-3">
+                <button className="w-full flex items-center gap-3 p-3 rounded hover:bg-gray-50">
+                  <HelpCircle className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-700">Knowledge repository</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                </button>
+                <button className="w-full flex items-center gap-3 p-3 rounded hover:bg-gray-50">
+                  <MessageCircle className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-700">Live chat</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                For any further assistance, please reach out to us via support@rapid.one
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
