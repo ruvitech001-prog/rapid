@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import Link from 'next/link'
+import { Download, ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,10 +17,6 @@ export default function InvoicesPage() {
   ]
 
   const filteredInvoices = invoices.filter(inv => statusFilter === 'all' || inv.status === statusFilter)
-
-  const handleDownload = (invoiceId: string) => {
-    alert(`Downloading ${invoiceId}...`)
-  }
 
   return (
     <div className="space-y-6">
@@ -92,8 +89,15 @@ export default function InvoicesPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredInvoices.map(invoice => (
-                  <tr key={invoice.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap font-medium">{invoice.id}</td>
+                  <tr key={invoice.id} className="hover:bg-muted/20 transition-colors cursor-pointer">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium">
+                      <Link
+                        href={`/contractor/invoices/${invoice.id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {invoice.id}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(invoice.date).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{invoice.hours} hrs</td>
                     <td className="px-6 py-4 whitespace-nowrap font-semibold">₹{invoice.amount.toLocaleString()}</td>
@@ -108,15 +112,12 @@ export default function InvoicesPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(invoice.id)}
-                        className="text-primary hover:text-primary"
+                      <Link
+                        href={`/contractor/invoices/${invoice.id}`}
+                        className="inline-flex items-center gap-1 text-primary hover:text-primary hover:underline"
                       >
-                        <Download className="h-4 w-4 mr-1" />
-                        Download
-                      </Button>
+                        View <ChevronRight className="h-4 w-4" />
+                      </Link>
                     </td>
                   </tr>
                 ))}
