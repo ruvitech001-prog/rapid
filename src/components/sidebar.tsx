@@ -125,7 +125,7 @@ const CONTRACTOR_SECTIONS: NavSection[] = [
   {
     title: 'WORK',
     items: [
-      { label: 'Timesheets', href: '/contractor/timesheets/submit', icon: <Calendar className="h-4 w-4" /> },
+      { label: 'Timesheet', href: '/contractor/timesheet', icon: <Calendar className="h-4 w-4" /> },
       { label: 'Invoices', href: '/contractor/invoices', icon: <DollarSign className="h-4 w-4" /> },
     ],
   },
