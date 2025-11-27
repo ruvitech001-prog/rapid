@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Building2, User, Briefcase } from 'lucide-react';
+import { Building2, User, Briefcase, BarChart3 } from 'lucide-react';
 
 type UserType = 'employer' | 'employee' | 'contractor';
 
@@ -22,7 +22,16 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center p-4 relative">
+      {/* Project Status Button - Bottom Left */}
+      <Link
+        href="/project-status"
+        className="fixed bottom-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-white hover:shadow-md transition-all z-50"
+      >
+        <BarChart3 className="w-4 h-4 text-primary" />
+        Project Status
+      </Link>
+
       <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-8">
         {/* Header */}
         <div className="text-center mb-8">

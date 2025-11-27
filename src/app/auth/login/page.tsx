@@ -24,6 +24,7 @@ export default function LoginPage() {
     employer: '/employer/dashboard',
     employee: '/employee/dashboard',
     contractor: '/contractor/dashboard',
+    super_admin: '/super-admin/dashboard',
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

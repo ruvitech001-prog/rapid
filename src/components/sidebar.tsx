@@ -45,7 +45,7 @@ interface NavSection {
 }
 
 interface SidebarProps {
-  role: 'employer' | 'employee' | 'contractor'
+  role: 'employer' | 'employee' | 'contractor' | 'super_admin'
   userEmail?: string
   userName?: string
   userInitials?: string
@@ -142,6 +142,40 @@ const CONTRACTOR_SECTIONS: NavSection[] = [
   },
 ]
 
+const SUPER_ADMIN_SECTIONS: NavSection[] = [
+  {
+    items: [
+      { label: 'Dashboard', href: '/super-admin/dashboard', icon: <Home className="h-4 w-4" /> },
+    ],
+  },
+  {
+    title: 'ADMIN',
+    items: [
+      { label: 'Clients', href: '/super-admin/clients', icon: <Building2 className="h-4 w-4" /> },
+      { label: 'Access control', href: '/super-admin/access-control', icon: <Settings className="h-4 w-4" /> },
+      { label: 'Audit logs', href: '/super-admin/audit-logs', icon: <FileText className="h-4 w-4" /> },
+      { label: 'Services', href: '/super-admin/services', icon: <FileText className="h-4 w-4" /> },
+      { label: 'Requests', href: '/super-admin/requests', icon: <Mail className="h-4 w-4" /> },
+    ],
+  },
+  {
+    title: 'FINANCE',
+    items: [
+      { label: 'Invoices', href: '/super-admin/invoices', icon: <DollarSign className="h-4 w-4" /> },
+      { label: 'Payroll', href: '/super-admin/payroll', icon: <DollarSign className="h-4 w-4" /> },
+    ],
+  },
+  {
+    title: 'ACCOUNT',
+    items: [
+      { label: 'Company', href: '/super-admin/company', icon: <Building2 className="h-4 w-4" /> },
+      { label: 'Leaves', href: '/super-admin/leaves', icon: <Calendar className="h-4 w-4" /> },
+      { label: 'Profile', href: '/super-admin/profile', icon: <Users className="h-4 w-4" /> },
+      { label: 'Help & Support', href: '/super-admin/help', icon: <HelpCircle className="h-4 w-4" /> },
+    ],
+  },
+]
+
 export function Sidebar({
   role = 'employer',
   userEmail = 'user@example.com',
@@ -156,7 +190,9 @@ export function Sidebar({
       ? EMPLOYER_SECTIONS
       : role === 'employee'
         ? EMPLOYEE_SECTIONS
-        : CONTRACTOR_SECTIONS
+        : role === 'contractor'
+          ? CONTRACTOR_SECTIONS
+          : SUPER_ADMIN_SECTIONS
 
   const isActive = (href: string) => {
     if (pathname === href) return true
@@ -186,7 +222,7 @@ export function Sidebar({
         {/* Logo Section */}
         <div className="border-b border-border p-6 space-y-4">
           <h1 className="text-2xl font-bold text-primary">rapid</h1>
-          {role === 'employer' && (
+          {(role === 'employer' || role === 'super_admin') && (
             <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-lg">☀️</span>
