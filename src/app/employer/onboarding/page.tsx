@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Users, FileText, CreditCard, Settings, ChevronRight, HelpCircle, MessageSquare } from 'lucide-react';
+import { Building2, Users, FileText, Settings, ChevronRight, HelpCircle, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OnboardingProgress, OnboardingChecklist, OnboardingStep } from '@/components/onboarding';

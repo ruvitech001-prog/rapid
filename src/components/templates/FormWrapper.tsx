@@ -21,8 +21,8 @@ export const FormWrapper: React.FC<FormWrapperProps> = ({
   description,
   children,
   onSubmit,
-  submitLabel = "Submit",
-  isLoading = false,
+  submitLabel: _submitLabel = "Submit",
+  isLoading: _isLoading = false,
   actionButtons,
 }) => {
   return (

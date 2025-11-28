@@ -35,7 +35,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Edit2, Trash2, Lock } from 'lucide-react'
+import { Edit2, Trash2, Lock, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 /**
@@ -197,7 +197,7 @@ export default function AccessControlPage() {
       // Store in mock data
       defaultRoles.forEach(role => addMockData('roles', role))
     }
-  }, [company.id])
+  }, [company?.id])
 
   // ============================================================================
   // HANDLERS
@@ -254,7 +254,7 @@ export default function AccessControlPage() {
         // Create new role
         const newRole: Role = {
           id: generateId(),
-          company_id: company.id,
+          company_id: company?.id || '',
           ...data,
           user_count: 0,
           created_at: today,
@@ -300,10 +300,12 @@ export default function AccessControlPage() {
           { label: 'Home', href: '/employer/dashboard' },
           { label: 'Access Control' },
         ]}
-        action={{
-          label: 'Create Role',
-          onClick: handleCreate,
-        }}
+        actions={
+          <Button onClick={handleCreate}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Role
+          </Button>
+        }
       />
 
       {/* Roles Table */}

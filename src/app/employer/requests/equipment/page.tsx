@@ -23,7 +23,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, FormWrapper } from '@/components/templates'
 import { getCurrentMockCompany, addMockData, generateId } from '@/lib/mock-data'
-import { Button } from '@/components/ui/button'
+import { Button as _Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Paperclip, Plus, X } from 'lucide-react'
+import { Paperclip, Plus as _Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 /**
@@ -152,7 +152,7 @@ export default function EquipmentRequestPage() {
   })
 
   // Watch category and urgency for conditional rendering
-  const selectedCategory = watch('category')
+  const _selectedCategory = watch('category')
   const selectedUrgency = watch('urgency')
 
   // ============================================================================
@@ -172,7 +172,7 @@ export default function EquipmentRequestPage() {
       // Create new equipment request
       const newRequest: EquipmentRequest = {
         id: generateId(),
-        company_id: company.id,
+        company_id: company?.id || '',
         requester_id: generateId(), // In real app, use logged-in user ID
         request_type: 'equipment',
         title: `Equipment Request - ${data.item_name}`,
@@ -190,8 +190,8 @@ export default function EquipmentRequestPage() {
         status: 'pending',
         assigned_to: null,
         notes: null,
-        created_at: new Date().toISOString().split('T')[0],
-        updated_at: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString().split('T')[0] || '',
+        updated_at: new Date().toISOString().split('T')[0] || '',
         attachments: attachments.length > 0 ? attachments : undefined,
       }
 

@@ -20,7 +20,7 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, FormWrapper } from '@/components/templates'
-import { getCurrentMockCompany, addMockData, generateId } from '@/lib/mock-data'
+import { getCurrentMockCompany, generateId } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
-import { Plus, Trash2, AlertCircle, DollarSign } from 'lucide-react'
+import { Plus, Trash2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 /**
@@ -183,9 +183,9 @@ export default function SalaryStructureSettingsPage() {
       const today = new Date().toISOString().split('T')[0] || new Date().toISOString()
 
       // Create salary structure
-      const newStructure: SalaryStructure = {
+      const _newStructure: SalaryStructure = {
         id: generateId(),
-        company_id: company.id,
+        company_id: company?.id || '',
         salary_structure_name: data.salary_structure_name,
         description: data.description,
         effective_from: data.effective_from,

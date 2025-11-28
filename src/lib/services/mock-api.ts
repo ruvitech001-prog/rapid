@@ -47,7 +47,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.employees.filter((e) => e.company_id === company.id),
+        data: mockDatabase.employees.filter((e) => e.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -67,7 +67,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.contractors.filter((c) => c.company_id === company.id),
+        data: mockDatabase.contractors.filter((c) => c.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -79,7 +79,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.leaveRequests.filter((lr) => lr.company_id === company.id),
+        data: mockDatabase.leaveRequests.filter((lr) => lr.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -91,7 +91,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.expenseRequests.filter((er) => er.company_id === company.id),
+        data: mockDatabase.expenseRequests.filter((er) => er.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -103,7 +103,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.payrollRuns.filter((pr) => pr.company_id === company.id),
+        data: mockDatabase.payrollRuns.filter((pr) => pr.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -114,7 +114,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.payroll || [], // Placeholder for payslips
+        data: [], // Placeholder for payslips
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -126,7 +126,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.specialRequests.filter((sr) => sr.company_id === company.id),
+        data: mockDatabase.specialRequests.filter((sr) => sr.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -138,7 +138,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.invoices.filter((i) => i.company_id === company.id),
+        data: mockDatabase.invoices.filter((i) => i.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -150,7 +150,7 @@ const mockEndpoints: Record<
     if (method === "GET") {
       return {
         success: true,
-        data: mockDatabase.attendance.filter((a) => a.company_id === company.id),
+        data: mockDatabase.attendance.filter((a) => a.company_id === company?.id),
         meta: { timestamp: new Date().toISOString(), requestId: generateRequestId() },
       }
     }
@@ -214,14 +214,14 @@ export async function fetchMockApi<T = any>(
         return response
       } catch (error) {
         console.error("[Mock API] Error:", error)
-        return errorResponse("Internal Server Error")
+        return errorResponse("Internal Server Error") as MockApiResponse<T>
       }
     }
   }
 
   // Endpoint not found in mock data
   console.warn("[Mock API] Endpoint not registered:", endpoint)
-  return errorResponse("Not Found")
+  return errorResponse("Not Found") as MockApiResponse<T>
 }
 
 /**

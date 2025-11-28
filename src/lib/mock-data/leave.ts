@@ -50,7 +50,7 @@ export function generateMockLeaveRequests(
       start_date: formatDate(startDate),
       end_date: formatDate(endDate),
       days_count: daysCount,
-      reason: ["Vacation", "Medical", "Personal", "Emergency"][Math.floor(Math.random() * 4)],
+      reason: ["Vacation", "Medical", "Personal", "Emergency"][Math.floor(Math.random() * 4)] || "Vacation",
       status,
       approver_id: status === "pending" ? null : approver_id || generateId(),
       approved_at: status === "pending" ? null : formatDate(new Date()),

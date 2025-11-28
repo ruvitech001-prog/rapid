@@ -123,7 +123,7 @@ export default function HelpPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {helpResources.map((resource) => {
-              const Icon = resource.icon
+              const _Icon = resource.icon
               return (
                 <div key={resource.title} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                   <div className="flex items-start justify-between">

@@ -4,19 +4,17 @@ import { useState } from 'react'
 import {
   Search,
   Clock,
-  CheckCircle,
-  AlertCircle,
   ChevronDown,
   Plus,
   Edit2,
   Calendar,
   ChevronUp,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent as _CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
+import { Input as _Input } from '@/components/ui/input'
 import { AddTimeModal } from '@/components/timesheet'
 import { RejectionReasonModal } from '@/components/timesheet'
 
@@ -121,7 +119,7 @@ export default function TimesheetPage() {
       if (!acc[entry.project]) {
         acc[entry.project] = []
       }
-      acc[entry.project].push(entry)
+      acc[entry.project]!.push(entry)
       return acc
     },
     {} as Record<string, typeof mockTimesheetEntries>,

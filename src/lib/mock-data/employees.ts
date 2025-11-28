@@ -8,6 +8,7 @@ import {
   LAST_NAMES,
   DESIGNATIONS,
   DEPARTMENTS,
+  INDIAN_CITIES,
   generateRandomEmail,
   generateRandomPhone,
   generatePAN,
@@ -16,7 +17,6 @@ import {
   generatePFAccount,
   formatDate,
   subtractDays,
-  addDays,
   getRandomElement,
   getRandomNumber,
 } from "./utils"
@@ -26,6 +26,7 @@ export interface MockEmployee {
   user_id: string
   company_id: string
   team_id: string
+  team_name: string
   employee_code: string
   first_name: string
   last_name: string
@@ -37,16 +38,23 @@ export interface MockEmployee {
   joining_date: string
   salary_structure_id: string
   status: "active" | "probation" | "resigned" | "terminated" | "on_leave"
+  badge_status: "none" | "ex_employee" | "manager" | "on_notice_period"
+  reporting_manager_id: string | null
+  reporting_manager_name: string | null
   personal_details: {
     date_of_birth: string
     gender: "male" | "female" | "other"
     marital_status: "single" | "married" | "divorced" | "widowed"
     pan: string
     aadhaar: string
-    address: string
-    city: string
-    state: string
-    postal_code: string
+    address: {
+      country: string
+      address_line_1: string
+      address_line_2: string
+      pin: string
+      city: string
+      state: string
+    }
   }
   statutory_details: {
     uan: string
@@ -63,21 +71,34 @@ export function generateMockEmployees(count: number = 25, company_id: string = "
   const employees: MockEmployee[] = []
   const designations = [...DESIGNATIONS]
   const departments = [...DEPARTMENTS]
+  const teams = ["Design", "Engineering", "Product", "Marketing", "Sales", "Operations", "HR", "Finance"]
+  const managerNames = ["Ronak Singhavi", "Priya Sharma", "Amit Kumar", "Sneha Gupta", "Vikram Singh"]
 
   for (let i = 0; i < count; i++) {
     const firstName = getRandomElement(FIRST_NAMES)
     const lastName = getRandomElement(LAST_NAMES)
     const designation = getRandomElement(designations)
     const department = getRandomElement(departments)
+    const teamName = getRandomElement(teams)
 
     const joiningDate = subtractDays(new Date(), getRandomNumber(30, 730))
+
+    // Assign badge statuses with realistic distribution
+    let badgeStatus: "none" | "ex_employee" | "manager" | "on_notice_period" = "none"
+    if (i === 1) badgeStatus = "ex_employee" // Second employee is ex-employee
+    else if (i === 2) badgeStatus = "on_notice_period" // Third is on notice
+    else if (i === 3) badgeStatus = "manager" // Fourth is manager
+    else if (i % 8 === 0) badgeStatus = "manager" // Every 8th is a manager
+    else if (i % 12 === 0) badgeStatus = "ex_employee"
+    else if (i % 15 === 0) badgeStatus = "on_notice_period"
 
     employees.push({
       id: generateId(),
       user_id: generateId(),
       company_id: company_id || generateId(),
       team_id: generateId(),
-      employee_code: `EMP${String(i + 1).padStart(4, "0")}`,
+      team_name: teamName,
+      employee_code: `${234 + i}`,
       first_name: firstName,
       last_name: lastName,
       email: generateRandomEmail(firstName, lastName),
@@ -88,6 +109,9 @@ export function generateMockEmployees(count: number = 25, company_id: string = "
       joining_date: formatDate(joiningDate),
       salary_structure_id: generateId(),
       status: getRandomElement(["active", "probation", "active"] as const), // More active employees
+      badge_status: badgeStatus,
+      reporting_manager_id: i === 0 ? null : generateId(),
+      reporting_manager_name: i === 0 ? null : getRandomElement(managerNames),
       personal_details: {
         date_of_birth: formatDate(
           subtractDays(new Date(), getRandomNumber(20000, 17520)), // 20-48 years old
@@ -101,10 +125,22 @@ export function generateMockEmployees(count: number = 25, company_id: string = "
         ] as const),
         pan: generatePAN(),
         aadhaar: generateAadhaar(),
-        address: `${getRandomNumber(1, 999)} Street Name`,
-        city: "Bangalore",
-        state: "Karnataka",
-        postal_code: `560${getRandomNumber(1, 99)}`,
+        address: (() => {
+          const statesWithCities = Object.keys(INDIAN_CITIES) as Array<keyof typeof INDIAN_CITIES>
+          const state = getRandomElement(statesWithCities)
+          const cities = INDIAN_CITIES[state]
+          const city = getRandomElement(cities)
+          const streetNames = ["MG Road", "Park Street", "Gandhi Nagar", "Sector", "Ashok Vihar", "Rajiv Colony", "Nehru Place", "Green Park"]
+          const localities = ["Phase 1", "Phase 2", "Block A", "Block B", "Near Metro Station", "Near Hospital", "Main Road"]
+          return {
+            country: "India",
+            address_line_1: `${getRandomNumber(1, 999)}, ${getRandomElement(streetNames)}`,
+            address_line_2: `${getRandomElement(localities)}, ${city}`,
+            pin: `${getRandomNumber(100000, 999999)}`,
+            city,
+            state,
+          }
+        })(),
       },
       statutory_details: {
         uan: generateUAN(),

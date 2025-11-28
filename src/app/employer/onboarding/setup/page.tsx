@@ -61,7 +61,10 @@ function SetupContent() {
   const handleNext = () => {
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
-      setCurrentStep(stepOrder[currentIndex + 1]);
+      const nextStep = stepOrder[currentIndex + 1];
+      if (nextStep) {
+        setCurrentStep(nextStep);
+      }
     } else {
       router.push('/employer/onboarding/complete');
     }

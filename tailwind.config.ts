@@ -7,6 +7,7 @@ const config = {
     './src/components/**/*.{ts,tsx}',
     './src/app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
+    './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
   ],
   prefix: '',
   theme: {
@@ -71,6 +72,36 @@ const config = {
         'chart-sky': '#7DD3FC',
         'chart-mint': '#6EE7B7',
         'chart-pink': '#F472B6',
+        // Tremor colors
+        tremor: {
+          brand: {
+            faint: '#eff6ff',
+            muted: '#bfdbfe',
+            subtle: '#60a5fa',
+            DEFAULT: '#3b82f6',
+            emphasis: '#1d4ed8',
+            inverted: '#ffffff',
+          },
+          background: {
+            muted: '#f9fafb',
+            subtle: '#f3f4f6',
+            DEFAULT: '#ffffff',
+            emphasis: '#374151',
+          },
+          border: {
+            DEFAULT: '#e5e7eb',
+          },
+          ring: {
+            DEFAULT: '#e5e7eb',
+          },
+          content: {
+            subtle: '#9ca3af',
+            DEFAULT: '#6b7280',
+            emphasis: '#374151',
+            strong: '#111827',
+            inverted: '#ffffff',
+          },
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

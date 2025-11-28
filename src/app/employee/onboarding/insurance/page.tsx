@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, FormWrapper } from '@/components/templates'
-import { Button } from '@/components/ui/button'
+import { Button as _Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/select'
 import {
   Heart,
-  Shield,
   Gift,
   AlertCircle,
   CheckCircle2,
@@ -73,7 +72,7 @@ export default function InsurancePage() {
 
   const selectedSwagItems = watch('swag_items')
 
-  const onSubmit = async (data: InsuranceSwagFormData) => {
+  const onSubmit = async (_data: InsuranceSwagFormData) => {
     try {
       setIsSubmitting(true)
       await new Promise((resolve) => setTimeout(resolve, 500))

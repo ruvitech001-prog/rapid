@@ -97,7 +97,7 @@ export default function InvoiceApprovalPage() {
     const loadInvoices = async () => {
       try {
         setIsLoading(true)
-        const mockInvoices = getMockDataByCompany('invoices', company.id)
+        const mockInvoices = getMockDataByCompany('invoices', company?.id || '')
         setInvoices(mockInvoices || [])
       } catch (error) {
         console.error('Error loading invoices:', error)
@@ -110,7 +110,7 @@ export default function InvoiceApprovalPage() {
     if (company) {
       loadInvoices()
     }
-  }, [company.id])
+  }, [company?.id])
 
   // ============================================================================
   // CALCULATIONS
@@ -393,7 +393,7 @@ export default function InvoiceApprovalPage() {
                       <div className="flex items-center gap-2">
                         {formatDate(invoice.due_date)}
                         {isOverdue(invoice.due_date) && invoice.status !== 'approved' && (
-                          <AlertCircle className="w-4 h-4 text-red-600" title="Overdue" />
+                          <AlertCircle className="w-4 h-4 text-red-600" aria-label="Overdue" />
                         )}
                       </div>
                     </TableCell>

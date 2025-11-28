@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Download, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Button as _Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 export default function InvoicesPage() {

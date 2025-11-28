@@ -1,22 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, FormWrapper } from '@/components/templates'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Input as _Input } from '@/components/ui/input'
+import { Label as _Label } from '@/components/ui/label'
+import { Textarea as _Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select as _Select,
+  SelectContent as _SelectContent,
+  SelectItem as _SelectItem,
+  SelectTrigger as _SelectTrigger,
+  SelectValue as _SelectValue,
 } from '@/components/ui/select'
 import {
   FileText,
@@ -91,7 +91,7 @@ export default function DocumentsPage() {
 
   const {
     handleSubmit,
-    control,
+    control: _control,
     formState: { errors },
     reset,
   } = useForm<DocumentsFormData>({

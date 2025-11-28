@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, FileText, MoreVertical, Eye, Download, Users, Briefcase } from 'lucide-react';
+import { Plus, Search, FileText, Eye, Download, Users, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

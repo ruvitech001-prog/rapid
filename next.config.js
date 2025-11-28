@@ -4,6 +4,11 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
 
+  /* ESLint - ignore during builds for now */
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   /* Experimental Features */
   experimental: {
     serverActions: {

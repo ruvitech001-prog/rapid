@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Download, Edit2, AlertCircle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -93,7 +93,7 @@ const mockInvoiceData: InvoiceData = {
   otherTerms: ['-E & OE', '-Payment due in 7 days'],
 }
 
-export default function InvoiceDetailPage({ params }: { params: { id: string } }) {
+export default function InvoiceDetailPage({ params: _params }: { params: { id: string } }) {
   const router = useRouter()
   const [invoice] = useState<InvoiceData>(mockInvoiceData)
 

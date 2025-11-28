@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, FormWrapper } from '@/components/templates'
-import { Button } from '@/components/ui/button'
+import { Button as _Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -172,7 +172,7 @@ export default function EKYCPage() {
     }
   }
 
-  const onSubmit = async (data: EKYCFormData) => {
+  const onSubmit = async (_data: EKYCFormData) => {
     try {
       if (!capturedImageFile || !capturedFaceFile) {
         toast.error('Please complete document and face capture')

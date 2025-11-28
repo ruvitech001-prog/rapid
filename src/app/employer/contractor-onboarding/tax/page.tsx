@@ -25,7 +25,7 @@ import { getCurrentMockCompany, addMockData, generateId } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Textarea as _Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
-import { CheckCircle2, Circle, AlertCircle, FileText } from 'lucide-react'
+import { CheckCircle2, AlertCircle, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 /**
@@ -236,7 +236,7 @@ export default function ContractorOnboardingTaxPage() {
   /**
    * Toggle section expansion
    */
-  const toggleSection = (section: keyof typeof expandedSections) => {
+  const _toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections({
       ...expandedSections,
       [section]: !expandedSections[section],

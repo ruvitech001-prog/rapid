@@ -1,9 +1,9 @@
 'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Button as _Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 export default function LeavesPage() {
   const leaves = [

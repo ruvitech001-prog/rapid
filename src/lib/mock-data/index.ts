@@ -17,20 +17,28 @@ import { generateMockAttendance } from "./attendance"
 import { generateMockRoles } from "./roles"
 import { generateMockPolicies } from "./policies"
 
+// Initialize company first to get a consistent ID
+const initialCompanyArray = generateMockCompanies(1)
+const initialCompany = initialCompanyArray[0]!
+const initialEmployees = generateMockEmployees(25, initialCompany.id)
+const initialContractors = generateMockContractors(8, initialCompany.id)
+const employeeIds = initialEmployees.map(e => e.id)
+const contractorIds = initialContractors.map(c => c.id)
+
 // Mock database in-memory storage
 export const mockDatabase = {
-  companies: generateMockCompanies(1),
-  employees: generateMockEmployees(25),
-  contractors: generateMockContractors(8),
-  leaveRequests: generateMockLeaveRequests(15),
-  expenseRequests: generateMockExpenseRequests(10),
-  payrollRuns: generateMockPayrollRuns(12),
-  specialRequests: generateMockSpecialRequests(8),
-  taxDeclarations: generateMockTaxDeclarations(15),
-  invoices: generateMockInvoices(12),
-  attendance: generateMockAttendance(25, 30),
-  roles: generateMockRoles(generateMockCompanies(1)[0].id),
-  policies: generateMockPolicies(generateMockCompanies(1)[0].id),
+  companies: [initialCompany],
+  employees: initialEmployees,
+  contractors: initialContractors,
+  leaveRequests: generateMockLeaveRequests(15, initialCompany.id, employeeIds),
+  expenseRequests: generateMockExpenseRequests(10, initialCompany.id, employeeIds),
+  payrollRuns: generateMockPayrollRuns(12, initialCompany.id),
+  specialRequests: generateMockSpecialRequests(15, initialCompany.id, employeeIds),
+  taxDeclarations: generateMockTaxDeclarations(15, employeeIds),
+  invoices: generateMockInvoices(12, initialCompany.id, contractorIds),
+  attendance: generateMockAttendance(25, 30, initialCompany.id, employeeIds),
+  roles: generateMockRoles(initialCompany.id),
+  policies: generateMockPolicies(initialCompany.id),
 }
 
 // Initialize mock data on app startup
@@ -102,18 +110,26 @@ export function deleteMockData(key: keyof typeof mockDatabase, id: string): bool
 
 // Reset mock data (useful for testing)
 export function resetMockData() {
+  const companyArray = generateMockCompanies(1)
+  const company = companyArray[0]!
+  const employees = generateMockEmployees(25, company.id)
+  const contractors = generateMockContractors(8, company.id)
+  const empIds = employees.map(e => e.id)
+  const contractIds = contractors.map(c => c.id)
+
   Object.assign(mockDatabase, {
-    companies: generateMockCompanies(1),
-    employees: generateMockEmployees(25),
-    contractors: generateMockContractors(8),
-    leaveRequests: generateMockLeaveRequests(15),
-    expenseRequests: generateMockExpenseRequests(10),
-    payrollRuns: generateMockPayrollRuns(12),
-    specialRequests: generateMockSpecialRequests(8),
-    taxDeclarations: generateMockTaxDeclarations(15),
-    invoices: generateMockInvoices(12),
-    attendance: generateMockAttendance(25, 30),
-    roles: generateMockRoles(generateMockCompanies(1)[0].id),
+    companies: [company],
+    employees: employees,
+    contractors: contractors,
+    leaveRequests: generateMockLeaveRequests(15, company.id, empIds),
+    expenseRequests: generateMockExpenseRequests(10, company.id, empIds),
+    payrollRuns: generateMockPayrollRuns(12, company.id),
+    specialRequests: generateMockSpecialRequests(15, company.id, empIds),
+    taxDeclarations: generateMockTaxDeclarations(15, empIds),
+    invoices: generateMockInvoices(12, company.id, contractIds),
+    attendance: generateMockAttendance(25, 30, company.id, empIds),
+    roles: generateMockRoles(company.id),
+    policies: generateMockPolicies(company.id),
   })
 }
 

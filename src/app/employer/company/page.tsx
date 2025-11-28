@@ -52,7 +52,7 @@ export default function CompanyPage() {
   };
 
   const inputClass = "w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";
-  const disabledClass = "w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-[#F4F7FA] text-sm cursor-not-allowed";
+  const _disabledClass = "w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-[#F4F7FA] text-sm cursor-not-allowed";
 
   return (
     <div className="space-y-6">

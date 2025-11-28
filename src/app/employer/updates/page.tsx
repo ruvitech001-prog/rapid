@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Bell, Trash2, Clock, CheckCircle, DollarSign, Users, Calendar, Shield, AlertCircle, Settings } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface Update {

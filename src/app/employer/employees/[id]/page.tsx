@@ -1,344 +1,713 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { ArrowLeft, Edit, User, Briefcase, Building, CreditCard, FileText, MapPin, Calendar, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import {
+  ArrowLeft,
+  Edit,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Eye,
+  Download,
+  MapPin,
+  Briefcase,
+  User,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { mockDatabase, type MockEmployee } from '@/lib/mock-data'
 
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  designation: string;
-  department: string;
-  employeeId: string;
-  joinDate: string;
-  status: string;
-  salary: number;
-  bankName: string;
-  accountNumber: string;
-  ifscCode: string;
-  panNumber: string;
-  aadhaarNumber: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
+// Helper function to get initials
+function getInitials(firstName: string, lastName: string): string {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
-interface LeaveRecord {
-  id: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-  days: number;
-  status: string;
+// Helper function to calculate experience
+function calculateExperience(joiningDate: string): string {
+  const joining = new Date(joiningDate)
+  const now = new Date()
+  const diffMs = now.getTime() - joining.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const years = Math.floor(diffDays / 365)
+  const months = Math.floor((diffDays % 365) / 30)
+
+  if (years === 0) {
+    return `${months} months`
+  }
+  return `${years} yrs ${months} months`
 }
 
-interface AttendanceRecord {
-  date: string;
-  checkIn: string;
-  checkOut: string;
-  hours: string;
-  status: string;
+// Section component for collapsible sections
+function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  return (
+    <div className="border border-[#DEE4EB] rounded-2xl overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-6 py-4 bg-white hover:bg-[#F4F7FA] transition-colors"
+      >
+        <span className="text-base font-semibold text-[#353B41]">{title}</span>
+        {isOpen ? (
+          <ChevronUp className="h-5 w-5 text-[#8593A3]" />
+        ) : (
+          <ChevronDown className="h-5 w-5 text-[#8593A3]" />
+        )}
+      </button>
+      {isOpen && <div className="px-6 pb-6 bg-white">{children}</div>}
+    </div>
+  )
+}
+
+// Info field component
+function InfoField({ label, value }: { label: string; value: string | React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-[#8593A3] uppercase tracking-wider">{label}</p>
+      {typeof value === 'string' ? (
+        <p className="text-sm font-medium text-[#353B41]">{value || '-'}</p>
+      ) : (
+        value
+      )}
+    </div>
+  )
+}
+
+// Document card component
+function DocumentCard({
+  name,
+  uploadedDate,
+  onView,
+  onDownload,
+}: {
+  name: string
+  uploadedDate: string
+  onView?: () => void
+  onDownload?: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#DEE4EB]">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
+          <FileText className="h-5 w-5 text-[#EF4444]" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-[#353B41]">{name}</p>
+          <p className="text-xs text-[#8593A3]">Uploaded on {uploadedDate}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-[#8593A3] hover:text-[#586AF5]"
+          onClick={onView}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-[#8593A3] hover:text-[#586AF5]"
+          onClick={onDownload}
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 export default function EmployeeDetailPage() {
-  const params = useParams();
-  const [employee] = useState<Employee>({
-    id: params.id as string,
-    name: 'John Doe',
-    email: 'john.doe@company.com',
-    phone: '+91 9876543210',
-    designation: 'Senior Software Engineer',
-    department: 'Engineering',
-    employeeId: 'EMP001',
-    joinDate: '2023-01-15',
-    status: 'active',
-    salary: 1200000,
-    bankName: 'HDFC Bank',
-    accountNumber: '1234567890',
-    ifscCode: 'HDFC0001234',
-    panNumber: 'ABCDE1234F',
-    aadhaarNumber: '1234 5678 9012',
-    address: '123 Main Street, Apartment 4B',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    pincode: '560001',
-  });
+  const params = useParams()
+  const employeeId = params.id as string
 
-  const [leaveRecords] = useState<LeaveRecord[]>([
-    { id: '1', type: 'Casual Leave', startDate: '2024-01-10', endDate: '2024-01-12', days: 3, status: 'Approved' },
-    { id: '2', type: 'Sick Leave', startDate: '2024-02-05', endDate: '2024-02-05', days: 1, status: 'Approved' },
-  ]);
+  // Use state to store employee data to avoid hydration mismatch
+  const [employee, setEmployee] = useState<MockEmployee | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const [attendanceRecords] = useState<AttendanceRecord[]>([
-    { date: '2024-03-01', checkIn: '09:15 AM', checkOut: '06:30 PM', hours: '9.25', status: 'Present' },
-    { date: '2024-03-02', checkIn: '09:00 AM', checkOut: '06:00 PM', hours: '9.00', status: 'Present' },
-    { date: '2024-03-03', checkIn: '09:30 AM', checkOut: '06:45 PM', hours: '9.25', status: 'Present' },
-  ]);
+  // Documents tab state
+  const [selectedDocCategory, setSelectedDocCategory] = useState('current_employment')
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'leave' | 'attendance'>('overview');
+  // Load employee data only on client side to avoid hydration mismatch
+  useEffect(() => {
+    const foundEmployee = mockDatabase.employees.find(emp => emp.id === employeeId) || mockDatabase.employees[0]
+    setEmployee(foundEmployee || null)
+    setIsLoading(false)
+  }, [employeeId])
 
-  const tabs = [
-    { id: 'overview' as const, label: 'Overview', icon: User },
-    { id: 'leave' as const, label: 'Leave History', icon: Calendar },
-    { id: 'attendance' as const, label: 'Attendance', icon: Clock },
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-pulse flex items-center gap-4">
+          <div className="w-16 h-16 bg-[#F4F7FA] rounded-full"></div>
+          <div className="space-y-2">
+            <div className="h-6 w-48 bg-[#F4F7FA] rounded"></div>
+            <div className="h-4 w-32 bg-[#F4F7FA] rounded"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!employee) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-[#8593A3]">Employee not found</p>
+      </div>
+    )
+  }
+
+  const fullName = `${employee.first_name} ${employee.last_name}`
+  const initials = getInitials(employee.first_name, employee.last_name)
+  const experience = calculateExperience(employee.joining_date)
+  const location = `${employee.personal_details.address.city}, ${employee.personal_details.address.state}`
+
+  // Mock family data
+  const familyMembers = [
+    {
+      name: 'Priya Singh',
+      relationship: 'Spouse',
+      dob: '1992-05-15',
+      isNominee: true,
+      isEmergencyContact: true,
+      phone: '+91 9876543210',
+    },
+    {
+      name: 'Raj Singh',
+      relationship: 'Father',
+      dob: '1960-08-20',
+      isNominee: false,
+      isEmergencyContact: false,
+      phone: '+91 9876543211',
+    },
+    {
+      name: 'Sunita Singh',
+      relationship: 'Mother',
+      dob: '1965-03-10',
+      isNominee: false,
+      isEmergencyContact: false,
+      phone: '+91 9876543212',
+    },
+  ]
+
+  // Mock education data
+  const educationHistory = [
+    {
+      type: 'University',
+      level: 'Bachelor of Technology',
+      board: 'Rajasthan Technical University',
+      institute: 'Engineering College, Jaipur',
+      from: '2012-07-01',
+      to: '2016-06-30',
+      percentage: '78%',
+      document: 'degree_certificate.pdf',
+    },
+    {
+      type: 'School',
+      level: '12th Standard',
+      board: 'CBSE',
+      institute: 'Delhi Public School, Jaipur',
+      from: '2010-04-01',
+      to: '2012-03-31',
+      percentage: '85%',
+      document: 'marksheet_12th.pdf',
+    },
+  ]
+
+  // Mock employment history
+  const employmentHistory = [
+    {
+      company: 'TechCorp India',
+      designation: 'Software Developer',
+      from: '2018-06-01',
+      to: '2021-12-31',
+      document: 'experience_letter.pdf',
+    },
+    {
+      company: 'StartupXYZ',
+      designation: 'Junior Developer',
+      from: '2016-07-01',
+      to: '2018-05-31',
+      document: 'relieving_letter.pdf',
+    },
+  ]
+
+  // Mock documents by category
+  const documents: Record<string, { name: string; uploadedDate: string }[]> = {
+    current_employment: [
+      { name: 'Offer Letter.pdf', uploadedDate: '15 Jan 2024' },
+      { name: 'Appointment Letter.pdf', uploadedDate: '20 Jan 2024' },
+      { name: 'NDA Agreement.pdf', uploadedDate: '20 Jan 2024' },
+    ],
+    identity: [
+      { name: 'Aadhaar Card.pdf', uploadedDate: '15 Jan 2024' },
+      { name: 'PAN Card.pdf', uploadedDate: '15 Jan 2024' },
+      { name: 'Passport.pdf', uploadedDate: '16 Jan 2024' },
+    ],
+    tax_declaration: [
+      { name: 'Form 16 (2023-24).pdf', uploadedDate: '01 Jun 2024' },
+      { name: 'Investment Proofs.pdf', uploadedDate: '15 Feb 2024' },
+    ],
+    previous_employment: [
+      { name: 'Experience Letter - TechCorp.pdf', uploadedDate: '15 Jan 2024' },
+      { name: 'Relieving Letter - StartupXYZ.pdf', uploadedDate: '15 Jan 2024' },
+    ],
+    education: [
+      { name: 'Degree Certificate.pdf', uploadedDate: '15 Jan 2024' },
+      { name: '12th Marksheet.pdf', uploadedDate: '15 Jan 2024' },
+    ],
+  }
+
+  // Mock assets
+  const assets = [
+    {
+      device: 'MacBook Pro 14"',
+      id: 'ASSET-001',
+      assignedOn: '20 Jan 2024',
+      assignedBy: 'HR Admin',
+      status: 'Active',
+    },
+    {
+      device: 'Dell Monitor 27"',
+      id: 'ASSET-002',
+      assignedOn: '20 Jan 2024',
+      assignedBy: 'HR Admin',
+      status: 'Active',
+    },
+    {
+      device: 'Logitech MX Keys',
+      id: 'ASSET-003',
+      assignedOn: '21 Jan 2024',
+      assignedBy: 'IT Support',
+      status: 'Active',
+    },
+  ]
+
+  const documentCategories = [
+    { id: 'current_employment', label: 'Current employment' },
+    { id: 'identity', label: 'Identity' },
+    { id: 'tax_declaration', label: 'Tax declaration proofs' },
+    { id: 'previous_employment', label: 'Previous employment' },
+    { id: 'education', label: 'Education' },
+  ]
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-4">
           <Link href="/employer/employees">
-            <Button variant="outline" size="icon" className="border-[#DEE4EB] hover:bg-[#F4F7FA]">
-              <ArrowLeft className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full hover:bg-[#F4F7FA]"
+            >
+              <ArrowLeft className="h-5 w-5 text-[#353B41]" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{employee.name}</h1>
-            <p className="text-[#8593A3] mt-1">{employee.designation} - {employee.department}</p>
+
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="w-16 h-16 rounded-full bg-[#FEE2E2] flex items-center justify-center">
+              <span className="text-xl font-semibold text-[#B91C1C]">{initials}</span>
+            </div>
+
+            {/* Info */}
+            <div>
+              <h1 className="text-2xl font-semibold text-[#353B41]">{fullName}</h1>
+              <p className="text-sm text-[#8593A3] mt-0.5">{employee.designation}</p>
+              <div className="flex items-center gap-4 mt-2 text-sm text-[#8593A3]">
+                <div className="flex items-center gap-1">
+                  <User className="h-4 w-4" />
+                  <span>Reporting to {employee.reporting_manager_name || 'N/A'}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Briefcase className="h-4 w-4" />
+                  <span>{experience}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  <span>{location}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button asChild variant="outline" className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA] gap-2">
-            <Link href={`/employer/employees/${employee.id}/edit`}>
-              <Edit className="h-4 w-4" />
-              Edit Employee
-            </Link>
-          </Button>
-        </div>
+
+        <Button
+          asChild
+          variant="outline"
+          className="border-[#586AF5] text-[#586AF5] hover:bg-[#586AF5]/10"
+        >
+          <Link href={`/employer/employees/${employee.id}/edit`}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Link>
+        </Button>
       </div>
 
       {/* Tabs */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
-        <CardContent className="p-2">
-          <div className="flex gap-2">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    activeTab === tab.id ? 'bg-[#586AF5] text-white' : 'text-[#8593A3] hover:bg-[#F4F7FA]'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
+      <Tabs defaultValue="personal" className="w-full">
+        <TabsList className="w-full justify-start gap-1 bg-white border border-[#DEE4EB] rounded-xl p-1 h-auto">
+          <TabsTrigger
+            value="personal"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-[#586AF5] data-[state=active]:text-white data-[state=inactive]:text-[#8593A3] data-[state=inactive]:hover:bg-[#F4F7FA]"
+          >
+            Personal
+          </TabsTrigger>
+          <TabsTrigger
+            value="bank"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-[#586AF5] data-[state=active]:text-white data-[state=inactive]:text-[#8593A3] data-[state=inactive]:hover:bg-[#F4F7FA]"
+          >
+            Bank
+          </TabsTrigger>
+          <TabsTrigger
+            value="family"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-[#586AF5] data-[state=active]:text-white data-[state=inactive]:text-[#8593A3] data-[state=inactive]:hover:bg-[#F4F7FA]"
+          >
+            Family
+          </TabsTrigger>
+          <TabsTrigger
+            value="education"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-[#586AF5] data-[state=active]:text-white data-[state=inactive]:text-[#8593A3] data-[state=inactive]:hover:bg-[#F4F7FA]"
+          >
+            Education
+          </TabsTrigger>
+          <TabsTrigger
+            value="employment"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-[#586AF5] data-[state=active]:text-white data-[state=inactive]:text-[#8593A3] data-[state=inactive]:hover:bg-[#F4F7FA]"
+          >
+            Employment history
+          </TabsTrigger>
+          <TabsTrigger
+            value="documents"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-[#586AF5] data-[state=active]:text-white data-[state=inactive]:text-[#8593A3] data-[state=inactive]:hover:bg-[#F4F7FA]"
+          >
+            Documents
+          </TabsTrigger>
+          <TabsTrigger
+            value="assets"
+            className="px-4 py-2.5 rounded-lg text-sm font-medium data-[state=active]:bg-[#586AF5] data-[state=active]:text-white data-[state=inactive]:text-[#8593A3] data-[state=inactive]:hover:bg-[#F4F7FA]"
+          >
+            Assets
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Personal Tab */}
+        <TabsContent value="personal" className="mt-6 space-y-6">
+          {/* Basic Details */}
+          <CollapsibleSection title="Basic details">
+            <div className="grid grid-cols-3 gap-6 pt-4">
+              <InfoField
+                label="DATE OF BIRTH"
+                value={new Date(employee.personal_details.date_of_birth).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              />
+              <InfoField
+                label="GENDER"
+                value={employee.personal_details.gender.charAt(0).toUpperCase() + employee.personal_details.gender.slice(1)}
+              />
+              <InfoField
+                label="MARITAL STATUS"
+                value={employee.personal_details.marital_status.charAt(0).toUpperCase() + employee.personal_details.marital_status.slice(1)}
+              />
+            </div>
+          </CollapsibleSection>
+
+          {/* Contact Details */}
+          <CollapsibleSection title="Contact details">
+            <div className="grid grid-cols-2 gap-6 pt-4">
+              <InfoField label="PERSONAL EMAIL" value={employee.email} />
+              <InfoField label="PHONE NUMBER" value={employee.phone} />
+            </div>
+          </CollapsibleSection>
+
+          {/* Identity Proof */}
+          <CollapsibleSection title="Identity proof">
+            <div className="space-y-6 pt-4">
+              <div className="grid grid-cols-2 gap-6">
+                <InfoField label="PAN" value={employee.personal_details.pan} />
+                <InfoField label="AADHAAR CARD" value={employee.personal_details.aadhaar} />
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                <InfoField
+                  label="CURRENT ADDRESS"
+                  value={`${employee.personal_details.address.address_line_1}, ${employee.personal_details.address.address_line_2}, ${employee.personal_details.address.city}, ${employee.personal_details.address.state} - ${employee.personal_details.address.pin}`}
+                />
+                <InfoField
+                  label="PERMANENT ADDRESS"
+                  value={`${employee.personal_details.address.address_line_1}, ${employee.personal_details.address.address_line_2}, ${employee.personal_details.address.city}, ${employee.personal_details.address.state} - ${employee.personal_details.address.pin}`}
+                />
+              </div>
+            </div>
+          </CollapsibleSection>
+        </TabsContent>
+
+        {/* Bank Tab */}
+        <TabsContent value="bank" className="mt-6 space-y-6">
+          <CollapsibleSection title="Bank details">
+            <div className="grid grid-cols-2 gap-6 pt-4">
+              <InfoField label="ACCOUNT NUMBER" value={employee.statutory_details.bank_account} />
+              <InfoField label="BANK NAME" value={employee.statutory_details.bank_name} />
+              <InfoField label="IFSC CODE" value={employee.statutory_details.ifsc_code} />
+              <InfoField label="BANK BRANCH" value="Main Branch" />
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Documents">
+            <div className="pt-4">
+              <DocumentCard
+                name="Cancelled Cheque.pdf"
+                uploadedDate="15 Jan 2024"
+                onView={() => console.log('View')}
+                onDownload={() => console.log('Download')}
+              />
+            </div>
+          </CollapsibleSection>
+        </TabsContent>
+
+        {/* Family Tab */}
+        <TabsContent value="family" className="mt-6">
+          <div className="bg-white border border-[#DEE4EB] rounded-2xl overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#DEE4EB] bg-[#F9FAFB]">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    NAME
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    RELATIONSHIP
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    DATE OF BIRTH
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    NOMINEE
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    EMERGENCY CONTACT
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    PHONE NUMBER
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {familyMembers.map((member, index) => (
+                  <tr
+                    key={index}
+                    className={index !== familyMembers.length - 1 ? 'border-b border-[#DEE4EB]' : ''}
+                  >
+                    <td className="px-6 py-4 text-sm font-medium text-[#353B41]">{member.name}</td>
+                    <td className="px-6 py-4 text-sm text-[#8593A3]">{member.relationship}</td>
+                    <td className="px-6 py-4 text-sm text-[#8593A3]">
+                      {new Date(member.dob).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td className="px-6 py-4">
+                      {member.isNominee ? (
+                        <Badge className="bg-[#D1FAE5] text-[#065F46] text-xs">Yes</Badge>
+                      ) : (
+                        <span className="text-sm text-[#8593A3]">No</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {member.isEmergencyContact ? (
+                        <Badge className="bg-[#FEF3C7] text-[#92400E] text-xs">Yes</Badge>
+                      ) : (
+                        <span className="text-sm text-[#8593A3]">No</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-[#8593A3]">{member.phone}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Personal Information */}
-          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
-            <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center gap-2">
-                <User className="h-5 w-5 text-[#586AF5]" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { label: 'FULL NAME', value: employee.name },
-                  { label: 'EMPLOYEE ID', value: employee.employeeId },
-                  { label: 'EMAIL', value: employee.email },
-                  { label: 'PHONE', value: employee.phone },
-                  { label: 'JOIN DATE', value: new Date(employee.joinDate).toLocaleDateString('en-IN') },
-                  { label: 'STATUS', value: employee.status, badge: true },
-                ].map((item, index) => (
-                  <div key={index} className="p-4 bg-[#F4F7FA] rounded-xl">
-                    <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">{item.label}</p>
-                    {item.badge ? (
-                      <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-[#2DD4BF]/10 text-[#2DD4BF] capitalize">
-                        {item.value}
-                      </span>
-                    ) : (
-                      <p className="text-base font-medium text-gray-900">{item.value}</p>
-                    )}
-                  </div>
+        {/* Education Tab */}
+        <TabsContent value="education" className="mt-6 space-y-4">
+          {educationHistory.map((edu, index) => (
+            <CollapsibleSection key={index} title={edu.type} defaultOpen={index === 0}>
+              <div className="space-y-6 pt-4">
+                <div className="grid grid-cols-3 gap-6">
+                  <InfoField label="EDUCATION LEVEL" value={edu.level} />
+                  <InfoField label="BOARD NAME" value={edu.board} />
+                  <InfoField label="INSTITUTE NAME" value={edu.institute} />
+                </div>
+                <div className="grid grid-cols-3 gap-6">
+                  <InfoField
+                    label="FROM"
+                    value={new Date(edu.from).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  />
+                  <InfoField
+                    label="TO"
+                    value={new Date(edu.to).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  />
+                  <InfoField label="PERCENTAGE" value={edu.percentage} />
+                </div>
+                <div>
+                  <p className="text-xs text-[#8593A3] uppercase tracking-wider mb-2">DOCUMENT</p>
+                  <DocumentCard
+                    name={edu.document}
+                    uploadedDate="15 Jan 2024"
+                    onView={() => console.log('View')}
+                    onDownload={() => console.log('Download')}
+                  />
+                </div>
+              </div>
+            </CollapsibleSection>
+          ))}
+        </TabsContent>
+
+        {/* Employment History Tab */}
+        <TabsContent value="employment" className="mt-6 space-y-4">
+          {employmentHistory.map((job, index) => (
+            <CollapsibleSection key={index} title={`Previous job ${index + 1}`} defaultOpen={index === 0}>
+              <div className="space-y-6 pt-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <InfoField label="COMPANY NAME" value={job.company} />
+                  <InfoField label="DESIGNATION" value={job.designation} />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <InfoField
+                    label="FROM"
+                    value={new Date(job.from).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  />
+                  <InfoField
+                    label="TO"
+                    value={new Date(job.to).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-[#8593A3] uppercase tracking-wider mb-2">DOCUMENT</p>
+                  <DocumentCard
+                    name={job.document}
+                    uploadedDate="15 Jan 2024"
+                    onView={() => console.log('View')}
+                    onDownload={() => console.log('Download')}
+                  />
+                </div>
+              </div>
+            </CollapsibleSection>
+          ))}
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="mt-6">
+          <div className="flex gap-6">
+            {/* Sidebar */}
+            <div className="w-64 flex-shrink-0">
+              <div className="bg-white border border-[#DEE4EB] rounded-2xl p-2">
+                {documentCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedDocCategory(category.id)}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      selectedDocCategory === category.id
+                        ? 'bg-[#F6F2FF] text-[#642DFC]'
+                        : 'text-[#8593A3] hover:bg-[#F4F7FA]'
+                    }`}
+                  >
+                    {category.label}
+                  </button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Employment Details */}
-          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
-            <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-[#586AF5]" />
-                Employment Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { label: 'DESIGNATION', value: employee.designation },
-                  { label: 'DEPARTMENT', value: employee.department },
-                  { label: 'ANNUAL CTC', value: `₹${employee.salary.toLocaleString('en-IN')}` },
-                ].map((item, index) => (
-                  <div key={index} className="p-4 bg-[#F4F7FA] rounded-xl">
-                    <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">{item.label}</p>
-                    <p className="text-base font-medium text-gray-900">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bank Details */}
-          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
-            <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-[#586AF5]" />
-                Bank Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { label: 'BANK NAME', value: employee.bankName },
-                  { label: 'ACCOUNT NUMBER', value: employee.accountNumber },
-                  { label: 'IFSC CODE', value: employee.ifscCode },
-                ].map((item, index) => (
-                  <div key={index} className="p-4 bg-[#F4F7FA] rounded-xl">
-                    <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">{item.label}</p>
-                    <p className="text-base font-medium text-gray-900">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Compliance Details */}
-          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
-            <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-[#586AF5]" />
-                Compliance Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { label: 'PAN NUMBER', value: employee.panNumber },
-                  { label: 'AADHAAR NUMBER', value: employee.aadhaarNumber },
-                ].map((item, index) => (
-                  <div key={index} className="p-4 bg-[#F4F7FA] rounded-xl">
-                    <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">{item.label}</p>
-                    <p className="text-base font-medium text-gray-900">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Address */}
-          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
-            <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-[#586AF5]" />
-                Address
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                <p className="text-base text-gray-900">{employee.address}</p>
-                <p className="text-base text-gray-900 mt-1">{employee.city}, {employee.state} - {employee.pincode}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Leave Tab */}
-      {activeTab === 'leave' && (
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-gray-900">Leave History</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">LEAVE TYPE</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">START DATE</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">END DATE</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DAYS</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#DEE4EB]">
-                  {leaveRecords.map((record) => (
-                    <tr key={record.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(record.startDate).toLocaleDateString('en-IN')}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(record.endDate).toLocaleDateString('en-IN')}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.days}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-[#2DD4BF]/10 text-[#2DD4BF]">
-                          {record.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Attendance Tab */}
-      {activeTab === 'attendance' && (
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-gray-900">Recent Attendance</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DATE</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">CHECK IN</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">CHECK OUT</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">HOURS</th>
-                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#DEE4EB]">
-                  {attendanceRecords.map((record, index) => (
-                    <tr key={index} className="hover:bg-[#F4F7FA]/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(record.date).toLocaleDateString('en-IN')}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.checkIn}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.checkOut}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.hours} hrs</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-[#2DD4BF]/10 text-[#2DD4BF]">
-                          {record.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Documents Grid */}
+            <div className="flex-1">
+              <div className="grid grid-cols-2 gap-4">
+                {documents[selectedDocCategory]?.map((doc, index) => (
+                  <DocumentCard
+                    key={index}
+                    name={doc.name}
+                    uploadedDate={doc.uploadedDate}
+                    onView={() => console.log('View', doc.name)}
+                    onDownload={() => console.log('Download', doc.name)}
+                  />
+                ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </TabsContent>
+
+        {/* Assets Tab */}
+        <TabsContent value="assets" className="mt-6">
+          <div className="bg-white border border-[#DEE4EB] rounded-2xl overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#DEE4EB] bg-[#F9FAFB]">
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    DEVICE
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    ASSIGNED ON
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    ASSIGNED BY
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#8593A3] uppercase tracking-wider">
+                    STATUS
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {assets.map((asset, index) => (
+                  <tr
+                    key={index}
+                    className={index !== assets.length - 1 ? 'border-b border-[#DEE4EB]' : ''}
+                  >
+                    <td className="px-6 py-4 text-sm font-medium text-[#353B41]">{asset.device}</td>
+                    <td className="px-6 py-4 text-sm text-[#8593A3]">{asset.id}</td>
+                    <td className="px-6 py-4 text-sm text-[#8593A3]">{asset.assignedOn}</td>
+                    <td className="px-6 py-4 text-sm text-[#8593A3]">{asset.assignedBy}</td>
+                    <td className="px-6 py-4">
+                      <Badge className="bg-[#D1FAE5] text-[#065F46] text-xs">{asset.status}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
+  )
 }

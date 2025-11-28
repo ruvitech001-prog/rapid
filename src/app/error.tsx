@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { AlertCircle, ArrowLeft, Home } from 'lucide-react';
+import { AlertCircle, Home } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Error({

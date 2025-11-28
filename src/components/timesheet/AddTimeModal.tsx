@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select as _Select,
+  SelectContent as _SelectContent,
+  SelectItem as _SelectItem,
+  SelectTrigger as _SelectTrigger,
+  SelectValue as _SelectValue,
 } from '@/components/ui/select'
 
 interface AddTimeModalProps {
@@ -62,7 +62,10 @@ export function AddTimeModal({ isOpen, onClose, onSubmit }: AddTimeModalProps) {
       try {
         const parseTime = (timeStr: string) => {
           const [time, meridiem] = timeStr.split(' ')
-          let [hours, minutes] = time.split(':').map(Number)
+          if (!time) return 0
+          const [hoursStr, minutesStr] = time.split(':')
+          let hours = Number(hoursStr) || 0
+          const minutes = Number(minutesStr) || 0
 
           if (meridiem === 'PM' && hours !== 12) hours += 12
           if (meridiem === 'AM' && hours === 12) hours = 0

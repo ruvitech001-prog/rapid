@@ -29,7 +29,7 @@ const iconMap = {
 export function OnboardingChecklist({ steps, onStartStep }: OnboardingChecklistProps) {
   return (
     <div className="space-y-3">
-      {steps.map((step, index) => {
+      {steps.map((step) => {
         const Icon = step.icon ? iconMap[step.icon] : FileText;
 
         return (

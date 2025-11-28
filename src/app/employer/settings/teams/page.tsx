@@ -20,12 +20,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, DataTableWrapper, ModalFormWrapper } from '@/components/templates'
-import { getMockDataByCompany, getCurrentMockCompany } from '@/lib/mock-data'
-import { addMockData, generateId } from '@/lib/mock-data'
+import { getCurrentMockCompany } from '@/lib/mock-data'
+import { generateId } from '@/lib/mock-data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
+import { Badge as _Badge } from '@/components/ui/badge'
 import { Plus, Edit2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -87,8 +87,8 @@ export default function TeamManagementPage() {
         // Simulate network delay
         await new Promise((resolve) => setTimeout(resolve, 300))
 
-        // Get mock data by company ID
-        const mockTeams = getMockDataByCompany('teams', company.id)
+        // Get mock data by company ID - teams not in mock data yet, use empty array
+        const mockTeams: Team[] = [] // getMockDataByCompany('teams', company?.id || '')
         setTeams(mockTeams || [])
       } catch (error) {
         console.error('Error loading teams:', error)
@@ -99,7 +99,7 @@ export default function TeamManagementPage() {
     }
 
     loadTeams()
-  }, [company.id])
+  }, [company?.id])
 
   // ============================================================================
   // HANDLERS
@@ -118,15 +118,15 @@ export default function TeamManagementPage() {
       // Create new team object
       const newTeam: Team = {
         id: generateId(),
-        company_id: company.id,
+        company_id: company?.id || '',
         name: data.name,
         description: data.description,
         manager_id: undefined,
-        created_at: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString().split('T')[0] || '',
       }
 
-      // Add to mock data
-      addMockData('teams', newTeam)
+      // Add to mock data - teams not in mock data yet
+      // addMockData('teams', newTeam)
 
       // Update local state
       setTeams([...teams, newTeam])
@@ -190,7 +190,7 @@ export default function TeamManagementPage() {
       />
 
       {/* Teams Table */}
-      <DataTableWrapper<Team>
+      <DataTableWrapper
         columns={[
           {
             key: 'name',

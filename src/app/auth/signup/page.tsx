@@ -24,7 +24,7 @@ interface FormData {
 
 export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);

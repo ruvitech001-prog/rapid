@@ -25,12 +25,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import {
   Select,
   SelectContent,
@@ -1092,7 +1092,7 @@ export default function SettingsPage() {
     <div className="flex gap-6 min-h-[calc(100vh-120px)]">
       {/* Left Sidebar */}
       <div className="w-64 flex-shrink-0">
-        <Card className="rounded-2xl border border-[#E5E7EB] shadow-none sticky top-6">
+        <Card className="rounded-2xl border border-[#E5E7EB] shadow-none sticky top-6 z-10">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold text-gray-900 px-3 py-2 mb-2">Company settings</h2>
             <nav className="space-y-1">
@@ -1101,9 +1101,10 @@ export default function SettingsPage() {
                 const isActive = activeSection === item.id;
                 return (
                   <button
+                    type="button"
                     key={item.id}
                     onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left cursor-pointer ${
                       isActive
                         ? 'bg-[#586AF5] text-white'
                         : 'text-[#6B7280] hover:bg-[#F4F7FA] hover:text-gray-900'
@@ -1125,11 +1126,12 @@ export default function SettingsPage() {
       </div>
 
       {/* Edit Profile Modal */}
-      <Dialog open={editProfileOpen} onOpenChange={setEditProfileOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Company profile</DialogTitle>
-          </DialogHeader>
+      <Sheet open={editProfileOpen} onOpenChange={setEditProfileOpen}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>Company profile</SheetTitle>
+          </SheetHeader>
+          <div className="px-6">
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -1211,7 +1213,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="px-6 py-4 border-t mt-4">
             <Button variant="outline" onClick={() => setEditProfileOpen(false)}>Cancel</Button>
             <Button
               className="bg-[#586AF5] hover:bg-[#4858d4]"
@@ -1222,17 +1224,19 @@ export default function SettingsPage() {
             >
               Submit
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {/* Edit Salary Range Modal */}
-      <Dialog open={editSalaryRangeOpen} onOpenChange={setEditSalaryRangeOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Salary range</DialogTitle>
-          </DialogHeader>
-          <p className="text-xs text-[#6B7280]">*all values in INR</p>
+      {/* Edit Salary Range Panel */}
+      <Sheet open={editSalaryRangeOpen} onOpenChange={setEditSalaryRangeOpen}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>Salary range</SheetTitle>
+          </SheetHeader>
+          <div className="px-6">
+          <p className="text-xs text-[#6B7280] pt-4">*all values in INR</p>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium text-[#6B7280]">Minimum salary</Label>
@@ -1259,7 +1263,7 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="px-6 py-4 border-t mt-4">
             <Button variant="outline" onClick={() => setEditSalaryRangeOpen(false)}>Cancel</Button>
             <Button
               className="bg-[#586AF5] hover:bg-[#4858d4]"
@@ -1270,17 +1274,19 @@ export default function SettingsPage() {
             >
               Submit
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {/* Edit Stock Options Modal */}
-      <Dialog open={editStockOpen} onOpenChange={setEditStockOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Stock options</DialogTitle>
-          </DialogHeader>
-          <p className="text-xs text-[#6B7280]">*all values in INR</p>
+      {/* Edit Stock Options Panel */}
+      <Sheet open={editStockOpen} onOpenChange={setEditStockOpen}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>Stock options</SheetTitle>
+          </SheetHeader>
+          <div className="px-6">
+          <p className="text-xs text-[#6B7280] pt-4">*all values in INR</p>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium text-[#6B7280]">Type of stocks</Label>
@@ -1355,7 +1361,7 @@ export default function SettingsPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="px-6 py-4 border-t mt-4">
             <Button variant="outline" onClick={() => setEditStockOpen(false)}>Cancel</Button>
             <Button
               className="bg-[#586AF5] hover:bg-[#4858d4]"
@@ -1366,17 +1372,19 @@ export default function SettingsPage() {
             >
               Submit
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {/* Edit Bonus Modal */}
-      <Dialog open={editBonusOpen} onOpenChange={setEditBonusOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Bonus policy</DialogTitle>
-          </DialogHeader>
-          <p className="text-xs text-[#6B7280]">*all values in INR</p>
+      {/* Edit Bonus Panel */}
+      <Sheet open={editBonusOpen} onOpenChange={setEditBonusOpen}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>Bonus policy</SheetTitle>
+          </SheetHeader>
+          <div className="px-6">
+          <p className="text-xs text-[#6B7280] pt-4">*all values in INR</p>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium text-[#6B7280]">Type of Bonus</Label>
@@ -1445,7 +1453,7 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="px-6 py-4 border-t mt-4">
             <Button variant="outline" onClick={() => setEditBonusOpen(false)}>Cancel</Button>
             <Button
               className="bg-[#586AF5] hover:bg-[#4858d4]"
@@ -1456,17 +1464,19 @@ export default function SettingsPage() {
             >
               Update
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {/* Edit Probation Modal */}
-      <Dialog open={editProbationOpen} onOpenChange={setEditProbationOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Probation & notice period</DialogTitle>
-          </DialogHeader>
-          <p className="text-xs text-[#6B7280]">*all values in days</p>
+      {/* Edit Probation Panel */}
+      <Sheet open={editProbationOpen} onOpenChange={setEditProbationOpen}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>Probation & notice period</SheetTitle>
+          </SheetHeader>
+          <div className="px-6">
+          <p className="text-xs text-[#6B7280] pt-4">*all values in days</p>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium text-[#6B7280]">Probation period</Label>
@@ -1553,7 +1563,7 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="px-6 py-4 border-t mt-4">
             <Button variant="outline" onClick={() => setEditProbationOpen(false)}>Cancel</Button>
             <Button
               className="bg-[#586AF5] hover:bg-[#4858d4]"
@@ -1564,16 +1574,18 @@ export default function SettingsPage() {
             >
               Update
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-      {/* Invite Manager Modal */}
-      <Dialog open={inviteManagerOpen} onOpenChange={setInviteManagerOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Invite team managers</DialogTitle>
-          </DialogHeader>
+      {/* Invite Manager Panel */}
+      <Sheet open={inviteManagerOpen} onOpenChange={setInviteManagerOpen}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle>Invite team managers</SheetTitle>
+          </SheetHeader>
+          <div className="px-6">
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium text-[#6B7280]">Full name</Label>
@@ -1611,14 +1623,15 @@ export default function SettingsPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="py-4 border-t mt-4">
             <Button variant="outline" onClick={() => setInviteManagerOpen(false)}>Cancel</Button>
             <Button className="bg-[#586AF5] hover:bg-[#4858d4]">
               Send invite
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

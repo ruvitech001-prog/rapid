@@ -32,7 +32,7 @@ export function generateMockCompanies(count: number = 1): MockCompany[] {
   const companies: MockCompany[] = []
 
   for (let i = 0; i < count; i++) {
-    const name = COMPANY_NAMES[i % COMPANY_NAMES.length]
+    const name = COMPANY_NAMES[i % COMPANY_NAMES.length] || 'Company'
     companies.push({
       id: generateId(),
       name: `${name} ${i > 0 ? `- Branch ${i + 1}` : ""}`,
@@ -89,11 +89,12 @@ export function generateMockTeams(
   const teams: MockTeam[] = []
 
   for (let i = 0; i < Math.min(count, teamNames.length); i++) {
+    const teamName = teamNames[i] || 'Team'
     teams.push({
       id: generateId(),
       company_id: company_id || generateId(),
-      name: teamNames[i],
-      description: `${teamNames[i]} team`,
+      name: teamName,
+      description: `${teamName} team`,
       manager_id: manager_ids[i % manager_ids.length] || generateId(),
       created_at: formatDate(new Date()),
     })
@@ -134,13 +135,14 @@ export function generateMockSalaryStructures(
   const names = ["Junior Developer", "Senior Developer", "Tech Lead"]
 
   for (let i = 0; i < Math.min(count, baseSalaries.length); i++) {
-    const base = baseSalaries[i]
+    const base = baseSalaries[i] || 500000
+    const name = names[i] || 'Developer'
 
     structures.push({
       id: generateId(),
       company_id: company_id || generateId(),
-      name: names[i],
-      description: `Salary structure for ${names[i]} role`,
+      name: name,
+      description: `Salary structure for ${name} role`,
       components: {
         basic_salary: base * 0.4,
         hra: base * 0.15,

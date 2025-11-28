@@ -73,7 +73,7 @@ export default function ContractorsPage() {
   });
 
   const activeCount = contractors.filter(c => c.status === 'active').length;
-  const inactiveCount = contractors.filter(c => c.status === 'inactive').length;
+  const _inactiveCount = contractors.filter(c => c.status === 'inactive').length;
 
   return (
     <div className="space-y-6">

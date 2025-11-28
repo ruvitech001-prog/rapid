@@ -1,11 +1,12 @@
 'use client'
 
-import { CSSProperties, useState } from 'react'
+import { useState } from 'react'
 import {
   Bell,
   ChevronRight,
+  ChevronDown,
   MessageSquare,
-  ArrowRight,
+  FileText,
 } from 'lucide-react'
 import {
   PieChart,
@@ -15,39 +16,61 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Link from 'next/link'
+
+// Figma Design Tokens
+const colors = {
+  primary500: '#642DFC',
+  primary100: '#E0D5FE',
+  primary50: '#F6F2FF',
+  iconBlue: '#586AF5',
+  neutral900: '#1B1D21',
+  neutral800: '#353B41',
+  neutral700: '#505862',
+  neutral600: '#6A7682',
+  neutral500: '#8593A3',
+  neutral400: '#A8B5C2',
+  neutral50: '#F4F7FA',
+  secondaryBlue50: '#EBF5FF',
+  secondaryBlue200: '#9ACEFE',
+  secondaryBlue600: '#026ACA',
+  success600: '#22957F',
+  success50: '#EDF9F7',
+  warning600: '#CC7A00',
+  warning200: '#FFDD99',
+  aqua200: '#A5E9F2',
+  aqua300: '#77DEEC',
+  aqua400: '#4AD3E5',
+  green200: '#A7ECCA',
+  rose200: '#FFB5C6',
+  border: '#DEE4EB',
+}
 
 // Data for Team Overview (Semi-circle gauge)
 const teamData = [
-  { name: 'Employees', value: 14, fill: '#2DD4BF' },
-  { name: 'Contractors', value: 6, fill: '#FF7373' },
+  { name: 'Employees', value: 14, fill: colors.aqua400 },
+  { name: 'Contractors', value: 6, fill: colors.rose200 },
 ]
 
 // Data for Cost Overview (Bar Chart)
 const costData = [
-  { month: 'Nov', cost: 45000 },
-  { month: 'Dec', cost: 65000 },
-  { month: 'Jan', cost: 72000 },
-  { month: 'Feb', cost: 58000 },
-  { month: 'Mar', cost: 81000 },
-  { month: 'Apr', cost: 92000 },
+  { month: 'Nov', cost: 5.5, fill: colors.aqua200 },
+  { month: 'Dec', cost: 8.5, fill: colors.secondaryBlue200 },
+  { month: 'Jan', cost: 4, fill: colors.green200 },
+  { month: 'Feb', cost: 6, fill: colors.warning200 },
+  { month: 'Mar', cost: 2.5, fill: colors.aqua400 },
+  { month: 'Apr', cost: 7, fill: colors.rose200 },
 ]
-
-const costColors = ['#7DD3FC', '#60A5FA', '#6EE7B7', '#FCD34D', '#2DD4BF', '#F472B6']
 
 // Data for Contract Summary (Donut Chart)
 const contractData = [
-  { name: 'Accepted', value: 25, fill: '#2DD4BF' },
-  { name: 'In progress', value: 10, fill: '#F472B6' },
-  { name: 'Rejected', value: 15, fill: '#FBBF24' },
+  { name: 'In progress', value: 10, fill: colors.rose200 },
+  { name: 'Accepted', value: 25, fill: colors.aqua300 },
+  { name: 'Rejected', value: 15, fill: colors.warning200 },
 ]
 
 // Updates data
@@ -55,133 +78,159 @@ const updatesData = [
   {
     id: '1',
     message: 'Time-off request for 16/May/2023 has been approved.',
-    timestamp: '2 hours ago',
   },
   {
     id: '2',
     message: 'Expense request for 12/May/23 has been approved.',
-    timestamp: '4 hours ago',
   },
   {
     id: '3',
     message: 'Time-off request for 25/May/23 has been approved.',
-    timestamp: '1 day ago',
   },
 ]
 
-// Invoices data
-const invoicesData = [
+// Invoices data - Pending
+const pendingInvoicesData = [
   {
     id: '1',
     amount: 90000,
-    contractor: 'Alex George',
-    title: 'Contractor, India',
+    name: 'Alex George',
+    type: 'Contractor, India',
   },
   {
     id: '2',
-    amount: 75000,
-    contractor: 'Sarah Johnson',
-    title: 'Contractor, USA',
+    amount: 90000,
+    name: 'Alex George',
+    type: 'Contractor, India',
   },
 ]
 
+// Recently paid invoices
 const recentlyPaidData = [
-  { id: '1', amount: 6000, contractor: 'John Doe' },
-  { id: '2', amount: 8500, contractor: 'Jane Smith' },
-  { id: '3', amount: 5200, contractor: 'Mike Wilson' },
+  { id: '1', amount: 6000, name: 'Alia Veince', type: 'Contractor, India' },
+  { id: '2', amount: 6000, name: 'Genevive Bhatt', type: 'Contractor, India' },
+  { id: '3', amount: 6000, name: 'Rakesh Gaur', type: 'Contractor, India' },
 ]
 
 // Requests data
 const requestsForApproval = [
   {
     id: '1',
-    type: 'LEAVE',
-    typeColor: 'bg-amber-100 text-amber-800',
-    label: '23/May - 28/May',
-    user: 'Vidushi Patel',
+    type: 'Leave',
+    bgColor: colors.warning600,
+    label: '23/May/2023 - 28/May/2023',
+    user: 'Vidushi Maheshwari',
+    role: 'Employee',
   },
   {
     id: '2',
-    type: 'EXPENSE',
-    typeColor: 'bg-blue-100 text-blue-800',
+    type: 'Expense',
+    bgColor: colors.secondaryBlue600,
     label: 'USD 5000',
-    user: 'Prithviraj Kumar',
+    user: 'Prithviraj Singh Hada',
+    role: 'Employee',
   },
   {
     id: '3',
-    type: 'LEAVE',
-    typeColor: 'bg-amber-100 text-amber-800',
-    label: '02/Jun - 12/Jun',
-    user: 'Khushi Sharma',
+    type: 'Leave',
+    bgColor: colors.warning600,
+    label: '02/Jun/2023 - 12/Jun/2023',
+    user: 'Khushi Mathur',
+    role: 'Contractor',
   },
 ]
 
 // Contracts data
 const recentContractsData = [
-  { id: '1', name: 'Sarah Johnson', role: 'Senior Developer' },
-  { id: '2', name: 'Mike Chen', role: 'Product Manager' },
-  { id: '3', name: 'Lisa Rodriguez', role: 'Designer' },
+  { id: '1', name: 'Abhishek Sharma', role: 'Asso. UI/UX Designer • India' },
+  { id: '2', name: 'Abhishek Sharma', role: 'Asso. UI/UX Designer • India' },
 ]
 
 // Holidays data
 const holidaysData = [
-  { id: '1', date: 'Tue, 15/Aug/2023', name: 'INDEPENDENCE DAY' },
-  { id: '2', date: 'Wed, 30/Aug/2023', name: 'RAKSHABANDHAN' },
+  { id: '1', date: 'Tue, 15/Aug/2023', name: 'Independence Day' },
+  { id: '2', date: 'Wed, 30/Aug/2023', name: 'Rakshabandhan' },
 ]
 
 export default function EmployerDashboard() {
-  const [activeRequestsTab, setActiveRequestsTab] = useState('approval')
+  const [activeRequestsTab, setActiveRequestsTab] = useState<'yours' | 'approval'>('approval')
 
   return (
-    <div className="space-y-8 pb-32">
+    <div className="space-y-6 pb-32">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">Good morning Peter!</h2>
-        </div>
+        <h1 className="text-2xl font-bold" style={{ color: colors.neutral800 }}>
+          Good morning Peter!
+        </h1>
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" className="text-violet-700 border-violet-700">
-            <Link href="/employer/requests/new">+ Create request</Link>
+          <Button
+            asChild
+            variant="outline"
+            className="h-10 px-4 text-xs font-semibold tracking-wide border rounded-lg"
+            style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
+          >
+            <Link href="/employer/requests/new">
+              + Create request
+              <ChevronDown className="ml-1 h-4 w-4" />
+            </Link>
           </Button>
-          <Button asChild className="bg-violet-600 text-white hover:bg-violet-700">
+          <Button
+            asChild
+            className="h-10 px-4 text-xs font-semibold tracking-wide rounded-lg"
+            style={{ backgroundColor: colors.primary500 }}
+          >
             <Link href="/employer/employees/new">Hire another</Link>
           </Button>
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-lg"
+            style={{ borderColor: colors.border }}
+          >
+            <Bell className="h-5 w-5" style={{ color: colors.neutral500 }} />
           </Button>
         </div>
       </div>
 
       {/* ROW 1: Team Overview & Updates */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Team Overview */}
-        <div className="lg:col-span-3">
-          <Card className="rounded-2xl border-0 h-full bg-[#EBF5FF]">
-            <CardHeader className="pb-4">
+        <div className="lg:col-span-7">
+          <Card
+            className="rounded-2xl h-full overflow-hidden"
+            style={{ backgroundColor: colors.secondaryBlue50, borderColor: colors.secondaryBlue200 }}
+          >
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-gray-900">Team</CardTitle>
-                <Link href="/employer/employees" className="text-sm font-medium text-[#586AF5] hover:underline flex items-center gap-1">
+                <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
+                  Team
+                </CardTitle>
+                <Link
+                  href="/employer/employees"
+                  className="text-xs font-semibold flex items-center gap-0.5"
+                  style={{ color: colors.iconBlue }}
+                >
                   View <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="pt-0 pb-6">
-              <div className="flex flex-col sm:flex-row">
+            <CardContent className="pt-0 pb-5">
+              <div className="flex">
                 {/* Left: Semi-circle Gauge */}
-                <div className="flex-1 sm:pr-8 sm:border-r border-[#DEE4EB]">
-                  <div className="relative">
-                    <ResponsiveContainer width="100%" height={160}>
+                <div className="flex-1 pr-4 border-r" style={{ borderColor: colors.border }}>
+                  <div className="relative h-[140px]">
+                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={teamData}
                           cx="50%"
-                          cy="100%"
+                          cy="95%"
                           startAngle={180}
                           endAngle={0}
-                          innerRadius={55}
-                          outerRadius={85}
+                          innerRadius={60}
+                          outerRadius={90}
                           paddingAngle={3}
+                          cornerRadius={8}
                           dataKey="value"
                         >
                           {teamData.map((entry, index) => (
@@ -191,43 +240,60 @@ export default function EmployerDashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                     {/* Centered text inside gauge */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
-                      <p className="text-4xl font-bold text-gray-900">20</p>
-                      <p className="text-[10px] text-[#8593A3] tracking-wider font-medium">TOTAL DAYS</p>
+                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
+                      <p className="text-[34px] font-bold" style={{ color: colors.neutral900 }}>20</p>
+                      <p
+                        className="text-xs font-medium tracking-widest uppercase"
+                        style={{ color: colors.neutral600 }}
+                      >
+                        Total days
+                      </p>
                     </div>
                   </div>
                   {/* Legend */}
-                  <div className="flex justify-center gap-6 mt-4 text-sm">
+                  <div className="flex justify-center gap-8 mt-2 text-xs">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#2DD4BF]"></div>
-                      <span className="text-[#8593A3]">Employees: 14</span>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.aqua400 }} />
+                      <span style={{ color: colors.neutral500 }}>Employees: 14</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#FF7373]"></div>
-                      <span className="text-[#8593A3]">Contractors: 6</span>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.rose200 }} />
+                      <span style={{ color: colors.neutral500 }}>Contractors: 6</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right: Joining This Month */}
-                <div className="flex-1 sm:pl-8 mt-6 sm:mt-0 pt-6 sm:pt-0 border-t sm:border-t-0 border-[#DEE4EB]">
-                  <p className="text-[11px] font-semibold text-[#8593A3] mb-5 tracking-wider">JOINING THIS MONTH</p>
-                  <div>
-                    <div className="flex items-center justify-between py-4 border-b border-[#DEE4EB]">
-                      <span className="text-sm text-gray-700">Employees</span>
+                <div className="flex-1 pl-6">
+                  <p
+                    className="text-xs font-medium tracking-widest uppercase mb-4"
+                    style={{ color: colors.neutral600 }}
+                  >
+                    Joining this month
+                  </p>
+                  <div className="space-y-0">
+                    <div
+                      className="flex items-center justify-between py-4 border-b"
+                      style={{ borderColor: colors.border }}
+                    >
+                      <span className="text-xs" style={{ color: colors.neutral500 }}>Employees</span>
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-gray-900">2</span>
-                        <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
-                          <ChevronRight className="h-4 w-4 text-[#8593A3]" />
+                        <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>2</span>
+                        <div
+                          className="w-5 h-5 rounded-full bg-white flex items-center justify-center"
+                        >
+                          <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between py-4">
-                      <span className="text-sm text-gray-700">Contractors</span>
+                      <span className="text-xs" style={{ color: colors.neutral500 }}>Contractors</span>
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-gray-900">2</span>
-                        <div className="w-8 h-8 rounded-full bg-white/60 flex items-center justify-center">
-                          <ChevronRight className="h-4 w-4 text-[#8593A3]" />
+                        <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>2</span>
+                        <div
+                          className="w-5 h-5 rounded-full bg-white flex items-center justify-center"
+                        >
+                          <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
                         </div>
                       </div>
                     </div>
@@ -239,30 +305,39 @@ export default function EmployerDashboard() {
         </div>
 
         {/* Updates */}
-        <div className="lg:col-span-2">
-          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none h-full bg-white">
-            <CardHeader className="pb-4">
+        <div className="lg:col-span-5">
+          <Card className="rounded-2xl h-full" style={{ borderColor: colors.border }}>
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-gray-900">Updates</CardTitle>
-                <Link href="/employer/updates" className="text-sm font-medium text-[#586AF5] hover:underline flex items-center gap-1">
+                <CardTitle className="text-base font-bold" style={{ color: colors.neutral700 }}>
+                  Updates
+                </CardTitle>
+                <Link
+                  href="/employer/updates"
+                  className="text-xs font-semibold flex items-center gap-0.5"
+                  style={{ color: colors.iconBlue }}
+                >
                   View all <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="space-y-1 pb-6">
-              {updatesData.map((update) => (
-                <div
-                  key={update.id}
-                  className="flex gap-3 py-3 px-2 rounded-lg hover:bg-gray-50 transition"
-                >
-                  <div className="flex-shrink-0 mt-0.5">
-                    <Bell className="h-5 w-5 text-[#2DD4BF]" />
+            <CardContent className="pt-2 pb-4">
+              <div className="space-y-0">
+                {updatesData.map((update, index) => (
+                  <div
+                    key={update.id}
+                    className={`flex gap-3 py-4 ${index !== updatesData.length - 1 ? 'border-b' : ''}`}
+                    style={{ borderColor: colors.border }}
+                  >
+                    <div className="flex-shrink-0">
+                      <Bell className="h-5 w-5" style={{ color: colors.success600 }} />
+                    </div>
+                    <p className="text-sm leading-relaxed" style={{ color: colors.neutral500 }}>
+                      {update.message}
+                    </p>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-700 leading-relaxed">{update.message}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -273,32 +348,50 @@ export default function EmployerDashboard() {
         {/* Left Column: Invoices & Cost Overview */}
         <div className="space-y-6">
           {/* Invoices */}
-          <Card className="rounded-2xl shadow-sm">
+          <Card className="rounded-2xl" style={{ borderColor: colors.border }}>
             <CardHeader className="pb-3">
+              <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
+                Invoices
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-0">
+              {/* Pending Invoices Header */}
               <div className="flex items-center justify-between">
-                <CardTitle>PENDING INVOICES (4)</CardTitle>
-                <Link href="/employer/invoices" className="text-sm text-violet-600 hover:underline">
-                  View all &gt;
+                <p
+                  className="text-xs font-medium tracking-widest uppercase"
+                  style={{ color: colors.neutral500 }}
+                >
+                  Pending invoices (4)
+                </p>
+                <Link
+                  href="/employer/invoices"
+                  className="text-xs font-semibold flex items-center gap-0.5"
+                  style={{ color: colors.iconBlue }}
+                >
+                  View all <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+
               {/* Pending Invoices Cards */}
-              {invoicesData.map((invoice) => (
+              {pendingInvoicesData.map((invoice) => (
                 <div
                   key={invoice.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition"
+                  className="p-4 rounded-xl flex items-center justify-between"
+                  style={{ backgroundColor: colors.neutral50 }}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="text-lg font-bold text-gray-900">USD {invoice.amount.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600">{invoice.contractor} • {invoice.title}</p>
-                    </div>
+                  <div>
+                    <p className="text-base font-semibold" style={{ color: colors.neutral800 }}>
+                      USD {invoice.amount.toLocaleString()}
+                    </p>
+                    <p className="text-xs" style={{ color: colors.neutral600 }}>
+                      {invoice.name} • {invoice.type}
+                    </p>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-violet-600 border-violet-600 hover:bg-violet-50"
+                    className="text-xs font-semibold px-3 py-2 h-8 rounded-lg"
+                    style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
                   >
                     Pay now
                   </Button>
@@ -306,24 +399,38 @@ export default function EmployerDashboard() {
               ))}
 
               {/* Recently Paid Section */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-gray-900">RECENTLY PAID INVOICES (5)</p>
-                  <Link href="/employer/invoices/paid" className="text-xs text-violet-600 hover:underline">
-                    View all &gt;
+              <div className="pt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <p
+                    className="text-xs font-medium tracking-widest uppercase"
+                    style={{ color: colors.neutral500 }}
+                  >
+                    Recently paid invoices (5)
+                  </p>
+                  <Link
+                    href="/employer/invoices/paid"
+                    className="text-xs font-semibold flex items-center gap-0.5"
+                    style={{ color: colors.iconBlue }}
+                  >
+                    View all <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="space-y-2">
-                  {recentlyPaidData.map((paid) => (
+                <div className="space-y-0">
+                  {recentlyPaidData.map((paid, index) => (
                     <div
                       key={paid.id}
-                      className="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
+                      className={`flex items-center justify-between py-3 ${index !== recentlyPaidData.length - 1 ? 'border-b' : ''}`}
+                      style={{ borderColor: colors.border }}
                     >
                       <div>
-                        <p className="text-sm font-medium text-gray-900">USD {paid.amount.toLocaleString()}</p>
-                        <p className="text-xs text-gray-600">{paid.contractor}</p>
+                        <p className="text-sm font-semibold" style={{ color: colors.neutral700 }}>
+                          USD {paid.amount.toLocaleString()}
+                        </p>
+                        <p className="text-xs" style={{ color: colors.neutral500 }}>
+                          {paid.name} • {paid.type}
+                        </p>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                      <ChevronRight className="h-5 w-5" style={{ color: colors.neutral500 }} />
                     </div>
                   ))}
                 </div>
@@ -332,27 +439,51 @@ export default function EmployerDashboard() {
           </Card>
 
           {/* Cost Overview */}
-          <Card className="rounded-2xl shadow-sm">
-            <CardHeader>
+          <Card className="rounded-2xl" style={{ borderColor: colors.border }}>
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle>Cost overview</CardTitle>
-                <Button variant="outline" size="sm">
-                  Last 6 months
-                </Button>
+                <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
+                  Cost overview
+                </CardTitle>
+                <Link
+                  href="#"
+                  className="text-xs font-semibold flex items-center gap-0.5"
+                  style={{ color: colors.iconBlue }}
+                >
+                  Last 6 months <ChevronDown className="h-4 w-4" />
+                </Link>
               </div>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={costData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="cost" radius={[10, 10, 10, 10]} style={{ width: '100px' } as CSSProperties}>
-                        {costData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={costColors[index]} />
+            <CardContent className="pt-2">
+              <div className="flex items-center gap-2 mb-4">
+                <span
+                  className="text-[10px] font-medium tracking-widest uppercase -rotate-90 origin-center"
+                  style={{ color: colors.neutral400 }}
+                >
+                  Amount (in INR)
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={costData} barSize={15}>
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: colors.neutral500, fontSize: 12 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: colors.neutral500, fontSize: 12 }}
+                    tickFormatter={(value) => `${value}L`}
+                    domain={[0, 10]}
+                    ticks={[0, 2, 4, 6, 8, 10]}
+                  />
+                  <Bar dataKey="cost" radius={[12, 12, 12, 12]}>
+                    {costData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
-                    </Bar>
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -362,111 +493,209 @@ export default function EmployerDashboard() {
         {/* Right Column: Requests & Contracts */}
         <div className="space-y-6">
           {/* Requests */}
-          <Card className="rounded-2xl shadow-sm">
-            <Tabs value={activeRequestsTab} onValueChange={setActiveRequestsTab}>
-              <CardHeader className="pb-3">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="yours">Your requests (10)</TabsTrigger>
-                  <TabsTrigger value="approval">For your approval (6)</TabsTrigger>
-                </TabsList>
-              </CardHeader>
-              <CardContent>
-                <TabsContent value="approval" className="space-y-3 mt-0">
+          <Card className="rounded-2xl" style={{ borderColor: colors.border }}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-bold" style={{ color: colors.neutral700 }}>
+                Requests
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {/* Custom Tabs */}
+              <div className="flex gap-6 mb-4">
+                <button
+                  onClick={() => setActiveRequestsTab('yours')}
+                  className={`text-base font-semibold pb-2 border-b-2 transition-colors ${
+                    activeRequestsTab === 'yours'
+                      ? 'border-b-2'
+                      : 'border-transparent'
+                  }`}
+                  style={{
+                    color: activeRequestsTab === 'yours' ? colors.primary500 : colors.neutral400,
+                    borderColor: activeRequestsTab === 'yours' ? colors.primary500 : 'transparent',
+                  }}
+                >
+                  Your requests (10)
+                </button>
+                <button
+                  onClick={() => setActiveRequestsTab('approval')}
+                  className={`text-base font-semibold pb-2 border-b-2 transition-colors ${
+                    activeRequestsTab === 'approval'
+                      ? 'border-b-2'
+                      : 'border-transparent'
+                  }`}
+                  style={{
+                    color: activeRequestsTab === 'approval' ? colors.primary500 : colors.neutral400,
+                    borderColor: activeRequestsTab === 'approval' ? colors.primary500 : 'transparent',
+                  }}
+                >
+                  For your approval (6)
+                </button>
+              </div>
+
+              {/* Request Items */}
+              {activeRequestsTab === 'approval' && (
+                <div className="space-y-3">
                   {requestsForApproval.map((request) => (
                     <div
                       key={request.id}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:shadow-md transition"
+                      className="p-4 rounded-xl"
+                      style={{ backgroundColor: colors.neutral50 }}
                     >
-                      <div className="flex-1">
-                        <Badge className={`${request.typeColor} mb-2`}>
-                          {request.type}
-                        </Badge>
-                        <p className="text-sm font-medium text-gray-900">{request.label}</p>
-                        <p className="text-xs text-gray-600">{request.user}</p>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <span
+                            className="inline-block px-2 py-0.5 text-[10px] font-medium tracking-widest uppercase text-white rounded-full"
+                            style={{ backgroundColor: request.bgColor }}
+                          >
+                            {request.type}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <p className="text-sm font-semibold" style={{ color: colors.neutral800 }}>
+                              {request.label}
+                            </p>
+                            <ChevronRight className="h-4 w-4" style={{ color: colors.neutral600 }} />
+                          </div>
+                          <p className="text-xs" style={{ color: colors.neutral500 }}>
+                            {request.user} • {request.role}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs font-semibold px-3 py-2 h-8 rounded-lg"
+                          style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
+                        >
+                          Approve
+                        </Button>
                       </div>
-                      <Button size="sm" className="bg-violet-600 hover:bg-violet-700">
-                        Approve
-                      </Button>
                     </div>
                   ))}
-                </TabsContent>
-                <TabsContent value="yours" className="space-y-3 mt-0">
-                  <p className="text-sm text-gray-600 text-center py-4">No requests yet</p>
-                </TabsContent>
+                </div>
+              )}
 
-                <Button variant="outline" className="w-full mt-4 text-violet-600 border-violet-600">
-                  View all requests
-                </Button>
-              </CardContent>
-            </Tabs>
+              {activeRequestsTab === 'yours' && (
+                <div className="py-8 text-center">
+                  <p className="text-sm" style={{ color: colors.neutral500 }}>No requests yet</p>
+                </div>
+              )}
+
+              <Button
+                className="w-full mt-4 text-xs font-semibold"
+                style={{ backgroundColor: colors.primary50, color: colors.iconBlue }}
+              >
+                View all requests
+              </Button>
+            </CardContent>
           </Card>
 
           {/* Contract Summary */}
-          <Card className="rounded-2xl shadow-sm">
-            <CardHeader>
+          <Card className="rounded-2xl" style={{ borderColor: colors.border }}>
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle>Contract summary</CardTitle>
-                <Button variant="outline" size="sm">
-                  Last 6 months
-                </Button>
+                <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
+                  Contract summary
+                </CardTitle>
+                <Link
+                  href="#"
+                  className="text-xs font-semibold flex items-center gap-0.5"
+                  style={{ color: colors.iconBlue }}
+                >
+                  Last 6 months <ChevronDown className="h-4 w-4" />
+                </Link>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center mb-4">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={contractData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {contractData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="text-center mb-4">
-                <p className="text-3xl font-bold text-gray-900">50</p>
-                <p className="text-sm text-gray-600">Contracts rolled out</p>
-              </div>
-
-              <div className="flex justify-center gap-4 mb-4 text-sm">
-                {contractData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: item.fill }}
-                    ></div>
-                    <span className="text-gray-700">{item.name} ({item.value})</span>
+            <CardContent className="pt-0">
+              <div className="flex items-center gap-4 mb-4">
+                {/* Donut Chart */}
+                <div className="relative w-[110px] h-[110px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={contractData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={35}
+                        outerRadius={50}
+                        paddingAngle={3}
+                        cornerRadius={4}
+                        dataKey="value"
+                      >
+                        {contractData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <p className="text-2xl font-semibold" style={{ color: colors.neutral700 }}>50</p>
+                    <p className="text-[10px] text-center leading-tight" style={{ color: colors.neutral600 }}>
+                      Contracts<br />rolled out
+                    </p>
                   </div>
-                ))}
+                </div>
+
+                {/* Legend */}
+                <div className="flex gap-6">
+                  {contractData.map((item) => (
+                    <div key={item.name} className="flex flex-col items-start gap-1">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-1 h-7 rounded-full"
+                          style={{ backgroundColor: item.fill }}
+                        />
+                        <div>
+                          <p
+                            className="text-xs font-medium tracking-widest uppercase"
+                            style={{ color: colors.neutral700 }}
+                          >
+                            {item.value}
+                          </p>
+                          <p className="text-xs" style={{ color: colors.neutral500 }}>
+                            {item.name}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
+              {/* Recent Contracts */}
+              <div className="pt-4 border-t" style={{ borderColor: colors.border }}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-gray-900">RECENT CONTRACTS (8)</p>
-                  <Link href="/employer/contracts" className="text-xs text-violet-600 hover:underline">
-                    View all &gt;
+                  <p
+                    className="text-xs font-medium tracking-widest uppercase"
+                    style={{ color: colors.neutral500 }}
+                  >
+                    Recent contracts (8)
+                  </p>
+                  <Link
+                    href="/employer/contracts"
+                    className="text-xs font-semibold flex items-center gap-0.5"
+                    style={{ color: colors.iconBlue }}
+                  >
+                    View all <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="space-y-2">
-                  {recentContractsData.map((contract) => (
+                <div className="space-y-0">
+                  {recentContractsData.map((contract, index) => (
                     <div
                       key={contract.id}
-                      className="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
+                      className={`flex items-center justify-between py-3 ${index !== recentContractsData.length - 1 ? 'border-b' : ''}`}
+                      style={{ borderColor: colors.border }}
                     >
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{contract.name}</p>
-                        <p className="text-xs text-gray-600">{contract.role}</p>
+                        <div className="flex items-center gap-1">
+                          <p className="text-sm font-semibold" style={{ color: colors.neutral700 }}>
+                            {contract.name}
+                          </p>
+                          <ChevronRight className="h-3.5 w-3.5" style={{ color: colors.neutral500 }} />
+                        </div>
+                        <p className="text-xs" style={{ color: colors.neutral500 }}>
+                          {contract.role}
+                        </p>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                      <FileText className="h-5 w-5" style={{ color: colors.iconBlue }} />
                     </div>
                   ))}
                 </div>
@@ -479,52 +708,115 @@ export default function EmployerDashboard() {
       {/* ROW 3: Help & Support & Upcoming Holidays */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Help & Support */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="rounded-2xl shadow-sm cursor-pointer hover:shadow-md transition">
-            <CardContent className="p-6 flex flex-col items-center justify-center gap-4 h-full">
-              <div className="p-4 rounded-full bg-gray-100">
-                <MessageSquare className="h-8 w-8 text-gray-700" />
+        <Card className="rounded-2xl" style={{ borderColor: colors.border }}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold" style={{ color: colors.neutral700 }}>
+              Help & Support
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div
+                className="p-4 rounded-lg cursor-pointer hover:opacity-90 transition"
+                style={{ backgroundColor: colors.neutral50 }}
+              >
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center mb-3"
+                  style={{ backgroundColor: 'transparent' }}
+                >
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect width="48" height="48" rx="8" fill={colors.neutral50} />
+                    <path
+                      d="M24 14C18.48 14 14 18.48 14 24C14 29.52 18.48 34 24 34C29.52 34 34 29.52 34 24C34 18.48 29.52 14 24 14ZM25 31H23V29H25V31ZM27.07 23.25L26.17 24.17C25.45 24.9 25 25.5 25 27H23V26.5C23 25.4 23.45 24.4 24.17 23.67L25.41 22.41C25.78 22.05 26 21.55 26 21C26 19.9 25.1 19 24 19C22.9 19 22 19.9 22 21H20C20 18.79 21.79 17 24 17C26.21 17 28 18.79 28 21C28 21.88 27.64 22.68 27.07 23.25Z"
+                      fill={colors.neutral500}
+                    />
+                  </svg>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold" style={{ color: colors.neutral600 }}>
+                    Knowledge repository
+                  </p>
+                  <ChevronRight className="h-5 w-5" style={{ color: colors.neutral500 }} />
+                </div>
               </div>
-              <p className="font-medium text-gray-900 text-center">Knowledge repository</p>
-              <ArrowRight className="h-5 w-5 text-violet-600" />
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl shadow-sm cursor-pointer hover:shadow-md transition">
-            <CardContent className="p-6 flex flex-col items-center justify-center gap-4 h-full">
-              <div className="p-4 rounded-full bg-gray-100">
-                <MessageSquare className="h-8 w-8 text-gray-700" />
+              <div
+                className="p-4 rounded-lg cursor-pointer hover:opacity-90 transition"
+                style={{ backgroundColor: colors.neutral50 }}
+              >
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center mb-3"
+                  style={{ backgroundColor: 'transparent' }}
+                >
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect width="48" height="48" rx="8" fill={colors.neutral50} />
+                    <path
+                      d="M24 14C18.48 14 14 18.48 14 24C14 29.52 18.48 34 24 34C29.52 34 34 29.52 34 24C34 18.48 29.52 14 24 14ZM25 31H23V29H25V31ZM27.07 23.25L26.17 24.17C25.45 24.9 25 25.5 25 27H23V26.5C23 25.4 23.45 24.4 24.17 23.67L25.41 22.41C25.78 22.05 26 21.55 26 21C26 19.9 25.1 19 24 19C22.9 19 22 19.9 22 21H20C20 18.79 21.79 17 24 17C26.21 17 28 18.79 28 21C28 21.88 27.64 22.68 27.07 23.25Z"
+                      fill={colors.neutral500}
+                    />
+                  </svg>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold" style={{ color: colors.neutral600 }}>
+                    Live chat
+                  </p>
+                  <ChevronRight className="h-5 w-5" style={{ color: colors.neutral500 }} />
+                </div>
               </div>
-              <p className="font-medium text-gray-900 text-center">Live chat</p>
-              <ArrowRight className="h-5 w-5 text-violet-600" />
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <p className="text-xs" style={{ color: colors.neutral500 }}>
+              For any further assistance, please reach out to us via{' '}
+              <a href="mailto:support@rapid.one" style={{ color: colors.iconBlue }}>
+                support@rapid.one
+              </a>
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Upcoming Holidays */}
-        <div className="grid grid-cols-2 gap-4">
-          {holidaysData.map((holiday) => (
-            <Card
-              key={holiday.id}
-              className="rounded-2xl shadow-sm bg-teal-50 border-teal-100"
+        <Card className="rounded-2xl" style={{ borderColor: colors.border }}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
+              Upcoming holidays
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              {holidaysData.map((holiday) => (
+                <div
+                  key={holiday.id}
+                  className="p-4 rounded-lg"
+                  style={{ backgroundColor: colors.success50 }}
+                >
+                  <p className="text-sm font-medium" style={{ color: colors.neutral700 }}>
+                    {holiday.date}
+                  </p>
+                  <p
+                    className="text-xs font-medium tracking-widest uppercase mt-1"
+                    style={{ color: colors.neutral500 }}
+                  >
+                    {holiday.name}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/employer/holidays"
+              className="text-xs font-semibold flex items-center gap-0.5"
+              style={{ color: colors.iconBlue }}
             >
-              <CardContent className="p-6">
-                <p className="text-sm text-teal-700 font-medium">{holiday.date}</p>
-                <p className="text-lg font-bold text-teal-900 mt-2">{holiday.name}</p>
-              </CardContent>
-            </Card>
-          ))}
-          <div className="col-span-2">
-            <Link href="/employer/holidays" className="text-sm text-violet-600 hover:underline">
-              View holiday calendar &gt;
+              View holiday calendar <ChevronRight className="h-4 w-4" />
             </Link>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Floating Chat Button */}
       <div className="fixed bottom-8 right-8 z-40">
-        <button className="w-14 h-14 rounded-full bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center shadow-lg hover:shadow-xl transition">
-          <MessageSquare className="h-6 w-6" />
+        <button
+          className="w-[70px] h-[70px] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition"
+          style={{ backgroundColor: colors.primary500 }}
+        >
+          <MessageSquare className="h-7 w-7" style={{ color: colors.primary50 }} />
         </button>
       </div>
     </div>

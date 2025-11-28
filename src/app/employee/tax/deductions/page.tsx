@@ -73,7 +73,7 @@ const DEDUCTION_CATEGORIES = {
 
 export default function TaxDeductionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showCalculation, setShowCalculation] = useState(false)
+  const [_showCalculation, setShowCalculation] = useState(false)
 
   const {
     register,
@@ -108,7 +108,7 @@ export default function TaxDeductionsPage() {
   const totalDeductions = hraAmount + medicalPremium + totalAdditionalDeductions
   const estimatedTaxSavings = Math.round(totalDeductions * 0.3) // Approximate 30% tax slab
 
-  const onSubmit = async (data: TaxDeductionsFormData) => {
+  const onSubmit = async (_data: TaxDeductionsFormData) => {
     try {
       setIsSubmitting(true)
       await new Promise((resolve) => setTimeout(resolve, 500))

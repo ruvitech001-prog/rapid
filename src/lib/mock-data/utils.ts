@@ -3,14 +3,16 @@
  * Helper functions for generating mock data
  */
 
-import { v4 as uuidv4 } from "crypto"
-
 export function generateId(): string {
-  return uuidv4()
+  return crypto.randomUUID()
 }
 
 export function getRandomElement<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)]
+  const element = array[Math.floor(Math.random() * array.length)]
+  if (element === undefined) {
+    throw new Error('Array is empty')
+  }
+  return element
 }
 
 export function getRandomNumber(min: number, max: number): number {
@@ -22,7 +24,11 @@ export function getRandomBoolean(): boolean {
 }
 
 export function getRandomEnum<T extends readonly string[]>(values: T): T[number] {
-  return values[Math.floor(Math.random() * values.length)]
+  const value = values[Math.floor(Math.random() * values.length)]
+  if (value === undefined) {
+    throw new Error('Array is empty')
+  }
+  return value
 }
 
 export function addDays(date: Date, days: number): Date {
@@ -36,7 +42,7 @@ export function subtractDays(date: Date, days: number): Date {
 }
 
 export function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0]
+  return date.toISOString().split("T")[0] || ''
 }
 
 export function getFirstDayOfMonth(date: Date): Date {
@@ -140,15 +146,61 @@ export const DEPARTMENTS = [
 ]
 
 export const REQUEST_TYPES = [
-  "equipment",
-  "gift",
-  "salary_amendment",
-  "promotion",
+  "expense_claim",
+  "send_gifts",
+  "purchase_equipment",
+  "collect_equipment",
   "termination",
-  "resignation",
-  "probation_extension",
+  "cancellation_of_hiring",
+  "extension_of_probation",
+  "confirmation_of_probation",
+  "incentive_payment",
   "office_space",
+  "contract_amendment",
 ]
+
+export const INDIAN_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi",
+]
+
+export const INDIAN_CITIES = {
+  "Karnataka": ["Bangalore", "Mysore", "Hubli", "Mangalore"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
+  "Delhi": ["New Delhi", "Dwarka", "Rohini", "Saket"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Salem"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Kota"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+  "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
+}
 
 export const LEAVE_TYPES = [
   "casual",
