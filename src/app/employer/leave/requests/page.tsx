@@ -1,97 +1,146 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Clock, CheckCircle, XCircle, Calendar, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react'
+import { Clock, CheckCircle, XCircle, Calendar, X, Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  useLeaveRequests,
+  usePendingLeaveCount,
+  useApproveLeave,
+  useRejectLeave,
+} from '@/lib/hooks'
+import { useAuth } from '@/lib/auth'
 
-interface LeaveRequest {
-  id: string;
-  employeeName: string;
-  employeeId: string;
-  leaveType: string;
-  startDate: string;
-  endDate: string;
-  days: number;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected';
-  appliedOn: string;
+type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected'
+
+interface LeaveRequestDisplay {
+  id: string
+  employeeName: string
+  employeeCode: string
+  leaveType: string
+  startDate: string
+  endDate: string
+  totalDays: number
+  reason: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: string
 }
 
 export default function LeaveRequestsPage() {
-  const [requests, setRequests] = useState<LeaveRequest[]>([
-    {
-      id: '1',
-      employeeName: 'John Doe',
-      employeeId: 'EMP001',
-      leaveType: 'Casual Leave',
-      startDate: '2024-03-15',
-      endDate: '2024-03-17',
-      days: 3,
-      reason: 'Family function',
-      status: 'pending',
-      appliedOn: '2024-03-01',
-    },
-    {
-      id: '2',
-      employeeName: 'Sarah Smith',
-      employeeId: 'EMP002',
-      leaveType: 'Sick Leave',
-      startDate: '2024-03-10',
-      endDate: '2024-03-11',
-      days: 2,
-      reason: 'Medical appointment',
-      status: 'pending',
-      appliedOn: '2024-03-02',
-    },
-    {
-      id: '3',
-      employeeName: 'Mike Johnson',
-      employeeId: 'EMP003',
-      leaveType: 'Earned Leave',
-      startDate: '2024-03-20',
-      endDate: '2024-03-22',
-      days: 3,
-      reason: 'Personal work',
-      status: 'pending',
-      appliedOn: '2024-03-03',
-    },
-    {
-      id: '4',
-      employeeName: 'Alice Brown',
-      employeeId: 'EMP004',
-      leaveType: 'Casual Leave',
-      startDate: '2024-02-28',
-      endDate: '2024-02-29',
-      days: 2,
-      reason: 'Vacation',
-      status: 'approved',
-      appliedOn: '2024-02-20',
-    },
-  ]);
+  const { user } = useAuth()
+  const companyId = user?.companyId || undefined
+  const employerId = user?.id || ''
 
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRequestDisplay | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [showRejectModal, setShowRejectModal] = useState(false)
 
-  const handleApprove = (requestId: string) => {
-    setRequests(requests.map(req =>
-      req.id === requestId ? { ...req, status: 'approved' } : req
-    ));
-    setSelectedRequest(null);
-  };
+  // Fetch leave requests
+  const { data: leaveRequestsData = [], isLoading } = useLeaveRequests(companyId)
+  const { data: pendingCount = 0 } = usePendingLeaveCount(companyId)
 
-  const handleReject = (requestId: string) => {
-    setRequests(requests.map(req =>
-      req.id === requestId ? { ...req, status: 'rejected' } : req
-    ));
-    setSelectedRequest(null);
-  };
+  // Mutations
+  const approveMutation = useApproveLeave()
+  const rejectMutation = useRejectLeave()
 
-  const filteredRequests = filterStatus === 'all'
-    ? requests
-    : requests.filter(req => req.status === filterStatus);
+  // Transform data for display
+  const requests: LeaveRequestDisplay[] = leaveRequestsData.map((req) => ({
+    id: req.id,
+    employeeName: req.employeeName,
+    employeeCode: req.employeeCode,
+    leaveType: req.leave_type,
+    startDate: req.start_date,
+    endDate: req.end_date,
+    totalDays: Number(req.total_days) || 0,
+    reason: req.reason,
+    status: req.status as 'pending' | 'approved' | 'rejected',
+    createdAt: req.created_at || '',
+  }))
 
-  const pendingCount = requests.filter(req => req.status === 'pending').length;
+  // Calculate stats
+  const approvedToday = requests.filter(
+    (req) =>
+      req.status === 'approved' &&
+      new Date(req.createdAt).toDateString() === new Date().toDateString()
+  ).length
+
+  const rejectedToday = requests.filter(
+    (req) =>
+      req.status === 'rejected' &&
+      new Date(req.createdAt).toDateString() === new Date().toDateString()
+  ).length
+
+  const thisMonth = requests.filter((req) => {
+    const date = new Date(req.createdAt)
+    const now = new Date()
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
+  }).length
+
+  // Filter requests
+  const filteredRequests =
+    filterStatus === 'all' ? requests : requests.filter((req) => req.status === filterStatus)
+
+  const handleApprove = async (requestId: string) => {
+    try {
+      await approveMutation.mutateAsync({
+        requestId,
+        approverId: employerId,
+      })
+      setSelectedRequest(null)
+    } catch (error) {
+      console.error('Failed to approve leave:', error)
+    }
+  }
+
+  const handleReject = async (requestId: string) => {
+    if (!rejectReason.trim()) {
+      alert('Please provide a reason for rejection')
+      return
+    }
+    try {
+      await rejectMutation.mutateAsync({
+        requestId,
+        approverId: employerId,
+        reason: rejectReason,
+      })
+      setSelectedRequest(null)
+      setShowRejectModal(false)
+      setRejectReason('')
+    } catch (error) {
+      console.error('Failed to reject leave:', error)
+    }
+  }
+
+  const openRejectModal = (request: LeaveRequestDisplay) => {
+    setSelectedRequest(request)
+    setShowRejectModal(true)
+  }
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  const formatFullDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -109,7 +158,9 @@ export default function LeaveRequestsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PENDING REQUESTS</p>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  PENDING REQUESTS
+                </p>
                 <p className="text-3xl font-bold text-[#CC7A00] mt-2">{pendingCount}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
@@ -123,8 +174,10 @@ export default function LeaveRequestsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">APPROVED TODAY</p>
-                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">3</p>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  APPROVED TODAY
+                </p>
+                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">{approvedToday}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
                 <CheckCircle className="h-6 w-6 text-[#2DD4BF]" />
@@ -137,8 +190,10 @@ export default function LeaveRequestsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">REJECTED TODAY</p>
-                <p className="text-3xl font-bold text-[#FF7373] mt-2">1</p>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  REJECTED TODAY
+                </p>
+                <p className="text-3xl font-bold text-[#FF7373] mt-2">{rejectedToday}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
                 <XCircle className="h-6 w-6 text-[#FF7373]" />
@@ -151,8 +206,10 @@ export default function LeaveRequestsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL THIS MONTH</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">47</p>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  TOTAL THIS MONTH
+                </p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{thisMonth}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center">
                 <Calendar className="h-6 w-6 text-[#586AF5]" />
@@ -166,13 +223,15 @@ export default function LeaveRequestsPage() {
       <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
         <CardContent className="p-5">
           <div className="flex items-center gap-4">
-            <span className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FILTER BY STATUS:</span>
+            <span className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+              FILTER BY STATUS:
+            </span>
             <div className="flex gap-2">
               {[
-                { key: 'all', label: 'All', color: '#586AF5' },
-                { key: 'pending', label: 'Pending', color: '#CC7A00' },
-                { key: 'approved', label: 'Approved', color: '#2DD4BF' },
-                { key: 'rejected', label: 'Rejected', color: '#FF7373' },
+                { key: 'all' as FilterStatus, label: 'All', color: '#586AF5' },
+                { key: 'pending' as FilterStatus, label: 'Pending', color: '#CC7A00' },
+                { key: 'approved' as FilterStatus, label: 'Approved', color: '#2DD4BF' },
+                { key: 'rejected' as FilterStatus, label: 'Rejected', color: '#FF7373' },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -195,20 +254,34 @@ export default function LeaveRequestsPage() {
       {/* Requests List */}
       <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
         <CardHeader className="pb-0">
-          <CardTitle className="text-gray-900">Leave Requests</CardTitle>
+          <CardTitle className="text-gray-900">Leave Requests ({filteredRequests.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">EMPLOYEE</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">LEAVE TYPE</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DURATION</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DAYS</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">APPLIED ON</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTIONS</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                    EMPLOYEE
+                  </th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                    LEAVE TYPE
+                  </th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                    DURATION
+                  </th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                    DAYS
+                  </th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                    APPLIED ON
+                  </th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                    STATUS
+                  </th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                    ACTIONS
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#DEE4EB]">
@@ -216,8 +289,10 @@ export default function LeaveRequestsPage() {
                   <tr key={request.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{request.employeeName}</div>
-                        <div className="text-sm text-[#8593A3]">{request.employeeId}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {request.employeeName}
+                        </div>
+                        <div className="text-sm text-[#8593A3]">{request.employeeCode}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -225,24 +300,29 @@ export default function LeaveRequestsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {new Date(request.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} -{' '}
-                        {new Date(request.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                        {formatDate(request.startDate)} - {formatDate(request.endDate)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{request.days} days</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {request.totalDays} {request.totalDays === 1 ? 'day' : 'days'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-[#8593A3]">
-                        {new Date(request.appliedOn).toLocaleDateString('en-IN')}
+                        {formatFullDate(request.createdAt)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
-                        request.status === 'pending' ? 'bg-[#CC7A00]/10 text-[#CC7A00]' :
-                        request.status === 'approved' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' :
-                        'bg-[#FF7373]/10 text-[#FF7373]'
-                      }`}>
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+                          request.status === 'pending'
+                            ? 'bg-[#CC7A00]/10 text-[#CC7A00]'
+                            : request.status === 'approved'
+                              ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
+                              : 'bg-[#FF7373]/10 text-[#FF7373]'
+                        }`}
+                      >
                         {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </span>
                     </td>
@@ -258,13 +338,15 @@ export default function LeaveRequestsPage() {
                           <>
                             <button
                               onClick={() => handleApprove(request.id)}
-                              className="text-[#2DD4BF] hover:underline font-medium"
+                              disabled={approveMutation.isPending}
+                              className="text-[#2DD4BF] hover:underline font-medium disabled:opacity-50"
                             >
-                              Approve
+                              {approveMutation.isPending ? 'Approving...' : 'Approve'}
                             </button>
                             <button
-                              onClick={() => handleReject(request.id)}
-                              className="text-[#FF7373] hover:underline font-medium"
+                              onClick={() => openRejectModal(request)}
+                              disabled={rejectMutation.isPending}
+                              className="text-[#FF7373] hover:underline font-medium disabled:opacity-50"
                             >
                               Reject
                             </button>
@@ -286,7 +368,7 @@ export default function LeaveRequestsPage() {
       </Card>
 
       {/* Detail Modal */}
-      {selectedRequest && (
+      {selectedRequest && !showRejectModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
@@ -302,54 +384,79 @@ export default function LeaveRequestsPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">EMPLOYEE NAME</p>
-                  <p className="text-base font-medium text-gray-900">{selectedRequest.employeeName}</p>
-                </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">EMPLOYEE ID</p>
-                  <p className="text-base font-medium text-gray-900">{selectedRequest.employeeId}</p>
-                </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">LEAVE TYPE</p>
-                  <p className="text-base font-medium text-gray-900">{selectedRequest.leaveType}</p>
-                </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">DURATION</p>
-                  <p className="text-base font-medium text-gray-900">{selectedRequest.days} days</p>
-                </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">START DATE</p>
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                    EMPLOYEE NAME
+                  </p>
                   <p className="text-base font-medium text-gray-900">
-                    {new Date(selectedRequest.startDate).toLocaleDateString('en-IN')}
+                    {selectedRequest.employeeName}
                   </p>
                 </div>
                 <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">END DATE</p>
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                    EMPLOYEE ID
+                  </p>
                   <p className="text-base font-medium text-gray-900">
-                    {new Date(selectedRequest.endDate).toLocaleDateString('en-IN')}
+                    {selectedRequest.employeeCode}
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                    LEAVE TYPE
+                  </p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedRequest.leaveType}
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                    DURATION
+                  </p>
+                  <p className="text-base font-medium text-gray-900">
+                    {selectedRequest.totalDays} {selectedRequest.totalDays === 1 ? 'day' : 'days'}
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                    START DATE
+                  </p>
+                  <p className="text-base font-medium text-gray-900">
+                    {formatFullDate(selectedRequest.startDate)}
+                  </p>
+                </div>
+                <div className="p-4 bg-[#F4F7FA] rounded-xl">
+                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                    END DATE
+                  </p>
+                  <p className="text-base font-medium text-gray-900">
+                    {formatFullDate(selectedRequest.endDate)}
                   </p>
                 </div>
               </div>
 
               <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">REASON</p>
-                <p className="text-base text-gray-900">{selectedRequest.reason}</p>
+                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">
+                  REASON
+                </p>
+                <p className="text-base text-gray-900">
+                  {selectedRequest.reason || 'No reason provided'}
+                </p>
               </div>
 
               {selectedRequest.status === 'pending' && (
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
                     variant="outline"
-                    onClick={() => handleReject(selectedRequest.id)}
+                    onClick={() => openRejectModal(selectedRequest)}
                     className="border-[#FF7373] text-[#FF7373] hover:bg-[#FF7373]/10"
                   >
                     Reject
                   </Button>
                   <Button
                     onClick={() => handleApprove(selectedRequest.id)}
+                    disabled={approveMutation.isPending}
                     className="bg-[#2DD4BF] hover:bg-[#2DD4BF]/90 text-white"
                   >
-                    Approve
+                    {approveMutation.isPending ? 'Approving...' : 'Approve'}
                   </Button>
                 </div>
               )}
@@ -357,6 +464,71 @@ export default function LeaveRequestsPage() {
           </div>
         </div>
       )}
+
+      {/* Reject Modal */}
+      {showRejectModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Reject Leave Request</h2>
+              <button
+                onClick={() => {
+                  setShowRejectModal(false)
+                  setRejectReason('')
+                }}
+                className="w-8 h-8 rounded-lg bg-[#F4F7FA] hover:bg-[#DEE4EB] flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5 text-[#8593A3]" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-[#8593A3] mb-2">
+                  Rejecting leave request for{' '}
+                  <span className="font-medium text-gray-900">{selectedRequest.employeeName}</span>
+                </p>
+                <p className="text-sm text-[#8593A3]">
+                  {selectedRequest.leaveType} | {formatDate(selectedRequest.startDate)} -{' '}
+                  {formatDate(selectedRequest.endDate)}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">
+                  REJECTION REASON *
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Please provide a reason for rejection..."
+                  rows={4}
+                  className="w-full px-4 py-3 border border-[#DEE4EB] rounded-xl text-sm focus:outline-none focus:border-[#586AF5] resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowRejectModal(false)
+                    setRejectReason('')
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleReject(selectedRequest.id)}
+                  disabled={rejectMutation.isPending || !rejectReason.trim()}
+                  className="bg-[#FF7373] hover:bg-[#FF7373]/90 text-white"
+                >
+                  {rejectMutation.isPending ? 'Rejecting...' : 'Reject Request'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 }

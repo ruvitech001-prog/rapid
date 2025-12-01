@@ -425,12 +425,13 @@ export default function AccessControlPage() {
                     render={({ field }) => (
                       <Checkbox
                         id={permission.id}
-                        checked={field.value.includes(permission.id)}
+                        checked={(field.value || []).includes(permission.id)}
                         onCheckedChange={(checked) => {
+                          const currentValue = field.value || []
                           if (checked) {
-                            field.onChange([...field.value, permission.id])
+                            field.onChange([...currentValue, permission.id])
                           } else {
-                            field.onChange(field.value.filter(p => p !== permission.id))
+                            field.onChange(currentValue.filter(p => p !== permission.id))
                           }
                         }}
                       />

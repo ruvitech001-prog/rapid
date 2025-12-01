@@ -3,36 +3,43 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Info } from 'lucide-react';
 import { AuthLayout } from '@/components/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth, DEMO_USERS } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userType = searchParams.get('type') || 'employer';
+  const { login, isAuthenticated } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDemoInfo, setShowDemoInfo] = useState(true);
 
-  const dashboardPaths: Record<string, string> = {
-    employer: '/employer/dashboard',
-    employee: '/employee/dashboard',
-    contractor: '/contractor/dashboard',
-    super_admin: '/super-admin/dashboard',
-  };
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    const dashboardPaths: Record<string, string> = {
+      employer: '/employer/dashboard',
+      employee: '/employee/dashboard',
+      contractor: '/contractor/dashboard',
+      super_admin: '/superadmin/dashboard',
+    };
+    router.push(dashboardPaths[userType] || '/employer/dashboard');
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Mock validation
+    // Validation
     if (!email || !password) {
       setError('Please fill in all fields');
       setLoading(false);
@@ -45,18 +52,34 @@ export default function LoginPage() {
       return;
     }
 
-    // Mock login - simulate API call
-    setTimeout(() => {
-      router.push(dashboardPaths[userType] || '/employer/dashboard');
-    }, 1000);
+    // Use auth context login
+    const result = await login(email, password);
+
+    if (result.success && result.redirectTo) {
+      router.push(result.redirectTo);
+    } else {
+      setError(result.error || 'Login failed');
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (role: 'employer' | 'employee' | 'contractor' | 'superadmin') => {
+    setLoading(true);
+    setError('');
+    const demoUser = DEMO_USERS[role];
+    const result = await login(demoUser.email, 'demo');
+
+    if (result.success && result.redirectTo) {
+      router.push(result.redirectTo);
+    } else {
+      setError(result.error || 'Login failed');
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignIn = () => {
-    // Mock Google sign-in
-    setLoading(true);
-    setTimeout(() => {
-      router.push(dashboardPaths[userType] || '/employer/dashboard');
-    }, 1000);
+    // Mock Google sign-in - use employer demo account
+    handleDemoLogin('employer');
   };
 
   return (
@@ -72,6 +95,74 @@ export default function LoginPage() {
           </a>
         </p>
       </div>
+
+      {/* Demo Credentials Info */}
+      {showDemoInfo && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-2">
+              <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-800 mb-2">Quick Demo Login</p>
+                <div className="space-y-1 text-blue-700">
+                  <p><strong>Employer:</strong> demo@rapidone.com</p>
+                  <p><strong>Employee:</strong> aarav@rapidone.com (Aarav Sharma)</p>
+                  <p><strong>Contractor:</strong> amit@rapidone.com (Amit Kapoor)</p>
+                  <p className="text-blue-600 mt-2">Password: any value or use buttons below</p>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowDemoInfo(false)}
+              className="text-blue-400 hover:text-blue-600"
+            >
+              &times;
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handleDemoLogin('employer')}
+              disabled={loading}
+              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              Login as Employer
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handleDemoLogin('employee')}
+              disabled={loading}
+              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              Login as Employee
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handleDemoLogin('contractor')}
+              disabled={loading}
+              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              Login as Contractor
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handleDemoLogin('superadmin')}
+              disabled={loading}
+              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              Login as Admin
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -138,7 +229,7 @@ export default function LoginPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-12 bg-gray-400 hover:bg-gray-500 text-white font-medium"
+          className="w-full h-12 bg-[#586AF5] hover:bg-[#4858D9] text-white font-medium"
         >
           {loading ? (
             <>

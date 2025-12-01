@@ -1,234 +1,306 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Plus, Trash2, Edit2, Gift, Heart, Briefcase, GraduationCap, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
-interface Perk {
-  id: number;
-  name: string;
-  description: string;
-  category: 'Health' | 'Work-Life' | 'Financial' | 'Learning';
-  active: boolean;
-  enrolledCount: number;
+// Toggle switch component
+function ToggleSwitch({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors ${
+        enabled ? 'bg-[#642DFC]' : 'bg-[#DEE4EB]'
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform ${
+          enabled ? 'translate-x-[18px]' : 'translate-x-[2px]'
+        }`}
+      />
+    </button>
+  )
 }
 
 export default function PerksPage() {
-  const [perks] = useState<Perk[]>([
-    { id: 1, name: 'Health Insurance', description: 'Comprehensive health coverage for employees and families', category: 'Health', active: true, enrolledCount: 145 },
-    { id: 2, name: 'Flexible Working Hours', description: 'Work from home and flexible scheduling options', category: 'Work-Life', active: true, enrolledCount: 120 },
-    { id: 3, name: 'Annual Bonus', description: 'Performance-based annual bonus up to 20% of CTC', category: 'Financial', active: true, enrolledCount: 150 },
-    { id: 4, name: 'Paid Time Off', description: '20 days paid leave per year plus public holidays', category: 'Work-Life', active: true, enrolledCount: 150 },
-    { id: 5, name: 'Professional Development', description: 'Training and certification support up to ₹50,000/year', category: 'Learning', active: true, enrolledCount: 85 },
-    { id: 6, name: 'Gym Membership', description: 'Free gym membership at partner fitness centers', category: 'Health', active: true, enrolledCount: 78 },
-  ]);
-
-  const [showModal, setShowModal] = useState(false);
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'Health':
-        return Heart;
-      case 'Work-Life':
-        return Briefcase;
-      case 'Financial':
-        return Gift;
-      case 'Learning':
-        return GraduationCap;
-      default:
-        return Gift;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Health':
-        return { bg: 'bg-[#FF7373]/10', text: 'text-[#FF7373]' };
-      case 'Work-Life':
-        return { bg: 'bg-[#586AF5]/10', text: 'text-[#586AF5]' };
-      case 'Financial':
-        return { bg: 'bg-[#2DD4BF]/10', text: 'text-[#2DD4BF]' };
-      case 'Learning':
-        return { bg: 'bg-[#CC7A00]/10', text: 'text-[#CC7A00]' };
-      default:
-        return { bg: 'bg-[#8593A3]/10', text: 'text-[#8593A3]' };
-    }
-  };
-
-  const healthPerks = perks.filter(p => p.category === 'Health').length;
-  const financialPerks = perks.filter(p => p.category === 'Financial').length;
-  const activePerks = perks.filter(p => p.active).length;
+  const [healthPolicyEnabled, setHealthPolicyEnabled] = useState(true)
+  const [currentPlan] = useState<'pro' | 'power' | 'premium'>('pro')
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header Row */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Perks & Benefits</h1>
-          <p className="text-[#8593A3] mt-1">Manage employee benefits and perks programs</p>
+        {/* Title */}
+        <h1 className="font-semibold text-[24px] text-[#353B41] leading-none">
+          Perks &amp; Benefits
+        </h1>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-4">
+          {/* Create Request Button */}
+          <button className="flex items-center gap-2 px-4 py-3 border border-[#586AF5] rounded-lg bg-white hover:bg-[#F4F7FA] transition-colors">
+            <span className="font-semibold text-[12px] text-[#586AF5] tracking-[0.75px]">+ Create request</span>
+            <ChevronDown className="w-4 h-4 text-[#586AF5]" />
+          </button>
+
+          {/* Hire Another Button */}
+          <button className="flex items-center gap-2 px-4 py-3 bg-[#642DFC] rounded-lg hover:bg-[#5620e0] transition-colors min-w-[139px] justify-center">
+            <span className="font-semibold text-[12px] text-white tracking-[0.75px]">Hire another</span>
+          </button>
+
+          {/* Notification Bell */}
+          <button className="flex items-center justify-center w-10 h-10 border border-[#EFF2F5] rounded-lg bg-white hover:bg-[#F4F7FA] transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="#8593A3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="#8593A3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         </div>
-        <Button onClick={() => setShowModal(true)} className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]">
-          <Plus className="h-4 w-4" />
-          Add Perk
-        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL PERKS</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{perks.length}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
-                <Gift className="h-6 w-6 text-[#586AF5]" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTIVE PERKS</p>
-                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">{activePerks}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
-                <Briefcase className="h-6 w-6 text-[#2DD4BF]" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">HEALTH BENEFITS</p>
-                <p className="text-3xl font-bold text-[#FF7373] mt-2">{healthPerks}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
-                <Heart className="h-6 w-6 text-[#FF7373]" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FINANCIAL BENEFITS</p>
-                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{financialPerks}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
-                <Gift className="h-6 w-6 text-[#CC7A00]" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Health Insurance Section */}
+      <div className="space-y-2">
+        <h2 className="font-semibold text-[20px] text-[#353B41] tracking-[0.15px]">
+          Health insurance
+        </h2>
+        <p className="text-[12px] text-[#6A7682] tracking-[0.25px]">
+          One line about this
+        </p>
       </div>
 
-      {/* Perks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {perks.map((perk) => {
-          const Icon = getCategoryIcon(perk.category);
-          const colors = getCategoryColor(perk.category);
-          return (
-            <Card key={perk.id} className="rounded-2xl border border-[#DEE4EB] shadow-none hover:border-[#586AF5] transition-all">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center`}>
-                    <Icon className={`h-6 w-6 ${colors.text}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-base font-semibold text-gray-900">{perk.name}</h3>
-                      {perk.active && (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-[#2DD4BF]/10 text-[#2DD4BF]">
-                          Active
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-[#8593A3] mb-3">{perk.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text}`}>
-                        {perk.category}
-                      </span>
-                      <span className="text-sm text-[#8593A3]">{perk.enrolledCount} enrolled</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-4 pt-4 border-t border-[#DEE4EB]">
-                  <Button variant="outline" className="flex-1 gap-2 border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]">
-                    <Edit2 className="h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" className="flex-1 gap-2 border-[#FF7373]/20 text-[#FF7373] hover:bg-[#FF7373]/10">
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Add Perk Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md rounded-2xl border border-[#DEE4EB] shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-gray-900">Add New Perk</CardTitle>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#F4F7FA] rounded-lg">
-                <X className="h-4 w-4" />
-              </button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PERK NAME *</Label>
-                <Input
-                  type="text"
-                  placeholder="Enter perk name"
-                  className="h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">DESCRIPTION *</Label>
-                <textarea
-                  placeholder="Enter perk description"
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">CATEGORY *</Label>
-                <select className="w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none">
-                  <option value="Health">Health</option>
-                  <option value="Work-Life">Work-Life Balance</option>
-                  <option value="Financial">Financial</option>
-                  <option value="Learning">Learning & Development</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => setShowModal(false)} className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]">
-                  Cancel
-                </Button>
-                <Button className="bg-[#642DFC] hover:bg-[#5020d9]">
-                  Add Perk
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Toggle Row */}
+      <div className="flex items-center justify-between py-2">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2">
+            <span className="text-[16px] text-[#505862] tracking-[0.5px]">
+              Health policy for the entire team
+            </span>
+            <span className="text-[12px] text-[#6A7682] tracking-[0.25px]">
+              Applying standard insurance policy by Rapid
+            </span>
+          </div>
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <ToggleSwitch enabled={healthPolicyEnabled} onToggle={() => setHealthPolicyEnabled(!healthPolicyEnabled)} />
+          <ChevronRight className="w-6 h-6 text-[#8593A3]" />
+        </div>
+      </div>
+
+      {/* Health Care Plan Comparison Table */}
+      <div className="border border-[#DEE4EB] rounded-xl overflow-hidden">
+        {/* Table Header */}
+        <div className="grid grid-cols-4">
+          {/* Coverage Header */}
+          <div className="p-4 bg-white border-r border-[#DEE4EB]">
+            <span className="font-semibold text-[16px] text-[#353B41] tracking-[0.15px]">
+              Coverage
+            </span>
+          </div>
+          {/* Pro Header */}
+          <div className="p-4 bg-[#EFF2F5] border-r border-[#DEE4EB] text-center">
+            <span className="font-semibold text-[16px] text-[#353B41] tracking-[0.15px]">
+              Pro
+            </span>
+          </div>
+          {/* Power Header */}
+          <div className="p-4 bg-[#EFF2F5] border-r border-[#DEE4EB] text-center">
+            <span className="font-semibold text-[16px] text-[#353B41] tracking-[0.15px]">
+              Power
+            </span>
+          </div>
+          {/* Premium Header */}
+          <div className="p-4 bg-[#EFF2F5] text-center">
+            <span className="font-semibold text-[16px] text-[#353B41] tracking-[0.15px]">
+              Premium
+            </span>
+          </div>
+        </div>
+
+        {/* Health Insurance Sum Assured Row */}
+        <div className="grid grid-cols-4 border-t border-[#DEE4EB]">
+          <div className="p-4 border-r border-[#DEE4EB]">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              Health Insurance (Sum Assured)
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 500,000
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 1,000,000
+            </span>
+          </div>
+          <div className="p-4 text-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 2,000,000
+            </span>
+          </div>
+        </div>
+
+        {/* Family Row */}
+        <div className="grid grid-cols-4 border-t border-[#DEE4EB]">
+          <div className="p-4 border-r border-[#DEE4EB]">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              Family
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              Employee only
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center">
+            <div className="font-medium text-[14px] text-[#505862] tracking-[0.25px] leading-4">
+              <p>Employee</p>
+              <p>+</p>
+              <p>Spouse</p>
+              <p>+</p>
+              <p>upto 4 children</p>
+            </div>
+          </div>
+          <div className="p-4 text-center">
+            <div className="font-medium text-[14px] text-[#505862] tracking-[0.25px] leading-4">
+              <p>Employee</p>
+              <p>+</p>
+              <p>Spouse</p>
+              <p>+</p>
+              <p>upto 4 children</p>
+              <p>+</p>
+              <p>Either parents or</p>
+              <p>parents in law</p>
+            </div>
+          </div>
+        </div>
+
+        {/* OPD Row */}
+        <div className="grid grid-cols-4 border-t border-[#DEE4EB]">
+          <div className="p-4 border-r border-[#DEE4EB]">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              OPD incl. Dental and Vision Cover (within Health Insurance)
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center flex items-center justify-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 10,000
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center flex items-center justify-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 15,000
+            </span>
+          </div>
+          <div className="p-4 text-center flex items-center justify-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 20,000
+            </span>
+          </div>
+        </div>
+
+        {/* Maternity Cover Row */}
+        <div className="grid grid-cols-4 border-t border-[#DEE4EB]">
+          <div className="p-4 border-r border-[#DEE4EB]">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              Maternity Cover (within Health Insurance)
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center flex items-center justify-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              —
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center flex items-center justify-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 150,000
+            </span>
+          </div>
+          <div className="p-4 text-center flex items-center justify-center">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 150,000
+            </span>
+          </div>
+        </div>
+
+        {/* Accident and Disability Insurance Row */}
+        <div className="grid grid-cols-4 border-t border-[#DEE4EB]">
+          <div className="p-4 border-r border-[#DEE4EB]">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              Accident and Disability Insurance
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center flex items-center justify-center col-span-3">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              INR 30,00,000 only for Employee
+            </span>
+          </div>
+        </div>
+
+        {/* Comprehensive Health Benefits Row */}
+        <div className="grid grid-cols-4 border-t border-[#DEE4EB]">
+          <div className="p-4 border-r border-[#DEE4EB]">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              Comprehensive health benefits for a superior employee experience
+            </span>
+          </div>
+          <div className="p-4 border-r border-[#DEE4EB] text-center flex items-center justify-center col-span-3">
+            <span className="font-medium text-[14px] text-[#505862] tracking-[0.25px]">
+              Included
+            </span>
+          </div>
+        </div>
+
+        {/* Cost Section */}
+        <div className="grid grid-cols-4 border-t border-[#DEE4EB] bg-[#F6F2FF]">
+          <div className="p-6 border-r border-[#DEE4EB]/50">
+            <span className="font-semibold text-[16px] text-black tracking-[0.15px]">
+              Cost (Paid Annually)
+            </span>
+          </div>
+          <div className="p-6 border-r border-[#DEE4EB]/50 text-center flex flex-col items-center justify-center gap-4">
+            <span className="font-medium text-[24px] text-black tracking-[0.25px]">
+              $349
+            </span>
+            <button
+              className={`px-4 py-3 rounded-lg border text-[12px] font-semibold tracking-[0.75px] transition-colors ${
+                currentPlan === 'pro'
+                  ? 'border-[rgba(133,147,163,0.4)] text-[#A8B5C2] bg-white cursor-default'
+                  : 'border-[#586AF5] text-[#586AF5] bg-white hover:bg-[#586AF5]/5'
+              }`}
+            >
+              {currentPlan === 'pro' ? 'Current plan' : 'Select plan'}
+            </button>
+          </div>
+          <div className="p-6 border-r border-[#DEE4EB]/50 text-center flex flex-col items-center justify-center gap-4">
+            <span className="font-medium text-[24px] text-black tracking-[0.25px]">
+              $999
+            </span>
+            <button
+              className={`px-4 py-3 rounded-lg border text-[12px] font-semibold tracking-[0.75px] transition-colors ${
+                currentPlan === 'power'
+                  ? 'border-[rgba(133,147,163,0.4)] text-[#A8B5C2] bg-white cursor-default'
+                  : 'border-[#586AF5] text-[#586AF5] bg-white hover:bg-[#586AF5]/5'
+              }`}
+            >
+              {currentPlan === 'power' ? 'Current plan' : 'Upgrade plan'}
+            </button>
+          </div>
+          <div className="p-6 text-center flex flex-col items-center justify-center gap-4">
+            <span className="font-medium text-[24px] text-black tracking-[0.25px]">
+              $2099
+            </span>
+            <button
+              className={`px-4 py-3 rounded-lg border text-[12px] font-semibold tracking-[0.75px] transition-colors ${
+                currentPlan === 'premium'
+                  ? 'border-[rgba(133,147,163,0.4)] text-[#A8B5C2] bg-white cursor-default'
+                  : 'border-[#586AF5] text-[#586AF5] bg-white hover:bg-[#586AF5]/5'
+              }`}
+            >
+              {currentPlan === 'premium' ? 'Current plan' : 'Upgrade plan'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-  );
+  )
 }

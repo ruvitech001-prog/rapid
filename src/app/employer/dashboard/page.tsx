@@ -7,6 +7,7 @@ import {
   ChevronDown,
   MessageSquare,
   FileText,
+  Loader2,
 } from 'lucide-react'
 import {
   PieChart,
@@ -21,6 +22,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useEmployees, useContractors } from '@/lib/hooks'
+import { useLeaveRequests, useExpenseRequests } from '@/lib/hooks'
+import { useAuth } from '@/lib/auth'
 
 // Figma Design Tokens
 const colors = {
@@ -153,14 +157,68 @@ const holidaysData = [
 ]
 
 export default function EmployerDashboard() {
+  const { user } = useAuth()
+  const companyId = user?.companyId || undefined
+
   const [activeRequestsTab, setActiveRequestsTab] = useState<'yours' | 'approval'>('approval')
+
+  // Fetch real data
+  const { data: employees = [], isLoading: loadingEmployees } = useEmployees(companyId)
+  const { data: contractors = [], isLoading: loadingContractors } = useContractors(companyId)
+  const { data: leaveRequests = [], isLoading: loadingLeaves } = useLeaveRequests(companyId, { status: 'pending' })
+  const { data: expenseRequests = [], isLoading: loadingExpenses } = useExpenseRequests(companyId, { status: 'pending' })
+
+  const isLoading = loadingEmployees || loadingContractors || loadingLeaves || loadingExpenses
+
+  // Calculate real stats
+  const activeEmployees = employees.filter(e => e.status === 'active').length
+  const activeContractors = contractors.filter(c => c.status === 'active').length
+  const totalTeam = activeEmployees + activeContractors
+
+  // Dynamic team data for chart
+  const dynamicTeamData = [
+    { name: 'Employees', value: activeEmployees, fill: colors.aqua400 },
+    { name: 'Contractors', value: activeContractors, fill: colors.rose200 },
+  ]
+
+  // Combine pending requests for approval
+  const pendingRequests = [
+    ...leaveRequests.slice(0, 3).map(req => ({
+      id: req.id,
+      type: 'Leave' as const,
+      bgColor: colors.warning600,
+      label: `${new Date(req.start_date).toLocaleDateString()} - ${new Date(req.end_date).toLocaleDateString()}`,
+      user: req.employeeName,
+      role: 'Employee',
+      days: req.total_days,
+    })),
+    ...expenseRequests.slice(0, 3).map(req => ({
+      id: req.id,
+      type: 'Expense' as const,
+      bgColor: colors.secondaryBlue600,
+      label: `INR ${Number(req.amount).toLocaleString()}`,
+      user: req.employeeName,
+      role: 'Employee',
+      category: req.expense_category,
+    })),
+  ].slice(0, 4)
+
+  const totalPendingRequests = leaveRequests.length + expenseRequests.length
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 pb-32">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold" style={{ color: colors.neutral800 }}>
-          Good morning Peter!
+          Welcome to {user?.companyName || 'Your Company'}
         </h1>
         <div className="flex items-center gap-3">
           <Button
@@ -222,7 +280,7 @@ export default function EmployerDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={teamData}
+                          data={dynamicTeamData}
                           cx="50%"
                           cy="95%"
                           startAngle={180}
@@ -233,7 +291,7 @@ export default function EmployerDashboard() {
                           cornerRadius={8}
                           dataKey="value"
                         >
-                          {teamData.map((entry, index) => (
+                          {dynamicTeamData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                           ))}
                         </Pie>
@@ -241,12 +299,12 @@ export default function EmployerDashboard() {
                     </ResponsiveContainer>
                     {/* Centered text inside gauge */}
                     <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
-                      <p className="text-[34px] font-bold" style={{ color: colors.neutral900 }}>20</p>
+                      <p className="text-[34px] font-bold" style={{ color: colors.neutral900 }}>{totalTeam}</p>
                       <p
                         className="text-xs font-medium tracking-widest uppercase"
                         style={{ color: colors.neutral600 }}
                       >
-                        Total days
+                        Total team
                       </p>
                     </div>
                   </div>
@@ -254,11 +312,11 @@ export default function EmployerDashboard() {
                   <div className="flex justify-center gap-8 mt-2 text-xs">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.aqua400 }} />
-                      <span style={{ color: colors.neutral500 }}>Employees: 14</span>
+                      <span style={{ color: colors.neutral500 }}>Employees: {activeEmployees}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.rose200 }} />
-                      <span style={{ color: colors.neutral500 }}>Contractors: 6</span>
+                      <span style={{ color: colors.neutral500 }}>Contractors: {activeContractors}</span>
                     </div>
                   </div>
                 </div>
@@ -514,7 +572,7 @@ export default function EmployerDashboard() {
                     borderColor: activeRequestsTab === 'yours' ? colors.primary500 : 'transparent',
                   }}
                 >
-                  Your requests (10)
+                  Your requests (0)
                 </button>
                 <button
                   onClick={() => setActiveRequestsTab('approval')}
@@ -528,48 +586,54 @@ export default function EmployerDashboard() {
                     borderColor: activeRequestsTab === 'approval' ? colors.primary500 : 'transparent',
                   }}
                 >
-                  For your approval (6)
+                  For your approval ({totalPendingRequests})
                 </button>
               </div>
 
               {/* Request Items */}
               {activeRequestsTab === 'approval' && (
                 <div className="space-y-3">
-                  {requestsForApproval.map((request) => (
-                    <div
-                      key={request.id}
-                      className="p-4 rounded-xl"
-                      style={{ backgroundColor: colors.neutral50 }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <span
-                            className="inline-block px-2 py-0.5 text-[10px] font-medium tracking-widest uppercase text-white rounded-full"
-                            style={{ backgroundColor: request.bgColor }}
-                          >
-                            {request.type}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <p className="text-sm font-semibold" style={{ color: colors.neutral800 }}>
-                              {request.label}
-                            </p>
-                            <ChevronRight className="h-4 w-4" style={{ color: colors.neutral600 }} />
-                          </div>
-                          <p className="text-xs" style={{ color: colors.neutral500 }}>
-                            {request.user} • {request.role}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs font-semibold px-3 py-2 h-8 rounded-lg"
-                          style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
-                        >
-                          Approve
-                        </Button>
-                      </div>
+                  {pendingRequests.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <p className="text-sm" style={{ color: colors.neutral500 }}>No pending requests</p>
                     </div>
-                  ))}
+                  ) : (
+                    pendingRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="p-4 rounded-xl"
+                        style={{ backgroundColor: colors.neutral50 }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <span
+                              className="inline-block px-2 py-0.5 text-[10px] font-medium tracking-widest uppercase text-white rounded-full"
+                              style={{ backgroundColor: request.bgColor }}
+                            >
+                              {request.type}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <p className="text-sm font-semibold" style={{ color: colors.neutral800 }}>
+                                {request.label}
+                              </p>
+                              <ChevronRight className="h-4 w-4" style={{ color: colors.neutral600 }} />
+                            </div>
+                            <p className="text-xs" style={{ color: colors.neutral500 }}>
+                              {request.user} • {request.role}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs font-semibold px-3 py-2 h-8 rounded-lg"
+                            style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
+                          >
+                            Approve
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
 

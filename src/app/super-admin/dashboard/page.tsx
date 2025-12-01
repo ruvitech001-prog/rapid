@@ -2,8 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ChevronRight, FileText, MessageSquare } from 'lucide-react'
+import { ChevronRight, FileText, MessageSquare, Loader2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { useSuperAdminDashboard, useSuperAdminRequests } from '@/lib/hooks'
+import Link from 'next/link'
 
 // Figma Design Tokens
 const colors = {
@@ -34,84 +36,63 @@ const colors = {
   border: '#DEE4EB',
 }
 
+// Chart colors for revenue
+const chartColors = [colors.aqua400, colors.secondaryBlue200, colors.green200, colors.amber400, colors.aqua300, colors.rose200]
+
 export default function SuperAdminDashboard() {
-  // Donut chart data for clients by country
-  const clientsByCountry = [
-    { name: 'India', value: 10, color: colors.amber400 },
-    { name: 'Canada', value: 6, color: colors.rose200 },
-    { name: 'USA', value: 8, color: colors.secondaryBlue200 },
-    { name: 'Germany', value: 5, color: colors.primary100 },
-    { name: 'Poland', value: 3, color: colors.aqua300 },
-  ]
+  const { data: dashboardStats, isLoading: statsLoading } = useSuperAdminDashboard()
+  const { data: pendingRequests = [], isLoading: requestsLoading } = useSuperAdminRequests({ status: 'pending' })
 
-  // Revenue data
-  const revenueData = [
-    { month: 'Nov', Revenue: 40, color: colors.aqua400 },
-    { month: 'Dec', Revenue: 75, color: colors.secondaryBlue200 },
-    { month: 'Jan', Revenue: 35, color: colors.green200 },
-    { month: 'Feb', Revenue: 55, color: colors.amber400 },
-    { month: 'Mar', Revenue: 20, color: colors.aqua300 },
-    { month: 'Apr', Revenue: 65, color: colors.rose200 },
-  ]
+  const isLoading = statsLoading || requestsLoading
 
-  // Invoice data for grouped bars
-  const invoiceData = [
-    { month: 'Nov', Raised: 50, Received: 30 },
-    { month: 'Dec', Raised: 65, Received: 45 },
-    { month: 'Jan', Raised: 45, Received: 35 },
-    { month: 'Feb', Raised: 80, Received: 55 },
-    { month: 'Mar', Raised: 60, Received: 40 },
-    { month: 'Apr', Raised: 75, Received: 60 },
-  ]
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
+      </div>
+    )
+  }
 
-  const requests = [
-    {
-      id: 1,
-      type: 'LEAVE',
-      date: '23/May/2023 - 28/May/2023',
-      name: 'Vidushi Maheshwari',
-      role: 'Employee',
-      bgColor: colors.warning200,
-      textColor: colors.warning600,
-    },
-    {
-      id: 2,
-      type: 'EXPENSE',
-      date: 'USD 5000',
-      name: 'Prithviraj Singh Hada',
-      role: 'Client',
-      bgColor: colors.secondaryBlue50,
-      textColor: colors.secondaryBlue600,
-    },
-    {
-      id: 3,
-      type: 'LEAVE',
-      date: '02/Jun/2023 - 12/Jun/2023',
-      name: 'Khushi Mathur',
-      role: 'Employee',
-      bgColor: colors.warning200,
-      textColor: colors.warning600,
-    },
-  ]
+  // Prepare chart data
+  const clientsByCountry = dashboardStats?.clientsByCountry?.map((c, index) => ({
+    name: c.country,
+    value: c.count,
+    color: [colors.amber400, colors.rose200, colors.secondaryBlue200, colors.primary100, colors.aqua300][index % 5],
+  })) || [{ name: 'Clients', value: dashboardStats?.totalClients || 0, color: colors.amber400 }]
 
-  const updates = [
-    'ServiceNow has been onboarded successfully.',
-    'ServiceNow has been onboarded successfully.',
-    'ServiceNow has been onboarded successfully.',
-    'ServiceNow has been onboarded successfully.',
-    'Payment of INR 50,000 received from Agro Tech.',
-  ]
+  const revenueData = dashboardStats?.revenueOverview?.map((r, index) => ({
+    month: r.month,
+    Revenue: Math.round(r.amount / 100000), // Convert to Lakhs
+    color: chartColors[index % chartColors.length],
+  })) || []
 
-  const holidays = [
-    { date: 'Tue, 15/Aug/2023', name: 'INDEPENDENCE DAY' },
-    { date: 'Wed, 30/Aug/2023', name: 'RAKSHABANDHAN' },
-  ]
+  const invoiceData = dashboardStats?.invoiceOverview?.map((i) => ({
+    month: i.month,
+    Raised: i.raised,
+    Received: i.received,
+  })) || []
+
+  // Get top 3 pending requests for display
+  const displayRequests = pendingRequests.slice(0, 3).map((req) => ({
+    id: req.id,
+    type: req.requestType.toUpperCase(),
+    date: req.details,
+    name: req.requesterName,
+    role: req.category === 'employee' ? 'Employee' : req.category === 'employer' ? 'Client' : 'Special',
+    bgColor: req.requestType === 'leave' ? colors.warning200 : colors.secondaryBlue50,
+    textColor: req.requestType === 'leave' ? colors.warning600 : colors.secondaryBlue600,
+  }))
+
+  const totalClients = dashboardStats?.totalClients || 0
+  const updates = dashboardStats?.recentUpdates || []
+  const holidays = dashboardStats?.upcomingHolidays || []
+  const totalPendingRequests = dashboardStats?.pendingRequests?.pending || pendingRequests.length
 
   return (
     <div className="space-y-8 pb-32">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold" style={{ color: colors.neutral900 }}>Good morning Peter!</h2>
+        <h2 className="text-3xl font-bold" style={{ color: colors.neutral900 }}>Good morning!</h2>
       </div>
 
       {/* Main Grid */}
@@ -149,7 +130,7 @@ export default function SuperAdminDashboard() {
                         ))}
                       </Pie>
                       <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-sm font-bold" fill={colors.neutral900}>
-                        32
+                        {totalClients}
                       </text>
                       <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" className="text-xs" fill={colors.neutral600}>
                         TOTAL CLIENTS
@@ -211,57 +192,67 @@ export default function SuperAdminDashboard() {
                   className="text-sm pb-3 font-medium hover:opacity-80 transition-opacity"
                   style={{ color: colors.neutral500 }}
                 >
-                  My requests (10)
+                  My requests ({pendingRequests.length})
                 </button>
                 <button
                   className="text-sm font-semibold pb-3 border-b-2"
                   style={{ color: colors.primary500, borderColor: colors.primary500 }}
                 >
-                  For your approval (6)
+                  For your approval ({totalPendingRequests})
                 </button>
               </div>
 
               {/* Request Items */}
               <div className="space-y-4">
-                {requests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="flex items-start justify-between p-4 rounded-xl hover:shadow-md transition-all duration-200"
-                    style={{ borderColor: colors.border, borderWidth: 1 }}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span
-                          className="text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide"
-                          style={{ backgroundColor: req.bgColor, color: req.textColor }}
-                        >
-                          {req.type}
-                        </span>
-                        <span className="text-sm font-medium" style={{ color: colors.neutral600 }}>{req.date}</span>
-                      </div>
-                      <p className="text-sm font-semibold" style={{ color: colors.neutral800 }}>{req.name}</p>
-                      <p className="text-xs mt-1" style={{ color: colors.neutral500 }}>• {req.role}</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="text-sm h-9 px-6 font-semibold hover:text-white transition-all duration-200"
-                      style={{
-                        borderColor: colors.primary500,
-                        color: colors.primary500,
-                      }}
-                    >
-                      Approve
-                    </Button>
+                {displayRequests.length === 0 ? (
+                  <div className="p-8 text-center" style={{ color: colors.neutral500 }}>
+                    <p>No pending requests</p>
                   </div>
-                ))}
+                ) : (
+                  displayRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      className="flex items-start justify-between p-4 rounded-xl hover:shadow-md transition-all duration-200"
+                      style={{ borderColor: colors.border, borderWidth: 1 }}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span
+                            className="text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide"
+                            style={{ backgroundColor: req.bgColor, color: req.textColor }}
+                          >
+                            {req.type}
+                          </span>
+                          <span className="text-sm font-medium truncate max-w-xs" style={{ color: colors.neutral600 }}>{req.date}</span>
+                        </div>
+                        <p className="text-sm font-semibold" style={{ color: colors.neutral800 }}>{req.name}</p>
+                        <p className="text-xs mt-1" style={{ color: colors.neutral500 }}>• {req.role}</p>
+                      </div>
+                      <Link href="/super-admin/requests">
+                        <Button
+                          variant="outline"
+                          className="text-sm h-9 px-6 font-semibold hover:text-white transition-all duration-200"
+                          style={{
+                            borderColor: colors.primary500,
+                            color: colors.primary500,
+                          }}
+                        >
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  ))
+                )}
               </div>
 
-              <button
-                className="w-full text-center text-sm font-semibold mt-6 hover:underline transition-colors"
-                style={{ color: colors.primary500 }}
-              >
-                View all requests
-              </button>
+              <Link href="/super-admin/requests">
+                <button
+                  className="w-full text-center text-sm font-semibold mt-6 hover:underline transition-colors"
+                  style={{ color: colors.primary500 }}
+                >
+                  View all requests
+                </button>
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -281,17 +272,21 @@ export default function SuperAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {updates.map((update, idx) => (
-                  <div key={idx} className="flex gap-3 items-start">
-                    <div className="h-5 w-5 flex-shrink-0 mt-0.5">
-                      <div
-                        className="h-2 w-2 rounded-full mt-1.5 ml-1.5 animate-pulse"
-                        style={{ backgroundColor: colors.success600, boxShadow: `0 0 8px ${colors.success600}` }}
-                      />
+                {updates.length === 0 ? (
+                  <p className="text-sm text-center py-4" style={{ color: colors.neutral500 }}>No recent updates</p>
+                ) : (
+                  updates.map((update, idx) => (
+                    <div key={update.id || idx} className="flex gap-3 items-start">
+                      <div className="h-5 w-5 flex-shrink-0 mt-0.5">
+                        <div
+                          className="h-2 w-2 rounded-full mt-1.5 ml-1.5 animate-pulse"
+                          style={{ backgroundColor: colors.success600, boxShadow: `0 0 8px ${colors.success600}` }}
+                        />
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: colors.neutral700 }}>{update.message}</p>
                     </div>
-                    <p className="text-sm leading-relaxed" style={{ color: colors.neutral700 }}>{update}</p>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -374,16 +369,22 @@ export default function SuperAdminDashboard() {
               <CardTitle className="text-lg font-bold" style={{ color: colors.neutral900 }}>Upcoming holidays</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {holidays.map((holiday, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-lg transition-colors"
-                  style={{ backgroundColor: colors.neutral50 }}
-                >
-                  <p className="text-sm font-semibold" style={{ color: colors.neutral900 }}>{holiday.date}</p>
-                  <p className="text-xs uppercase tracking-wide mt-1" style={{ color: colors.neutral500 }}>{holiday.name}</p>
-                </div>
-              ))}
+              {holidays.length === 0 ? (
+                <p className="text-sm text-center py-4" style={{ color: colors.neutral500 }}>No upcoming holidays</p>
+              ) : (
+                holidays.map((holiday, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-lg transition-colors"
+                    style={{ backgroundColor: colors.neutral50 }}
+                  >
+                    <p className="text-sm font-semibold" style={{ color: colors.neutral900 }}>
+                      {new Date(holiday.date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                    <p className="text-xs uppercase tracking-wide mt-1" style={{ color: colors.neutral500 }}>{holiday.name}</p>
+                  </div>
+                ))
+              )}
               <button
                 className="w-full text-center text-sm font-semibold mt-4 hover:underline transition-colors flex items-center justify-center gap-1"
                 style={{ color: colors.primary500 }}

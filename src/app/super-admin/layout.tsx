@@ -3,8 +3,8 @@ import { Sidebar } from '@/components/sidebar'
 import { Header } from '@/components/header'
 
 export const metadata: Metadata = {
-  title: 'Super Admin Dashboard - Rapid.one',
-  description: 'System administration and multi-tenant management',
+  title: 'SuperAdmin Dashboard - Rapid.one',
+  description: 'Manage clients, requests, and platform operations',
 }
 
 export default function SuperAdminLayout({
@@ -18,7 +18,7 @@ export default function SuperAdminLayout({
         {/* Sidebar */}
         <Sidebar
           role="super_admin"
-          userName="System Admin"
+          userName="SuperAdmin"
           userEmail="admin@rapid.one"
           userInitials="SA"
         />

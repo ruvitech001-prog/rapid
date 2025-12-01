@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import {
   Bell,
@@ -10,6 +10,7 @@ import {
   Calendar,
   Clock,
   DollarSign,
+  Loader2,
 } from 'lucide-react'
 import {
   PieChart,
@@ -23,6 +24,8 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useEmployeeDashboard, useLeaveBalances } from '@/lib/hooks'
+import { useAuth } from '@/lib/auth'
 
 // Figma Design Tokens
 const colors = {
@@ -52,13 +55,7 @@ const colors = {
   border: '#DEE4EB',
 }
 
-// Leaves data for donut chart
-const leaveChartData = [
-  { name: 'Taken', value: 14, fill: colors.aqua400 },
-  { name: 'Available', value: 6, fill: colors.rose200 },
-]
-
-// Payroll data - last 6 months
+// Payroll data - last 6 months (mock - not available in current services)
 const payrollData = [
   { month: 'Nov', amount: 4.5, fill: colors.aqua200 },
   { month: 'Dec', amount: 4.8, fill: colors.secondaryBlue200 },
@@ -68,47 +65,96 @@ const payrollData = [
   { month: 'Apr', amount: 4.5, fill: colors.rose200 },
 ]
 
-// Requests data
-const requestsData = [
-  {
-    id: '1',
-    type: 'Leave',
-    bgColor: colors.warning600,
-    label: '23/May/2023 - 28/May/2023',
-    description: 'Personal Leave',
-  },
-  {
-    id: '2',
-    type: 'Expense',
-    bgColor: colors.secondaryBlue600,
-    label: 'INR 5000',
-    description: 'Travel Expense',
-  },
-  {
-    id: '3',
-    type: 'Leave',
-    bgColor: colors.warning600,
-    label: '02/Jun/2023 - 12/Jun/2023',
-    description: 'Vacation',
-  },
-]
-
-// Updates data
+// Updates data (mock - notifications not implemented yet)
 const updatesData = [
   { id: '1', message: 'Time-off request for 23 Nov 22 has been approved.' },
   { id: '2', message: 'Expense request for 15 Nov 22 has been approved.' },
   { id: '3', message: 'Payroll for November has been processed.' },
 ]
 
-// Holidays data
-const holidaysData = [
-  { id: '1', date: 'Tue, 15/Aug/2023', name: 'Independence Day' },
-  { id: '2', date: 'Wed, 30/Aug/2023', name: 'Rakshabandhan' },
-]
-
 export default function EmployeeDashboard() {
+  const { user } = useAuth()
+  const employeeId = user?.id || undefined
+  const userName = user?.name?.split(' ')[0] || 'User'
+
   const [activeRequestsTab, setActiveRequestsTab] = useState<'pending' | 'approved'>('pending')
-  const userName = 'Navin'
+
+  // Fetch real data
+  const { data: dashboardStats, isLoading } = useEmployeeDashboard(employeeId)
+  const { data: leaveBalancesData = [] } = useLeaveBalances(employeeId)
+
+  // Calculate totals from leave balances
+  const leaveStats = useMemo(() => {
+    if (!dashboardStats?.leaveBalances || dashboardStats.leaveBalances.length === 0) {
+      return { total: 20, taken: 14, available: 6 }
+    }
+
+    const total = dashboardStats.leaveBalances.reduce((sum, b) => sum + b.total, 0)
+    const taken = dashboardStats.leaveBalances.reduce((sum, b) => sum + b.taken, 0)
+    const available = dashboardStats.leaveBalances.reduce((sum, b) => sum + b.available, 0)
+
+    return { total, taken, available }
+  }, [dashboardStats?.leaveBalances])
+
+  // Chart data for leave balance
+  const leaveChartData = useMemo(() => [
+    { name: 'Taken', value: leaveStats.taken || 1, fill: colors.aqua400 },
+    { name: 'Available', value: leaveStats.available || 1, fill: colors.rose200 },
+  ], [leaveStats])
+
+  // Total pending requests
+  const totalPendingRequests = useMemo(() => {
+    return (dashboardStats?.pendingLeaveRequests || 0) + (dashboardStats?.pendingExpenseRequests || 0)
+  }, [dashboardStats])
+
+  // Mock requests data based on pending counts
+  const requestsData = useMemo(() => {
+    const requests = []
+    if (dashboardStats?.pendingLeaveRequests && dashboardStats.pendingLeaveRequests > 0) {
+      requests.push({
+        id: '1',
+        type: 'Leave',
+        bgColor: colors.warning600,
+        label: 'Pending Leave Request',
+        description: `${dashboardStats.pendingLeaveRequests} request(s) pending approval`,
+      })
+    }
+    if (dashboardStats?.pendingExpenseRequests && dashboardStats.pendingExpenseRequests > 0) {
+      requests.push({
+        id: '2',
+        type: 'Expense',
+        bgColor: colors.secondaryBlue600,
+        label: 'Pending Expense Claim',
+        description: `${dashboardStats.pendingExpenseRequests} claim(s) pending approval`,
+      })
+    }
+    return requests.length > 0 ? requests : [
+      { id: '1', type: 'Info', bgColor: colors.success600, label: 'All caught up!', description: 'No pending requests' }
+    ]
+  }, [dashboardStats])
+
+  // Format holidays from real data
+  const holidaysData = useMemo(() => {
+    if (!dashboardStats?.upcomingHolidays || dashboardStats.upcomingHolidays.length === 0) {
+      return [
+        { id: '1', date: 'No upcoming holidays', name: '' }
+      ]
+    }
+
+    return dashboardStats.upcomingHolidays.map((h, i) => ({
+      id: String(i + 1),
+      date: new Date(h.date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }),
+      name: h.name,
+    }))
+  }, [dashboardStats?.upcomingHolidays])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-[#586AF5]" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 pb-32">
@@ -184,7 +230,7 @@ export default function EmployeeDashboard() {
                     </ResponsiveContainer>
                     {/* Center text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <p className="text-[34px] font-bold" style={{ color: colors.neutral900 }}>20</p>
+                      <p className="text-[34px] font-bold" style={{ color: colors.neutral900 }}>{leaveStats.total}</p>
                       <p
                         className="text-xs font-medium tracking-widest uppercase"
                         style={{ color: colors.neutral600 }}
@@ -197,11 +243,11 @@ export default function EmployeeDashboard() {
                   <div className="flex justify-center gap-8 mt-2 text-xs">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.aqua400 }} />
-                      <span style={{ color: colors.neutral500 }}>Taken: 14</span>
+                      <span style={{ color: colors.neutral500 }}>Taken: {leaveStats.taken}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.rose200 }} />
-                      <span style={{ color: colors.neutral500 }}>Available: 6</span>
+                      <span style={{ color: colors.neutral500 }}>Available: {leaveStats.available}</span>
                     </div>
                   </div>
                 </div>
@@ -215,27 +261,47 @@ export default function EmployeeDashboard() {
                     Available leaves
                   </p>
                   <div className="space-y-0">
-                    <div
-                      className="flex items-center justify-between py-4 border-b"
-                      style={{ borderColor: colors.border }}
-                    >
-                      <span className="text-xs" style={{ color: colors.neutral500 }}>Casual Leave</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>2</span>
-                        <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
-                          <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
+                    {dashboardStats?.leaveBalances && dashboardStats.leaveBalances.length > 0 ? (
+                      dashboardStats.leaveBalances.slice(0, 3).map((balance, index) => (
+                        <div
+                          key={balance.type}
+                          className={`flex items-center justify-between py-4 ${index !== Math.min(dashboardStats.leaveBalances.length - 1, 2) ? 'border-b' : ''}`}
+                          style={{ borderColor: colors.border }}
+                        >
+                          <span className="text-xs" style={{ color: colors.neutral500 }}>{balance.type}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>{balance.available}</span>
+                            <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                              <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between py-4">
-                      <span className="text-xs" style={{ color: colors.neutral500 }}>Sick Leave</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>2</span>
-                        <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
-                          <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
+                      ))
+                    ) : (
+                      <>
+                        <div
+                          className="flex items-center justify-between py-4 border-b"
+                          style={{ borderColor: colors.border }}
+                        >
+                          <span className="text-xs" style={{ color: colors.neutral500 }}>Casual Leave</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>0</span>
+                            <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                              <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                        <div className="flex items-center justify-between py-4">
+                          <span className="text-xs" style={{ color: colors.neutral500 }}>Sick Leave</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>0</span>
+                            <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                              <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -304,7 +370,7 @@ export default function EmployeeDashboard() {
                     borderColor: activeRequestsTab === 'pending' ? colors.primary500 : 'transparent',
                   }}
                 >
-                  Pending (3)
+                  Pending ({totalPendingRequests})
                 </button>
                 <button
                   onClick={() => setActiveRequestsTab('approved')}
@@ -314,7 +380,7 @@ export default function EmployeeDashboard() {
                     borderColor: activeRequestsTab === 'approved' ? colors.primary500 : 'transparent',
                   }}
                 >
-                  Approved (8)
+                  Approved
                 </button>
               </div>
 
@@ -402,7 +468,7 @@ export default function EmployeeDashboard() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: colors.neutral500, fontSize: 12 }}
-                    tickFormatter={(value) => `₹${value}0K`}
+                    tickFormatter={(value) => `$${value}0K`}
                   />
                   <Bar dataKey="amount" radius={[12, 12, 12, 12]}>
                     {payrollData.map((entry, index) => (
@@ -424,7 +490,7 @@ export default function EmployeeDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs mb-2" style={{ color: colors.neutral600 }}>Net Pay (Last)</p>
-                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>₹45,000</p>
+                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>$45,000</p>
                     <p className="text-xs mt-2" style={{ color: colors.neutral500 }}>April 2024</p>
                   </div>
                   <DollarSign className="h-7 w-7" style={{ color: colors.primary100 }} />
@@ -450,8 +516,8 @@ export default function EmployeeDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs mb-2" style={{ color: colors.neutral600 }}>Leaves Taken</p>
-                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>14</p>
-                    <p className="text-xs mt-2" style={{ color: colors.neutral500 }}>Out of 20</p>
+                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>{leaveStats.taken}</p>
+                    <p className="text-xs mt-2" style={{ color: colors.neutral500 }}>Out of {leaveStats.total}</p>
                   </div>
                   <Clock className="h-7 w-7" style={{ color: colors.primary100 }} />
                 </div>
@@ -463,7 +529,7 @@ export default function EmployeeDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs mb-2" style={{ color: colors.neutral600 }}>Pending</p>
-                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>3</p>
+                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>{totalPendingRequests}</p>
                     <p className="text-xs mt-2" style={{ color: colors.neutral500 }}>Requests</p>
                   </div>
                   <Bell className="h-7 w-7" style={{ color: colors.primary100 }} />
@@ -597,7 +663,7 @@ export default function EmployeeDashboard() {
           </CardHeader>
           <CardContent className="pt-2">
             <div className="grid grid-cols-2 gap-4 mb-4">
-              {holidaysData.map((holiday) => (
+              {holidaysData.slice(0, 4).map((holiday) => (
                 <div
                   key={holiday.id}
                   className="p-4 rounded-lg"
@@ -606,12 +672,14 @@ export default function EmployeeDashboard() {
                   <p className="text-sm font-medium" style={{ color: colors.neutral700 }}>
                     {holiday.date}
                   </p>
-                  <p
-                    className="text-xs font-medium tracking-widest uppercase mt-1"
-                    style={{ color: colors.neutral500 }}
-                  >
-                    {holiday.name}
-                  </p>
+                  {holiday.name && (
+                    <p
+                      className="text-xs font-medium tracking-widest uppercase mt-1"
+                      style={{ color: colors.neutral500 }}
+                    >
+                      {holiday.name}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

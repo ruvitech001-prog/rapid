@@ -1,28 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { useAuth } from '@/lib/auth'
+import { useEmployeeLeaveRequests, useLeaveBalances } from '@/lib/hooks'
 
 export default function LeaveHistoryPage() {
+  const { user } = useAuth()
+  const employeeId = user?.id
+
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
 
-  const leaveApplications = [
-    { id: 1, type: 'Earned Leave', startDate: '2024-02-15', endDate: '2024-02-17', days: 3, reason: 'Family vacation', status: 'approved', appliedOn: '2024-02-01' },
-    { id: 2, type: 'Sick Leave', startDate: '2024-01-20', endDate: '2024-01-21', days: 2, reason: 'Fever and cold', status: 'approved', appliedOn: '2024-01-20' },
-    { id: 3, type: 'Casual Leave', startDate: '2024-02-28', endDate: '2024-02-28', days: 0.5, reason: 'Personal work', status: 'pending', appliedOn: '2024-02-25' },
-    { id: 4, type: 'Earned Leave', startDate: '2024-01-05', endDate: '2024-01-08', days: 4, reason: 'Wedding in family', status: 'approved', appliedOn: '2023-12-20' },
-    { id: 5, type: 'Comp Off', startDate: '2024-01-15', endDate: '2024-01-15', days: 1, reason: 'Comp off for weekend work', status: 'rejected', appliedOn: '2024-01-10', rejectionReason: 'Already used comp off' },
-  ]
+  const { data: leaveRequests = [], isLoading } = useEmployeeLeaveRequests(employeeId)
+  const { data: leaveBalances = [] } = useLeaveBalances(employeeId)
 
-  const filteredApplications = leaveApplications.filter(leave => {
+  // Transform data
+  const leaveApplications = useMemo(() => {
+    return leaveRequests.map((req) => ({
+      id: req.id,
+      type: req.leave_type || 'Unknown',
+      startDate: req.start_date || '',
+      endDate: req.end_date || '',
+      days: req.total_days || 1,
+      reason: req.reason || '',
+      status: req.status || 'pending',
+      appliedOn: req.created_at || '',
+      rejectionReason: req.rejection_reason,
+    }))
+  }, [leaveRequests])
+
+  const filteredApplications = leaveApplications.filter((leave) => {
     const matchesStatus = statusFilter === 'all' || leave.status === statusFilter
-    const matchesType = typeFilter === 'all' || leave.type.toLowerCase().includes(typeFilter.toLowerCase())
+    const matchesType =
+      typeFilter === 'all' || leave.type.toLowerCase().includes(typeFilter.toLowerCase())
     return matchesStatus && matchesType
   })
 
@@ -33,9 +49,20 @@ export default function LeaveHistoryPage() {
       rejected: 'bg-red-100 text-red-800',
     }
     return (
-      <Badge variant="outline" className={styles[status as keyof typeof styles]}>
+      <Badge
+        variant="outline"
+        className={styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800'}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+      </div>
     )
   }
 
@@ -44,9 +71,7 @@ export default function LeaveHistoryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Leave History</h1>
-          <p className="mt-2 text-muted-foreground">
-            View all your leave applications
-          </p>
+          <p className="mt-2 text-muted-foreground">View all your leave applications</p>
         </div>
         <Button asChild size="lg" className="gap-2">
           <Link href="/employee/leave/apply">
@@ -72,7 +97,7 @@ export default function LeaveHistoryPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold text-primary">
-              {leaveApplications.filter(l => l.status === 'approved').length}
+              {leaveApplications.filter((l) => l.status === 'approved').length}
             </p>
           </CardContent>
         </Card>
@@ -82,7 +107,7 @@ export default function LeaveHistoryPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold text-orange-600">
-              {leaveApplications.filter(l => l.status === 'pending').length}
+              {leaveApplications.filter((l) => l.status === 'pending').length}
             </p>
           </CardContent>
         </Card>
@@ -92,11 +117,42 @@ export default function LeaveHistoryPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold text-destructive">
-              {leaveApplications.filter(l => l.status === 'rejected').length}
+              {leaveApplications.filter((l) => l.status === 'rejected').length}
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Leave Balances */}
+      {leaveBalances.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {leaveBalances.map((balance) => {
+            const total = (balance.opening_balance || 0) + (balance.accrued || 0) + (balance.carry_forward || 0)
+            const used = (balance.taken || 0) + (balance.pending || 0)
+            const available = total - used
+            return (
+              <Card key={balance.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">{balance.leave_type}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-semibold">
+                    {available} / {total}
+                  </p>
+                  <div className="mt-2 w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all"
+                      style={{
+                        width: `${total > 0 ? (available / total) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
 
       {/* Filters */}
       <Card>
@@ -139,9 +195,7 @@ export default function LeaveHistoryPage() {
       {/* Leave Applications List */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Leave Applications ({filteredApplications.length})
-          </CardTitle>
+          <CardTitle>Leave Applications ({filteredApplications.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {filteredApplications.length > 0 ? (
@@ -172,11 +226,10 @@ export default function LeaveHistoryPage() {
                 <tbody className="divide-y divide-border">
                   {filteredApplications.map((leave) => (
                     <tr key={leave.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        {leave.type}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">{leave.type}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {new Date(leave.startDate).toLocaleDateString('en-IN')} - {new Date(leave.endDate).toLocaleDateString('en-IN')}
+                        {new Date(leave.startDate).toLocaleDateString('en-IN')} -{' '}
+                        {new Date(leave.endDate).toLocaleDateString('en-IN')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {leave.days} {leave.days === 1 ? 'day' : 'days'}
@@ -184,9 +237,7 @@ export default function LeaveHistoryPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {new Date(leave.appliedOn).toLocaleDateString('en-IN')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(leave.status)}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(leave.status)}</td>
                       <td className="px-6 py-4 text-sm max-w-xs truncate">
                         {leave.reason}
                         {leave.status === 'rejected' && leave.rejectionReason && (
@@ -202,12 +253,8 @@ export default function LeaveHistoryPage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                No leave applications found
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Try adjusting your filters
-              </p>
+              <p className="text-muted-foreground">No leave applications found</p>
+              <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters</p>
             </div>
           )}
         </CardContent>

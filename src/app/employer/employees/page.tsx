@@ -9,9 +9,9 @@ import {
   X,
   MoreVertical,
   Download,
-  Plus,
   Users,
-  Bell
+  Bell,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,7 +36,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { mockDatabase } from '@/lib/mock-data'
+import { useEmployees } from '@/lib/hooks'
+import { useAuth } from '@/lib/auth'
 
 interface Employee {
   id: string
@@ -52,6 +53,9 @@ interface Employee {
 }
 
 export default function EmployeesPage() {
+  const { user } = useAuth()
+  const companyId = user?.companyId
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeams, setSelectedTeams] = useState<string[]>([])
   const [showExEmployee, setShowExEmployee] = useState(false)
@@ -74,21 +78,36 @@ export default function EmployeesPage() {
   const [newTeamEmployees, setNewTeamEmployees] = useState('')
   const [newTeamManager, setNewTeamManager] = useState('')
 
-  // Get employees from mock data
+  // Fetch real employee data
+  const { data: employeesData = [], isLoading } = useEmployees(companyId || undefined)
+
+  // Transform data to match expected interface
   const employees: Employee[] = useMemo(() => {
-    return mockDatabase.employees.map(emp => ({
-      id: emp.id,
-      employee_code: emp.employee_code,
-      first_name: emp.first_name,
-      last_name: emp.last_name,
-      email: emp.email,
-      phone: emp.phone,
-      designation: emp.designation,
-      team_name: emp.team_name,
-      badge_status: emp.badge_status,
-      reporting_manager_name: emp.reporting_manager_name,
-    }))
-  }, [])
+    return employeesData.map(emp => {
+      // Map status to badge_status
+      let badge_status: 'none' | 'ex_employee' | 'manager' | 'on_notice_period' = 'none'
+      if (emp.status === 'exited') badge_status = 'ex_employee'
+      else if (emp.status === 'on_notice') badge_status = 'on_notice_period'
+
+      // Split full name
+      const nameParts = emp.fullName.split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+
+      return {
+        id: emp.id,
+        employee_code: emp.employeeCode,
+        first_name: firstName,
+        last_name: lastName,
+        email: emp.email,
+        phone: emp.phone,
+        designation: emp.designation,
+        team_name: emp.department, // Using department as team
+        badge_status,
+        reporting_manager_name: null,
+      }
+    })
+  }, [employeesData])
 
   // Get unique teams and designations
   const teams = useMemo(() => [...new Set(employees.map(e => e.team_name))], [employees])
@@ -192,6 +211,14 @@ export default function EmployeesPage() {
       default:
         return ''
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+      </div>
+    )
   }
 
   return (

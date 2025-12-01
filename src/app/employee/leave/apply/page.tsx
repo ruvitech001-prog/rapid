@@ -2,33 +2,58 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useAuth } from '@/lib/auth'
+import { useLeaveBalances, useCreateLeaveRequest } from '@/lib/hooks'
 
 export default function ApplyLeavePage() {
   const router = useRouter()
+  const { user } = useAuth()
+  const employeeId = user?.id
+
   const [formData, setFormData] = useState({
     leaveType: '',
     startDate: '',
     endDate: '',
     reason: '',
     halfDay: false,
-    halfDayPeriod: 'first_half',
+    halfDayPeriod: 'first_half' as 'first_half' | 'second_half',
   })
 
-  const leaveBalances = [
-    { type: 'earned_leave', label: 'Earned Leave', balance: 12, total: 18 },
-    { type: 'casual_leave', label: 'Casual Leave', balance: 5, total: 12 },
-    { type: 'sick_leave', label: 'Sick Leave', balance: 7, total: 12 },
-    { type: 'comp_off', label: 'Comp Off', balance: 2, total: 0 },
-    { type: 'lwp', label: 'Leave Without Pay', balance: 0, total: 0 },
-  ]
+  const { data: leaveBalancesData = [], isLoading: loadingBalances } = useLeaveBalances(employeeId)
+  const createLeaveRequest = useCreateLeaveRequest()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  // Transform balances for display
+  const leaveBalances = leaveBalancesData.map((b) => {
+    const total = (b.opening_balance || 0) + (b.accrued || 0) + (b.carry_forward || 0)
+    const used = (b.taken || 0) + (b.pending || 0)
+    return {
+      type: b.leave_type || 'unknown',
+      label: b.leave_type || 'Unknown',
+      balance: total - used,
+      total: total,
+    }
+  })
+
+  // If no balances from DB, show default structure
+  const displayBalances =
+    leaveBalances.length > 0
+      ? leaveBalances
+      : [
+          { type: 'earned_leave', label: 'Earned Leave', balance: 12, total: 18 },
+          { type: 'casual_leave', label: 'Casual Leave', balance: 5, total: 12 },
+          { type: 'sick_leave', label: 'Sick Leave', balance: 7, total: 12 },
+        ]
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked
@@ -47,14 +72,41 @@ export default function ApplyLeavePage() {
     return formData.halfDay ? 0.5 : diffDays
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Leave application:', formData)
-    alert('Leave application submitted successfully!')
-    router.push('/employee/leave/history')
+
+    if (!employeeId) {
+      alert('Please log in as an employee to apply for leave')
+      return
+    }
+
+    try {
+      await createLeaveRequest.mutateAsync({
+        employeeId,
+        leaveType: formData.leaveType,
+        startDate: formData.startDate,
+        endDate: formData.halfDay ? formData.startDate : formData.endDate,
+        reason: formData.reason,
+        isHalfDay: formData.halfDay,
+        halfDayPeriod: formData.halfDay ? formData.halfDayPeriod : undefined,
+      })
+      alert('Leave application submitted successfully!')
+      router.push('/employee/leave/history')
+    } catch (error) {
+      console.error('Error submitting leave request:', error)
+      alert('Failed to submit leave request. Please try again.')
+    }
   }
 
-  const selectedLeaveBalance = leaveBalances.find(l => l.type === formData.leaveType)
+  const selectedLeaveBalance = displayBalances.find((l) => l.type === formData.leaveType)
+
+  if (loadingBalances) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -66,23 +118,25 @@ export default function ApplyLeavePage() {
 
       {/* Leave Balance Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {leaveBalances.filter(l => l.total > 0).map((leave) => (
-          <Card key={leave.type}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{leave.label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-semibold">{leave.balance}</p>
-              <div className="mt-3 w-full bg-muted rounded-full h-2">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all"
-                  style={{ width: `${(leave.balance / leave.total) * 100}%` }}
-                />
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">of {leave.total} remaining</p>
-            </CardContent>
-          </Card>
-        ))}
+        {displayBalances
+          .filter((l) => l.total > 0)
+          .map((leave) => (
+            <Card key={leave.type}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">{leave.label}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold">{leave.balance}</p>
+                <div className="mt-3 w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all"
+                    style={{ width: `${(leave.balance / leave.total) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">of {leave.total} remaining</p>
+              </CardContent>
+            </Card>
+          ))}
       </div>
 
       {/* Leave Application Form */}
@@ -113,7 +167,8 @@ export default function ApplyLeavePage() {
                 </select>
                 {selectedLeaveBalance && (
                   <p className="text-xs text-muted-foreground">
-                    Available: {selectedLeaveBalance.balance} {selectedLeaveBalance.total > 0 ? `/ ${selectedLeaveBalance.total}` : ''}
+                    Available: {selectedLeaveBalance.balance}{' '}
+                    {selectedLeaveBalance.total > 0 ? `/ ${selectedLeaveBalance.total}` : ''}
                   </p>
                 )}
               </div>
@@ -129,7 +184,9 @@ export default function ApplyLeavePage() {
                       setFormData({ ...formData, halfDay: checked as boolean })
                     }
                   />
-                  <Label htmlFor="halfDay" className="cursor-pointer">Half Day Leave</Label>
+                  <Label htmlFor="halfDay" className="cursor-pointer">
+                    Half Day Leave
+                  </Label>
                 </div>
                 {formData.halfDay && (
                   <select
@@ -164,13 +221,15 @@ export default function ApplyLeavePage() {
                   id="endDate"
                   type="date"
                   name="endDate"
-                  value={formData.endDate}
+                  value={formData.halfDay ? formData.startDate : formData.endDate}
                   onChange={handleChange}
                   required
                   disabled={formData.halfDay}
                 />
                 {formData.halfDay && (
-                  <p className="text-xs text-muted-foreground">End date same as start date for half day</p>
+                  <p className="text-xs text-muted-foreground">
+                    End date same as start date for half day
+                  </p>
                 )}
               </div>
 
@@ -190,7 +249,7 @@ export default function ApplyLeavePage() {
             </div>
 
             {/* Summary */}
-            {formData.startDate && formData.endDate && (
+            {formData.startDate && (formData.halfDay || formData.endDate) && (
               <div className="border border-border rounded-lg p-4 bg-muted/30">
                 <p className="text-sm font-semibold">Leave Summary</p>
                 <div className="mt-3 grid grid-cols-2 gap-4">
@@ -201,7 +260,8 @@ export default function ApplyLeavePage() {
                   <div>
                     <p className="text-xs text-muted-foreground">From - To</p>
                     <p className="text-sm font-semibold mt-1">
-                      {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}
+                      {new Date(formData.startDate).toLocaleDateString()} -{' '}
+                      {new Date(formData.halfDay ? formData.startDate : formData.endDate).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -210,15 +270,18 @@ export default function ApplyLeavePage() {
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
+              <Button type="button" variant="outline" onClick={() => router.back()}>
                 Cancel
               </Button>
-              <Button type="submit">
-                Submit Leave Request
+              <Button type="submit" disabled={createLeaveRequest.isPending}>
+                {createLeaveRequest.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Leave Request'
+                )}
               </Button>
             </div>
           </form>

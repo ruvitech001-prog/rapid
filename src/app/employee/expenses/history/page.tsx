@@ -1,44 +1,76 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { useAuth } from '@/lib/auth'
+import { useEmployeeExpenses } from '@/lib/hooks'
 
 export default function ExpenseHistoryPage() {
+  const { user } = useAuth()
+  const employeeId = user?.id
+
   const [statusFilter, setStatusFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
 
-  const expenses = [
-    { id: 1, category: 'Travel', amount: 850, merchant: 'Uber', date: '2024-02-20', submittedOn: '2024-02-21', status: 'approved', approvedAmount: 850 },
-    { id: 2, category: 'Food & Meals', amount: 450, merchant: 'Swiggy', date: '2024-02-18', submittedOn: '2024-02-19', status: 'pending', approvedAmount: null },
-    { id: 3, category: 'Accommodation', amount: 5500, merchant: 'OYO Rooms', date: '2024-02-15', submittedOn: '2024-02-16', status: 'approved', approvedAmount: 5500 },
-    { id: 4, category: 'Internet & Phone', amount: 1200, merchant: 'Airtel', date: '2024-02-10', submittedOn: '2024-02-11', status: 'rejected', approvedAmount: null, rejectionReason: 'Bill not clear' },
-    { id: 5, category: 'Office Supplies', amount: 2300, merchant: 'Amazon', date: '2024-02-05', submittedOn: '2024-02-06', status: 'approved', approvedAmount: 2300 },
-  ]
+  const { data: expenseClaims = [], isLoading } = useEmployeeExpenses(employeeId)
 
-  const filteredExpenses = expenses.filter(expense => {
+  // Transform data
+  const expenses = useMemo(() => {
+    return expenseClaims.map((exp) => ({
+      id: exp.id,
+      category: exp.expense_category || 'Other',
+      amount: exp.amount || 0,
+      merchant: exp.merchant_name || '',
+      date: exp.expense_date || '',
+      submittedOn: exp.created_at || '',
+      status: exp.status || 'pending',
+      approvedAmount: exp.amount, // No separate approved_amount field
+      rejectionReason: exp.rejection_reason,
+    }))
+  }, [expenseClaims])
+
+  const filteredExpenses = expenses.filter((expense) => {
     const matchesStatus = statusFilter === 'all' || expense.status === statusFilter
-    const matchesCategory = categoryFilter === 'all' || expense.category.toLowerCase().includes(categoryFilter.toLowerCase())
+    const matchesCategory =
+      categoryFilter === 'all' ||
+      expense.category.toLowerCase().includes(categoryFilter.toLowerCase())
     return matchesStatus && matchesCategory
   })
 
-  const totalApproved = expenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + (e.approvedAmount || 0), 0)
-  const totalPending = expenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0)
+  const totalApproved = expenses
+    .filter((e) => e.status === 'approved')
+    .reduce((sum, e) => sum + (e.approvedAmount || e.amount || 0), 0)
+  const totalPending = expenses
+    .filter((e) => e.status === 'pending')
+    .reduce((sum, e) => sum + (e.amount || 0), 0)
 
   const getStatusBadge = (status: string) => {
     const styles = {
       approved: 'bg-green-100 text-green-800',
       pending: 'bg-yellow-100 text-yellow-800',
       rejected: 'bg-red-100 text-red-800',
+      paid: 'bg-blue-100 text-blue-800',
     }
     return (
-      <Badge variant="outline" className={styles[status as keyof typeof styles]}>
+      <Badge
+        variant="outline"
+        className={styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800'}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+      </div>
     )
   }
 
@@ -47,9 +79,7 @@ export default function ExpenseHistoryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Expense History</h1>
-          <p className="mt-2 text-muted-foreground">
-            View all your expense claims
-          </p>
+          <p className="mt-2 text-muted-foreground">View all your expense claims</p>
         </div>
         <Button asChild size="lg" className="gap-2">
           <Link href="/employee/expenses/submit">
@@ -74,7 +104,11 @@ export default function ExpenseHistoryPage() {
             <CardTitle className="text-sm font-medium">Approved</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold text-primary">₹{totalApproved.toLocaleString()}</p>
+            <p className="text-2xl font-semibold text-primary">
+              {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(
+                totalApproved
+              )}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -82,7 +116,11 @@ export default function ExpenseHistoryPage() {
             <CardTitle className="text-sm font-medium">Pending</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold text-orange-600">₹{totalPending.toLocaleString()}</p>
+            <p className="text-2xl font-semibold text-orange-600">
+              {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(
+                totalPending
+              )}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -91,7 +129,11 @@ export default function ExpenseHistoryPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">
-              {expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).length}
+              {
+                expenses.filter(
+                  (e) => e.date && new Date(e.date).getMonth() === new Date().getMonth()
+                ).length
+              }
             </p>
           </CardContent>
         </Card>
@@ -140,9 +182,7 @@ export default function ExpenseHistoryPage() {
       {/* Expenses List */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Expenses ({filteredExpenses.length})
-          </CardTitle>
+          <CardTitle>Expenses ({filteredExpenses.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {filteredExpenses.length > 0 ? (
@@ -173,20 +213,22 @@ export default function ExpenseHistoryPage() {
                 <tbody className="divide-y divide-border">
                   {filteredExpenses.map((expense) => (
                     <tr key={expense.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        {expense.category}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">{expense.category}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{expense.merchant}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {expense.merchant}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {new Date(expense.date).toLocaleDateString('en-IN')}
+                        {expense.date
+                          ? new Date(expense.date).toLocaleDateString('en-IN')
+                          : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-semibold">
-                        ₹{expense.amount.toLocaleString()}
+                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(
+                          expense.amount
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                        {new Date(expense.submittedOn).toLocaleDateString('en-IN')}
+                        {expense.submittedOn
+                          ? new Date(expense.submittedOn).toLocaleDateString('en-IN')
+                          : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
@@ -196,7 +238,11 @@ export default function ExpenseHistoryPage() {
                           )}
                           {expense.status === 'approved' && expense.approvedAmount && (
                             <p className="text-xs text-primary">
-                              Approved: ₹{expense.approvedAmount.toLocaleString()}
+                              Approved:{' '}
+                              {new Intl.NumberFormat('en-IN', {
+                                style: 'currency',
+                                currency: 'INR',
+                              }).format(expense.approvedAmount)}
                             </p>
                           )}
                         </div>
@@ -208,12 +254,8 @@ export default function ExpenseHistoryPage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                No expenses found
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Try adjusting your filters
-              </p>
+              <p className="text-muted-foreground">No expenses found</p>
+              <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters</p>
             </div>
           )}
         </CardContent>
