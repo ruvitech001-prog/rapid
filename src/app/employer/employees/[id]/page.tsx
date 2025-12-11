@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
@@ -14,11 +14,12 @@ import {
   MapPin,
   Briefcase,
   User,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { mockDatabase, type MockEmployee } from '@/lib/mock-data'
+import { useEmployee } from '@/lib/hooks'
 
 // Helper function to get initials
 function getInitials(firstName: string, lastName: string): string {
@@ -133,30 +134,16 @@ export default function EmployeeDetailPage() {
   const params = useParams()
   const employeeId = params.id as string
 
-  // Use state to store employee data to avoid hydration mismatch
-  const [employee, setEmployee] = useState<MockEmployee | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  // Fetch employee data from backend
+  const { data: employee, isLoading } = useEmployee(employeeId)
 
   // Documents tab state
   const [selectedDocCategory, setSelectedDocCategory] = useState('current_employment')
 
-  // Load employee data only on client side to avoid hydration mismatch
-  useEffect(() => {
-    const foundEmployee = mockDatabase.employees.find(emp => emp.id === employeeId) || mockDatabase.employees[0]
-    setEmployee(foundEmployee || null)
-    setIsLoading(false)
-  }, [employeeId])
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse flex items-center gap-4">
-          <div className="w-16 h-16 bg-[#F4F7FA] rounded-full"></div>
-          <div className="space-y-2">
-            <div className="h-6 w-48 bg-[#F4F7FA] rounded"></div>
-            <div className="h-4 w-32 bg-[#F4F7FA] rounded"></div>
-          </div>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
       </div>
     )
   }
@@ -169,10 +156,16 @@ export default function EmployeeDetailPage() {
     )
   }
 
-  const fullName = `${employee.first_name} ${employee.last_name}`
-  const initials = getInitials(employee.first_name, employee.last_name)
-  const experience = calculateExperience(employee.joining_date)
-  const location = `${employee.personal_details.address.city}, ${employee.personal_details.address.state}`
+  // Parse full name into first and last name
+  const nameParts = employee.full_name?.split(' ') || ['Unknown']
+  const firstName = nameParts[0] || 'Unknown'
+  const lastName = nameParts.slice(1).join(' ') || ''
+  const fullName = employee.full_name || 'Unknown'
+  const initials = getInitials(firstName, lastName)
+  const experience = employee.contract?.start_date
+    ? calculateExperience(employee.contract.start_date)
+    : 'N/A'
+  const location = employee.contract?.work_location || 'Not specified'
 
   // Mock family data
   const familyMembers = [
@@ -327,11 +320,11 @@ export default function EmployeeDetailPage() {
             {/* Info */}
             <div>
               <h1 className="text-2xl font-semibold text-[#353B41]">{fullName}</h1>
-              <p className="text-sm text-[#8593A3] mt-0.5">{employee.designation}</p>
+              <p className="text-sm text-[#8593A3] mt-0.5">{employee.contract?.designation || 'No designation'}</p>
               <div className="flex items-center gap-4 mt-2 text-sm text-[#8593A3]">
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span>Reporting to {employee.reporting_manager_name || 'N/A'}</span>
+                  <span>ID: {employee.employee_code || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Briefcase className="h-4 w-4" />
@@ -412,19 +405,25 @@ export default function EmployeeDetailPage() {
             <div className="grid grid-cols-3 gap-6 pt-4">
               <InfoField
                 label="DATE OF BIRTH"
-                value={new Date(employee.personal_details.date_of_birth).toLocaleDateString('en-IN', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
+                value={employee.date_of_birth
+                  ? new Date(employee.date_of_birth).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })
+                  : 'Not provided'}
               />
               <InfoField
                 label="GENDER"
-                value={employee.personal_details.gender.charAt(0).toUpperCase() + employee.personal_details.gender.slice(1)}
+                value={employee.gender
+                  ? employee.gender.charAt(0).toUpperCase() + employee.gender.slice(1)
+                  : 'Not provided'}
               />
               <InfoField
                 label="MARITAL STATUS"
-                value={employee.personal_details.marital_status.charAt(0).toUpperCase() + employee.personal_details.marital_status.slice(1)}
+                value={employee.marital_status
+                  ? employee.marital_status.charAt(0).toUpperCase() + employee.marital_status.slice(1)
+                  : 'Not provided'}
               />
             </div>
           </CollapsibleSection>
@@ -432,8 +431,8 @@ export default function EmployeeDetailPage() {
           {/* Contact Details */}
           <CollapsibleSection title="Contact details">
             <div className="grid grid-cols-2 gap-6 pt-4">
-              <InfoField label="PERSONAL EMAIL" value={employee.email} />
-              <InfoField label="PHONE NUMBER" value={employee.phone} />
+              <InfoField label="PERSONAL EMAIL" value={employee.email || employee.personal_email || 'Not provided'} />
+              <InfoField label="PHONE NUMBER" value={employee.phone_number || 'Not provided'} />
             </div>
           </CollapsibleSection>
 
@@ -441,19 +440,34 @@ export default function EmployeeDetailPage() {
           <CollapsibleSection title="Identity proof">
             <div className="space-y-6 pt-4">
               <div className="grid grid-cols-2 gap-6">
-                <InfoField label="PAN" value={employee.personal_details.pan} />
-                <InfoField label="AADHAAR CARD" value={employee.personal_details.aadhaar} />
+                <InfoField label="PAN" value={employee.pan_number || 'Not provided'} />
+                <InfoField label="AADHAAR CARD" value={employee.aadhaar_number || 'Not provided'} />
               </div>
-              <div className="grid grid-cols-1 gap-6">
-                <InfoField
-                  label="CURRENT ADDRESS"
-                  value={`${employee.personal_details.address.address_line_1}, ${employee.personal_details.address.address_line_2}, ${employee.personal_details.address.city}, ${employee.personal_details.address.state} - ${employee.personal_details.address.pin}`}
-                />
-                <InfoField
-                  label="PERMANENT ADDRESS"
-                  value={`${employee.personal_details.address.address_line_1}, ${employee.personal_details.address.address_line_2}, ${employee.personal_details.address.city}, ${employee.personal_details.address.state} - ${employee.personal_details.address.pin}`}
-                />
+              <div className="grid grid-cols-2 gap-6">
+                <InfoField label="UAN NUMBER" value={employee.uan_number || 'Not provided'} />
+                <InfoField label="ESIC NUMBER" value={employee.esic_number || 'Not provided'} />
               </div>
+            </div>
+          </CollapsibleSection>
+
+          {/* Employment Details */}
+          <CollapsibleSection title="Employment details">
+            <div className="grid grid-cols-3 gap-6 pt-4">
+              <InfoField label="EMPLOYEE CODE" value={employee.employee_code || 'Not assigned'} />
+              <InfoField label="DESIGNATION" value={employee.contract?.designation || 'Not assigned'} />
+              <InfoField label="DEPARTMENT" value={employee.contract?.department || 'Not assigned'} />
+              <InfoField label="EMPLOYMENT TYPE" value={employee.contract?.employment_type || 'Not specified'} />
+              <InfoField
+                label="START DATE"
+                value={employee.contract?.start_date
+                  ? new Date(employee.contract.start_date).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })
+                  : 'Not specified'}
+              />
+              <InfoField label="STATUS" value={employee.status || 'Active'} />
             </div>
           </CollapsibleSection>
         </TabsContent>
@@ -462,20 +476,32 @@ export default function EmployeeDetailPage() {
         <TabsContent value="bank" className="mt-6 space-y-6">
           <CollapsibleSection title="Bank details">
             <div className="grid grid-cols-2 gap-6 pt-4">
-              <InfoField label="ACCOUNT NUMBER" value={employee.statutory_details.bank_account} />
-              <InfoField label="BANK NAME" value={employee.statutory_details.bank_name} />
-              <InfoField label="IFSC CODE" value={employee.statutory_details.ifsc_code} />
-              <InfoField label="BANK BRANCH" value="Main Branch" />
+              <InfoField label="ACCOUNT NUMBER" value="Bank details not available" />
+              <InfoField label="BANK NAME" value="Contact HR for details" />
+              <InfoField label="IFSC CODE" value="-" />
+              <InfoField label="BANK BRANCH" value="-" />
             </div>
           </CollapsibleSection>
 
-          <CollapsibleSection title="Documents">
-            <div className="pt-4">
-              <DocumentCard
-                name="Cancelled Cheque.pdf"
-                uploadedDate="15 Jan 2024"
-                onView={() => console.log('View')}
-                onDownload={() => console.log('Download')}
+          <CollapsibleSection title="Salary Information">
+            <div className="grid grid-cols-3 gap-6 pt-4">
+              <InfoField
+                label="CTC"
+                value={employee.contract?.ctc
+                  ? `₹${Number(employee.contract.ctc).toLocaleString('en-IN')}`
+                  : 'Not specified'}
+              />
+              <InfoField
+                label="GROSS SALARY"
+                value={employee.contract?.gross_salary
+                  ? `₹${Number(employee.contract.gross_salary).toLocaleString('en-IN')}`
+                  : 'Not specified'}
+              />
+              <InfoField
+                label="BASIC SALARY"
+                value={employee.contract?.basic_salary
+                  ? `₹${Number(employee.contract.basic_salary).toLocaleString('en-IN')}`
+                  : 'Not specified'}
               />
             </div>
           </CollapsibleSection>

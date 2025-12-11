@@ -145,34 +145,34 @@ export default function HelpPage() {
         <div className="mt-12">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Documentation</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a
-              href="#"
-              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <h4 className="font-medium text-gray-900 mb-1">User Guide</h4>
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50/50 cursor-not-allowed opacity-75">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-medium text-gray-900">User Guide</h4>
+                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Coming Soon</span>
+              </div>
               <p className="text-sm text-gray-600">Learn how to use Rapid.one features</p>
-            </a>
-            <a
-              href="#"
-              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <h4 className="font-medium text-gray-900 mb-1">Video Tutorials</h4>
+            </div>
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50/50 cursor-not-allowed opacity-75">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-medium text-gray-900">Video Tutorials</h4>
+                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Coming Soon</span>
+              </div>
               <p className="text-sm text-gray-600">Watch step-by-step video guides</p>
-            </a>
-            <a
-              href="#"
-              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <h4 className="font-medium text-gray-900 mb-1">API Documentation</h4>
+            </div>
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50/50 cursor-not-allowed opacity-75">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-medium text-gray-900">API Documentation</h4>
+                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Coming Soon</span>
+              </div>
               <p className="text-sm text-gray-600">Integrate Rapid.one with your systems</p>
-            </a>
-            <a
-              href="#"
-              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <h4 className="font-medium text-gray-900 mb-1">Status Page</h4>
+            </div>
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50/50 cursor-not-allowed opacity-75">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-medium text-gray-900">Status Page</h4>
+                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Coming Soon</span>
+              </div>
               <p className="text-sm text-gray-600">Check system status and updates</p>
-            </a>
+            </div>
           </div>
         </div>
       </div>

@@ -1,14 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useUserPreferences, useUpdateUserPreferences, useChangePassword } from '@/lib/hooks';
 
 export default function ContractorSettingsPage() {
   const [activeTab, setActiveTab] = useState<'preferences' | 'notifications' | 'security'>('preferences');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
+  // Password change form state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Fetch user preferences from backend
+  const { data: userPreferences, isLoading } = useUserPreferences();
+  const updatePreferences = useUpdateUserPreferences();
+  const changePassword = useChangePassword();
+
+  // Local state for form editing
   const [preferences, setPreferences] = useState({
     language: 'English',
     timezone: 'Asia/Kolkata',
-    theme: 'light',
+    theme: 'light' as 'light' | 'dark' | 'system',
     currency: 'INR',
   });
 
@@ -19,15 +33,76 @@ export default function ContractorSettingsPage() {
     emailDigest: true,
   });
 
+  // Update local state when data is loaded
+  useEffect(() => {
+    if (userPreferences) {
+      setPreferences({
+        language: userPreferences.language,
+        timezone: userPreferences.timezone,
+        theme: userPreferences.theme,
+        currency: userPreferences.currency,
+      });
+
+      // Map notification preferences for contractors
+      const notifPrefs = userPreferences.notificationPreferences;
+      setNotifications({
+        paymentReminders: notifPrefs.payrollAlerts,
+        invoiceNotifications: notifPrefs.invoiceAlerts,
+        timesheetReminders: notifPrefs.weeklyDigest,
+        emailDigest: notifPrefs.monthlyReport,
+      });
+    }
+  }, [userPreferences]);
+
   const handlePreferencesSave = () => {
-    console.log('Saving preferences:', preferences);
-    alert('Preferences updated successfully!');
+    updatePreferences.mutate({
+      language: preferences.language,
+      timezone: preferences.timezone,
+      theme: preferences.theme,
+      currency: preferences.currency,
+    });
   };
 
   const handleNotificationsSave = () => {
-    console.log('Saving notifications:', notifications);
-    alert('Notification settings updated successfully!');
+    updatePreferences.mutate({
+      notificationPreferences: {
+        payrollAlerts: notifications.paymentReminders,
+        invoiceAlerts: notifications.invoiceNotifications,
+        weeklyDigest: notifications.timesheetReminders,
+        monthlyReport: notifications.emailDigest,
+      },
+    });
   };
+
+  const handleEnable2FA = () => {
+    // 2FA implementation would go here
+  };
+
+  const handlePasswordChange = () => {
+    if (newPassword !== confirmPassword) {
+      return;
+    }
+
+    changePassword.mutate(
+      { currentPassword, newPassword },
+      {
+        onSuccess: () => {
+          setShowPasswordModal(false);
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        },
+      }
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -108,11 +183,12 @@ export default function ContractorSettingsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
                   <select
                     value={preferences.theme}
-                    onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
+                    onChange={(e) => setPreferences({ ...preferences, theme: e.target.value as 'light' | 'dark' | 'system' })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
-                    <option>light</option>
-                    <option>dark</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="system">System</option>
                   </select>
                 </div>
                 <div>
@@ -131,9 +207,11 @@ export default function ContractorSettingsPage() {
               <div className="flex justify-end mt-6">
                 <button
                   onClick={handlePreferencesSave}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={updatePreferences.isPending}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                 >
-                  Save Preferences
+                  {updatePreferences.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {updatePreferences.isPending ? 'Saving...' : 'Save Preferences'}
                 </button>
               </div>
             </div>
@@ -210,9 +288,11 @@ export default function ContractorSettingsPage() {
               <div className="flex justify-end mt-6">
                 <button
                   onClick={handleNotificationsSave}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={updatePreferences.isPending}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                 >
-                  Save Notifications
+                  {updatePreferences.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {updatePreferences.isPending ? 'Saving...' : 'Save Notifications'}
                 </button>
               </div>
             </div>
@@ -230,7 +310,10 @@ export default function ContractorSettingsPage() {
                     <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
                     <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
                   </div>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <button
+                    onClick={handleEnable2FA}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
                     Enable
                   </button>
                 </div>
@@ -239,10 +322,78 @@ export default function ContractorSettingsPage() {
                     <p className="text-sm font-medium text-gray-900">Change Password</p>
                     <p className="text-sm text-gray-500">Update your account password</p>
                   </div>
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
                     Change
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Password Change Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Confirm new password"
+                  />
+                  {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                    <p className="text-sm text-red-500 mt-1">Passwords do not match</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={changePassword.isPending || !currentPassword || !newPassword || newPassword !== confirmPassword}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {changePassword.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {changePassword.isPending ? 'Updating...' : 'Update Password'}
+                </button>
               </div>
             </div>
           </div>

@@ -1,40 +1,127 @@
 'use client'
 
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/lib/auth'
+import { useEmployeePayrollHistory, useCurrentPayslip } from '@/lib/hooks'
 
 export default function PayslipsPage() {
-  const payslips = [
-    { month: 'February 2024', gross: 50000, deductions: 6000, net: 44000, status: 'paid', paidOn: '2024-03-01' },
-    { month: 'January 2024', gross: 50000, deductions: 6000, net: 44000, status: 'paid', paidOn: '2024-02-01' },
-    { month: 'December 2023', gross: 50000, deductions: 6000, net: 44000, status: 'paid', paidOn: '2024-01-01' },
-    { month: 'November 2023', gross: 50000, deductions: 6000, net: 44000, status: 'paid', paidOn: '2023-12-01' },
-    { month: 'October 2023', gross: 50000, deductions: 6000, net: 44000, status: 'paid', paidOn: '2023-11-01' },
-  ]
+  const { user } = useAuth()
+  const employeeId = user?.id
+  const { data: payrollHistory, isLoading: historyLoading } = useEmployeePayrollHistory(employeeId, 12)
+  const { data: currentPayslip, isLoading: payslipLoading } = useCurrentPayslip(employeeId)
 
-  const [selectedPayslip, setSelectedPayslip] = useState(payslips[0])
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
-  const earnings = [
-    { name: 'Basic Salary', amount: 20000 },
-    { name: 'HRA', amount: 10000 },
-    { name: 'Special Allowance', amount: 17500 },
-    { name: 'Transport Allowance', amount: 1600 },
-    { name: 'Medical Allowance', amount: 900 },
-  ]
+  const isLoading = historyLoading || payslipLoading
 
-  const deductions = [
-    { name: 'EPF (Employee)', amount: 2400 },
-    { name: 'Professional Tax', amount: 200 },
-    { name: 'TDS', amount: 3400 },
-  ]
+  // Get selected payslip data
+  const selectedPayslip = payrollHistory?.[selectedIndex]
+
+  // Calculate YTD totals
+  const ytdNet = payrollHistory?.reduce((sum, p) => sum + p.netPay, 0) || 0
+  const ytdDeductions = payrollHistory?.reduce((sum, p) => sum + p.deductions, 0) || 0
 
   const handleDownload = (month: string) => {
-    console.log('Downloading payslip for:', month)
-    alert(`Downloading payslip for ${month}`)
+    if (!selectedPayslip) {
+      toast.error('No payslip selected')
+      return
+    }
+
+    toast.info(`Preparing payslip for ${month}...`)
+
+    // Generate printable payslip content
+    const payslipContent = `
+PAYSLIP - ${month}
+================================
+
+EMPLOYEE DETAILS
+----------------
+Name: ${user?.name || 'Employee'}
+Employee ID: ${user?.id || 'N/A'}
+
+EARNINGS
+--------
+${earnings.map(e => `${e.name.padEnd(25)} ₹${e.amount.toLocaleString()}`).join('\n')}
+${'─'.repeat(40)}
+Gross Earnings:${' '.repeat(13)} ₹${selectedPayslip.grossPay.toLocaleString()}
+
+DEDUCTIONS
+----------
+${deductions.map(d => `${d.name.padEnd(25)} ₹${d.amount.toLocaleString()}`).join('\n')}
+${'─'.repeat(40)}
+Total Deductions:${' '.repeat(11)} ₹${selectedPayslip.deductions.toLocaleString()}
+
+================================
+NET SALARY: ₹${selectedPayslip.netPay.toLocaleString()}
+================================
+
+This is a system generated payslip.
+Generated on: ${new Date().toLocaleString()}
+    `
+
+    // Create and trigger download
+    const blob = new Blob([payslipContent], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `payslip-${month.replace(' ', '-').toLowerCase()}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+
+    toast.success(`Payslip for ${month} downloaded`)
   }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!payrollHistory || payrollHistory.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground">Payslips</h1>
+          <p className="mt-1 text-sm text-muted-foreground">View and download your salary slips</p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No payslips available yet.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your payslips will appear here after your first salary is processed.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Build earnings and deductions from current payslip data
+  const earnings = currentPayslip ? [
+    { name: 'Basic Salary', amount: currentPayslip.basicSalary },
+    { name: 'HRA', amount: currentPayslip.hra },
+    { name: 'LTA', amount: currentPayslip.lta },
+    { name: 'Medical Allowance', amount: currentPayslip.medicalAllowance },
+    { name: 'Special Allowance', amount: currentPayslip.specialAllowance },
+    { name: 'Telephone Allowance', amount: currentPayslip.telephoneAllowance },
+    { name: 'Performance Bonus', amount: currentPayslip.performanceBonus },
+  ].filter(e => e.amount > 0) : []
+
+  const deductions = currentPayslip ? [
+    { name: 'EPF (Employee)', amount: currentPayslip.epfEmployee },
+    { name: 'ESIC (Employee)', amount: currentPayslip.esicEmployee },
+    { name: 'Professional Tax', amount: currentPayslip.professionalTax },
+    { name: 'Income Tax (TDS)', amount: currentPayslip.incomeTax },
+  ].filter(d => d.amount > 0) : []
 
   return (
     <div className="space-y-6">
@@ -52,7 +139,7 @@ export default function PayslipsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold text-primary">
-              ₹{selectedPayslip?.net.toLocaleString() || '0'}
+              ₹{(selectedPayslip?.netPay || 0).toLocaleString()}
             </p>
             <p className="text-xs text-muted-foreground mt-1">Net Salary</p>
           </CardContent>
@@ -63,7 +150,7 @@ export default function PayslipsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">
-              ₹{(payslips.reduce((sum, p) => sum + p.net, 0)).toLocaleString()}
+              ₹{ytdNet.toLocaleString()}
             </p>
             <p className="text-xs text-muted-foreground mt-1">Total Earned</p>
           </CardContent>
@@ -74,7 +161,7 @@ export default function PayslipsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold text-destructive">
-              ₹{(payslips.reduce((sum, p) => sum + p.deductions, 0)).toLocaleString()}
+              ₹{ytdDeductions.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -88,18 +175,18 @@ export default function PayslipsPage() {
           </CardHeader>
           <CardContent>
             <div className="divide-y divide-border">
-              {payslips.map((payslip, idx) => (
+              {payrollHistory.map((payslip, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setSelectedPayslip(payslip)}
+                  onClick={() => setSelectedIndex(idx)}
                   className={`w-full p-3 text-left hover:bg-muted/50 transition-colors ${
-                    selectedPayslip?.month === payslip.month ? 'bg-primary/5 border-l-2 border-primary' : ''
+                    selectedIndex === idx ? 'bg-primary/5 border-l-2 border-primary' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">{payslip.month}</p>
-                      <p className="text-xs text-muted-foreground mt-1">₹{payslip.net.toLocaleString()}</p>
+                      <p className="text-sm font-medium">{payslip.month} {payslip.year}</p>
+                      <p className="text-xs text-muted-foreground mt-1">₹{payslip.netPay.toLocaleString()}</p>
                     </div>
                     <Badge>Paid</Badge>
                   </div>
@@ -115,13 +202,13 @@ export default function PayslipsPage() {
           <CardHeader className="border-b border-border">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle>{selectedPayslip?.month || 'N/A'}</CardTitle>
+                <CardTitle>{selectedPayslip ? `${selectedPayslip.month} ${selectedPayslip.year}` : 'N/A'}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Paid on {selectedPayslip?.paidOn ? new Date(selectedPayslip.paidOn).toLocaleDateString() : 'N/A'}
+                  Salary for {selectedPayslip ? `${selectedPayslip.month} ${selectedPayslip.year}` : 'N/A'}
                 </p>
               </div>
               <Button
-                onClick={() => handleDownload(selectedPayslip?.month || '')}
+                onClick={() => handleDownload(selectedPayslip ? `${selectedPayslip.month} ${selectedPayslip.year}` : '')}
                 size="sm"
               >
                 <Download className="h-4 w-4 mr-2" />
@@ -145,7 +232,7 @@ export default function PayslipsPage() {
                   ))}
                   <div className="flex justify-between text-sm font-semibold border-t border-border pt-2 mt-2">
                     <span>Gross Earnings</span>
-                    <span className="text-primary">₹{selectedPayslip?.gross.toLocaleString() || '0'}</span>
+                    <span className="text-primary">₹{(selectedPayslip?.grossPay || 0).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -162,7 +249,7 @@ export default function PayslipsPage() {
                   ))}
                   <div className="flex justify-between text-sm font-semibold border-t border-border pt-2 mt-2">
                     <span>Total Deductions</span>
-                    <span className="text-destructive">₹{selectedPayslip?.deductions.toLocaleString() || '0'}</span>
+                    <span className="text-destructive">₹{(selectedPayslip?.deductions || 0).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -174,11 +261,11 @@ export default function PayslipsPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Net Salary</span>
                   <span className="text-2xl font-semibold text-primary">
-                    ₹{selectedPayslip?.net.toLocaleString() || '0'}
+                    ₹{(selectedPayslip?.netPay || 0).toLocaleString()}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  In words: {selectedPayslip ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(selectedPayslip.net).replace('₹', '') : '0'} Rupees Only
+                  In words: {selectedPayslip ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(selectedPayslip.netPay).replace('₹', '') : '0'} Rupees Only
                 </p>
               </div>
             </div>

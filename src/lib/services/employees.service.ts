@@ -24,32 +24,51 @@ export interface EmployeeListItem {
 
 class EmployeesServiceClass extends BaseService {
   async getByCompany(companyId: string): Promise<EmployeeListItem[]> {
-    // Get employees with their contracts
+    // Get contracts first
     const { data: contracts, error: contractsError } = await this.supabase
       .from('employee_employeecontract')
-      .select(
-        `
-        *,
-        employee:employee_employee(*)
-      `
-      )
+      .select('*')
       .eq('company_id', companyId)
       .eq('is_current', true)
 
-    if (contractsError) this.handleError(contractsError)
+    if (contractsError) {
+      console.error('Contracts error:', contractsError)
+      this.handleError(contractsError)
+    }
 
-    // Get users for emails
-    const employeeIds =
-      contracts
-        ?.map((c) => c.employee?.user_id)
-        .filter((id): id is string => !!id) || []
+    if (!contracts || contracts.length === 0) {
+      console.log('No contracts found for company:', companyId)
+      return []
+    }
+
+    // Get employee IDs from contracts
+    const employeeIds = contracts.map((c) => c.employee_id).filter((id): id is string => !!id)
+
+    // Get employees
+    const { data: employees, error: employeesError } = await this.supabase
+      .from('employee_employee')
+      .select('*')
+      .in('id', employeeIds)
+
+    if (employeesError) {
+      console.error('Employees error:', employeesError)
+      this.handleError(employeesError)
+    }
+
+    // Create employee map
+    const employeeMap = new Map(employees?.map((e) => [e.id, e]) || [])
+
+    // Get user IDs for emails
+    const userIds = employees
+      ?.map((e) => e.user_id)
+      .filter((id): id is string => !!id) || []
 
     let usersMap: Record<string, string> = {}
-    if (employeeIds.length > 0) {
+    if (userIds.length > 0) {
       const { data: users } = await this.supabase
         .from('users_user')
         .select('id, email')
-        .in('id', employeeIds)
+        .in('id', userIds)
 
       usersMap =
         users?.reduce(
@@ -61,20 +80,21 @@ class EmployeesServiceClass extends BaseService {
         ) || {}
     }
 
-    return (contracts || []).map((contract) => ({
-      id: contract.employee?.id || '',
-      employeeCode: contract.employee?.employee_code || '',
-      fullName: contract.employee?.full_name || '',
-      email: contract.employee?.user_id
-        ? usersMap[contract.employee.user_id] || ''
-        : '',
-      phone: contract.employee?.phone_number || '',
-      designation: contract.designation,
-      department: contract.department || '',
-      status: contract.employee?.status || 'active',
-      startDate: contract.start_date,
-      ctc: contract.ctc,
-    }))
+    return contracts.map((contract) => {
+      const employee = contract.employee_id ? employeeMap.get(contract.employee_id) : undefined
+      return {
+        id: employee?.id || contract.employee_id || '',
+        employeeCode: employee?.employee_code || '',
+        fullName: employee?.full_name || '',
+        email: employee?.user_id ? usersMap[employee.user_id] || '' : '',
+        phone: employee?.phone_number || '',
+        designation: contract.designation,
+        department: contract.department || '',
+        status: employee?.status || 'active',
+        startDate: contract.start_date,
+        ctc: contract.ctc,
+      }
+    })
   }
 
   async getById(id: string): Promise<EmployeeWithContract | null> {
@@ -125,6 +145,65 @@ class EmployeesServiceClass extends BaseService {
 
     if (error) this.handleError(error)
     return count || 0
+  }
+
+  /**
+   * Update employee details
+   */
+  async updateEmployee(
+    employeeId: string,
+    updates: {
+      fullName?: string
+      phoneNumber?: string
+      status?: string
+    }
+  ): Promise<Employee> {
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    }
+
+    if (updates.fullName !== undefined) updateData.full_name = updates.fullName
+    if (updates.phoneNumber !== undefined) updateData.phone_number = updates.phoneNumber
+    if (updates.status !== undefined) updateData.status = updates.status
+
+    const { data, error } = await this.supabase
+      .from('employee_employee')
+      .update(updateData)
+      .eq('id', employeeId)
+      .select()
+      .single()
+
+    if (error) this.handleError(error)
+    return data as Employee
+  }
+
+  /**
+   * Deactivate an employee (soft delete)
+   */
+  async deactivateEmployee(employeeId: string): Promise<void> {
+    // Update employee status
+    const { error: employeeError } = await this.supabase
+      .from('employee_employee')
+      .update({
+        status: 'exited',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', employeeId)
+
+    if (employeeError) this.handleError(employeeError)
+
+    // Deactivate their current contract
+    const { error: contractError } = await this.supabase
+      .from('employee_employeecontract')
+      .update({
+        is_current: false,
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('employee_id', employeeId)
+      .eq('is_current', true)
+
+    if (contractError) this.handleError(contractError)
   }
 }
 

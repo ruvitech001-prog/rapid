@@ -6,6 +6,7 @@ import {
   contractsService,
   type EmployeeContractWithDetails,
   type ContractorContractWithDetails,
+  type ContractorOwnContract,
 } from '@/lib/services/contracts.service'
 
 export function useEmployeeContracts(companyId: string | undefined) {
@@ -45,5 +46,14 @@ export function useContractStats(companyId: string | undefined) {
     queryKey: queryKeys.contracts.stats(companyId!),
     queryFn: () => contractsService.getContractStats(companyId!),
     enabled: !!companyId,
+  })
+}
+
+// Hook for contractors to view their own contracts
+export function useContractorOwnContracts(contractorId: string | undefined) {
+  return useQuery<ContractorOwnContract[]>({
+    queryKey: ['contracts', 'contractor-own', contractorId],
+    queryFn: () => contractsService.getContractsForContractor(contractorId!),
+    enabled: !!contractorId,
   })
 }

@@ -17,6 +17,13 @@ export interface ContractorContractWithDetails extends ContractorContract {
   contractorEmail: string
 }
 
+export interface ContractorOwnContract extends ContractorContract {
+  companyName: string
+  designation: string
+  department: string
+  contract_type: string
+}
+
 class ContractsServiceClass extends BaseService {
   async getEmployeeContracts(companyId: string): Promise<EmployeeContractWithDetails[]> {
     // Get contracts for this company
@@ -234,6 +241,47 @@ class ContractsServiceClass extends BaseService {
       activeContractorContracts: activeContractor || 0,
       expiringThisMonth: (expiringEmployee || 0) + (expiringContractor || 0),
     }
+  }
+
+  // Get contracts for a specific contractor (contractor's own view)
+  async getContractsForContractor(contractorId: string): Promise<ContractorOwnContract[]> {
+    const { data: contracts, error } = await this.supabase
+      .from('contractor_contractorcontract')
+      .select('*')
+      .eq('contractor_id', contractorId)
+      .eq('is_current', true)
+      .order('start_date', { ascending: false })
+
+    if (error) this.handleError(error)
+
+    if (!contracts || contracts.length === 0) return []
+
+    // Get company details
+    const companyIds = contracts.map((c) => c.company_id).filter((id): id is string => id !== null)
+
+    const { data: companies } = await this.supabase
+      .from('company_company')
+      .select('id, legal_name')
+      .in('id', companyIds)
+
+    const companiesMap =
+      companies?.reduce(
+        (acc, c) => {
+          acc[c.id] = c.legal_name
+          return acc
+        },
+        {} as Record<string, string>
+      ) || {}
+
+    return contracts.map((contract) => ({
+      ...contract,
+      companyName: contract.company_id
+        ? companiesMap[contract.company_id] || 'Unknown Company'
+        : 'Unknown Company',
+      designation: 'Consultant', // Default since contractor contracts don't have designation
+      department: 'External', // Default since contractor contracts don't have department
+      contract_type: contract.hourly_rate ? 'Hourly' : contract.monthly_rate ? 'Monthly' : 'Fixed',
+    }))
   }
 }
 

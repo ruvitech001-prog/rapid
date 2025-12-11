@@ -5,7 +5,16 @@ import { Button } from '@/components/ui/button'
 import { ChevronRight, FileText, MessageSquare, Loader2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSuperAdminDashboard, useSuperAdminRequests } from '@/lib/hooks'
+import { useAuth } from '@/lib/auth/auth-context'
 import Link from 'next/link'
+import { toast } from 'sonner'
+import {
+  GlobalSearch,
+  StatsCards,
+  WorkforceTrendChart,
+  PendingActionsWidget,
+  SupportTicketsWidget,
+} from '@/components/superadmin'
 
 // Figma Design Tokens
 const colors = {
@@ -40,8 +49,11 @@ const colors = {
 const chartColors = [colors.aqua400, colors.secondaryBlue200, colors.green200, colors.amber400, colors.aqua300, colors.rose200]
 
 export default function SuperAdminDashboard() {
+  const { user } = useAuth()
   const { data: dashboardStats, isLoading: statsLoading } = useSuperAdminDashboard()
-  const { data: pendingRequests = [], isLoading: requestsLoading } = useSuperAdminRequests({ status: 'pending' })
+  const { data: pendingRequestsResponse, isLoading: requestsLoading } = useSuperAdminRequests({ status: 'pending' })
+
+  const pendingRequests = pendingRequestsResponse?.data || []
 
   const isLoading = statsLoading || requestsLoading
 
@@ -88,14 +100,57 @@ export default function SuperAdminDashboard() {
   const holidays = dashboardStats?.upcomingHolidays || []
   const totalPendingRequests = dashboardStats?.pendingRequests?.pending || pendingRequests.length
 
+  // New data from enhanced dashboard stats
+  const workforceStats = dashboardStats?.workforceStats || {
+    totalEmployees: 0,
+    totalContractors: 0,
+    activeEmployees: 0,
+    activeContractors: 0,
+    onboardingEmployees: 0,
+    exitingEmployees: 0,
+  }
+  const workforceTrend = dashboardStats?.workforceTrend || []
+  const pendingActions = dashboardStats?.pendingActions || []
+  const totalRevenue = dashboardStats?.totalRevenue || 0
+  const monthlyRevenue = dashboardStats?.monthlyRevenue || 0
+
   return (
-    <div className="space-y-8 pb-32">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold" style={{ color: colors.neutral900 }}>Good morning!</h2>
+    <div className="space-y-6 pb-32">
+      {/* Header with Search */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold" style={{ color: colors.neutral900 }}>
+            Good morning {user?.name?.split(' ')[0] || 'Admin'}!
+          </h2>
+          <p className="text-sm mt-1" style={{ color: colors.neutral500 }}>
+            Here&apos;s what&apos;s happening across your organization today.
+          </p>
+        </div>
+        <GlobalSearch />
       </div>
 
-      {/* Main Grid */}
+      {/* Quick Stats Cards */}
+      <StatsCards
+        workforceStats={workforceStats}
+        totalClients={totalClients}
+        totalRevenue={totalRevenue}
+        monthlyRevenue={monthlyRevenue}
+      />
+
+      {/* Main Grid - Top Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Workforce Trend Chart - Takes 2 columns */}
+        <div className="lg:col-span-2">
+          <WorkforceTrendChart data={workforceTrend} />
+        </div>
+
+        {/* Pending Actions Widget */}
+        <div>
+          <PendingActionsWidget actions={pendingActions} />
+        </div>
+      </div>
+
+      {/* Main Grid - Middle Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
@@ -103,12 +158,13 @@ export default function SuperAdminDashboard() {
           <Card className="rounded-2xl shadow-sm" style={{ borderColor: colors.border }}>
             <CardHeader className="flex flex-row items-center justify-between pb-4">
               <CardTitle className="text-lg font-bold" style={{ color: colors.neutral900 }}>Clients in countries</CardTitle>
-              <button
+              <Link
+                href="/super-admin/clients"
                 className="text-sm font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity"
                 style={{ color: colors.primary500 }}
               >
                 View <ChevronRight className="h-4 w-4" />
-              </button>
+              </Link>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -259,16 +315,20 @@ export default function SuperAdminDashboard() {
 
         {/* Right Column */}
         <div className="space-y-6">
+          {/* Support Tickets Widget */}
+          <SupportTicketsWidget />
+
           {/* Updates */}
           <Card className="rounded-2xl shadow-sm" style={{ borderColor: colors.border }}>
             <CardHeader className="flex flex-row items-center justify-between pb-4">
               <CardTitle className="text-lg font-bold" style={{ color: colors.neutral900 }}>Updates</CardTitle>
-              <button
+              <Link
+                href="/super-admin/audit-logs"
                 className="text-sm font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity"
                 style={{ color: colors.primary500 }}
               >
                 View all <ChevronRight className="h-4 w-4" />
-              </button>
+              </Link>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -334,7 +394,8 @@ export default function SuperAdminDashboard() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors"
+                  onClick={() => toast.info('Knowledge repository coming soon')}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors hover:opacity-80"
                   style={{ backgroundColor: colors.neutral50 }}
                 >
                   <FileText className="h-7 w-7" style={{ color: colors.iconBlue }} />
@@ -342,7 +403,8 @@ export default function SuperAdminDashboard() {
                   <ChevronRight className="h-3 w-3 mt-1" style={{ color: colors.iconBlue }} />
                 </button>
                 <button
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors"
+                  onClick={() => toast.info('Live chat feature coming soon')}
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors hover:opacity-80"
                   style={{ backgroundColor: colors.neutral50 }}
                 >
                   <MessageSquare className="h-7 w-7" style={{ color: colors.iconBlue }} />
@@ -386,6 +448,7 @@ export default function SuperAdminDashboard() {
                 ))
               )}
               <button
+                onClick={() => toast.info('Holiday calendar feature coming soon')}
                 className="w-full text-center text-sm font-semibold mt-4 hover:underline transition-colors flex items-center justify-center gap-1"
                 style={{ color: colors.primary500 }}
               >

@@ -1,118 +1,131 @@
 'use client'
 
-import { useState } from 'react'
+import { use } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Download, Edit2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Download, AlertCircle, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useInvoiceDetail } from '@/lib/hooks/use-invoices'
 
-interface InvoiceData {
-  id: string
-  date: string
-  dueDate: string
-  amount: number
-  subTotal: number
-  gstAmount: number
-  status: 'paid' | 'pending'
-  company: {
-    name: string
-    pan: string
-    gst: string
-    address: string
-    city: string
-  }
-  client: {
-    name: string
-    address: string
-    city: string
-    pincode: string
-    country: string
-    companyCode: string
-  }
-  items: {
-    sno: number
-    description: string
-    taxRate: string
-    amount: number
-  }[]
-  bankDetails: {
-    accountName: string
-    accountNo: string
-    ifscCode: string
-    accountType: string
-    bankAddress: string
-  }
-  otherTerms: string[]
+function formatCurrency(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined) return '₹0'
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(amount)
 }
 
-const mockInvoiceData: InvoiceData = {
-  id: '234',
-  date: '01/Jun/2023',
-  dueDate: '10/Jun/2023',
-  amount: 50000,
-  subTotal: 42016,
-  gstAmount: 7564,
-  status: 'pending',
-  company: {
-    name: 'Auriga IT Consulting Pvt. Ltd.',
-    pan: 'XXXXXXXX',
-    gst: 'XXXXXXXX',
-    address: 'Transport Bhawan Sansad Marg',
-    city: 'New Delhi, 110001',
-  },
-  client: {
-    name: 'Rapid EOR Tech Private Limited',
-    address: '3rd Floor, 166/168/169 Arekere Mico Lyt, BG Road',
-    city: 'Bangalore, Karnataka 560076',
-    pincode: '560076',
-    country: 'India',
-    companyCode: 'BC23654970',
-  },
-  items: [
-    {
-      sno: 1,
-      description: 'Rapid Management Fees',
-      taxRate: '18%',
-      amount: 35680,
-    },
-    {
-      sno: 2,
-      description: 'Reimbursement of expenses',
-      taxRate: '0%',
-      amount: 6336,
-    },
-  ],
-  bankDetails: {
-    accountName: 'Rapid EOR Tech Private Limited',
-    accountNo: '####',
-    ifscCode: '###',
-    accountType: '####',
-    bankAddress: '####',
-  },
-  otherTerms: ['-E & OE', '-Payment due in 7 days'],
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
-export default function InvoiceDetailPage({ params: _params }: { params: { id: string } }) {
+function numberToWords(num: number): string {
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+
+  if (num === 0) return 'Zero'
+  if (num < 0) return 'Minus ' + numberToWords(-num)
+
+  let words = ''
+
+  if (Math.floor(num / 10000000) > 0) {
+    words += numberToWords(Math.floor(num / 10000000)) + ' Crore '
+    num %= 10000000
+  }
+
+  if (Math.floor(num / 100000) > 0) {
+    words += numberToWords(Math.floor(num / 100000)) + ' Lakh '
+    num %= 100000
+  }
+
+  if (Math.floor(num / 1000) > 0) {
+    words += numberToWords(Math.floor(num / 1000)) + ' Thousand '
+    num %= 1000
+  }
+
+  if (Math.floor(num / 100) > 0) {
+    words += ones[Math.floor(num / 100)] + ' Hundred '
+    num %= 100
+  }
+
+  if (num > 0) {
+    if (num < 20) {
+      words += ones[num]
+    } else {
+      words += tens[Math.floor(num / 10)]
+      if (num % 10 > 0) {
+        words += ' ' + ones[num % 10]
+      }
+    }
+  }
+
+  return words.trim() + ' Rupees Only'
+}
+
+export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
-  const [invoice] = useState<InvoiceData>(mockInvoiceData)
+  const { data, isLoading, error } = useInvoiceDetail(id)
 
   const handleDownload = () => {
-    alert(`Downloading invoice ${invoice.id}...`)
-  }
-
-  const handleEdit = () => {
-    alert(`Editing invoice ${invoice.id}...`)
+    window.print()
   }
 
   const handleBack = () => {
     router.back()
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-primary hover:underline font-medium"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">Invoice not found</h3>
+            <p className="text-gray-500 mt-2">
+              The invoice you&apos;re looking for doesn&apos;t exist or has been deleted.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const { invoice, contractor, company, bankAccount } = data
+  const subtotal = invoice.subtotal || 0
+  const cgstAmount = invoice.cgst_amount || 0
+  const sgstAmount = invoice.sgst_amount || 0
+  const igstAmount = invoice.igst_amount || 0
+  const totalGst = cgstAmount + sgstAmount + igstAmount
+  const totalAmount = invoice.total_amount || 0
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}
@@ -122,26 +135,16 @@ export default function InvoiceDetailPage({ params: _params }: { params: { id: s
             Back
           </button>
           <h1 className="text-3xl font-semibold text-gray-900">
-            Invoice of {invoice.company.name}
+            Invoice #{invoice.invoice_number}
           </h1>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleEdit}
-            className="flex items-center gap-2"
-          >
-            <Edit2 className="h-4 w-4" />
-            Edit
-          </Button>
-          <Button
-            onClick={handleDownload}
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-          >
-            <Download className="h-4 w-4" />
-            Download
-          </Button>
-        </div>
+        <Button
+          onClick={handleDownload}
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+        >
+          <Download className="h-4 w-4" />
+          Download
+        </Button>
       </div>
 
       {/* Invoice Document */}
@@ -149,39 +152,51 @@ export default function InvoiceDetailPage({ params: _params }: { params: { id: s
         <CardContent className="p-8">
           {/* Invoice Header */}
           <div className="text-center mb-8 pb-8 border-b border-gray-300">
-            <h2 className="text-2xl font-bold text-gray-900">INVOICE</h2>
+            <h2 className="text-2xl font-bold text-gray-900">TAX INVOICE</h2>
           </div>
 
           {/* From Section */}
           <div className="mb-8 pb-8 border-b border-gray-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-3">{invoice.company.name}</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  {contractor?.businessName || contractor?.name || 'Contractor'}
+                </h3>
                 <div className="text-sm text-gray-700 space-y-1">
-                  <p>{invoice.company.address}</p>
-                  <p>{invoice.company.city}</p>
-                  <p className="mt-3">
-                    <span className="font-semibold">PAN:</span> {invoice.company.pan}
-                  </p>
-                  <p>
-                    <span className="font-semibold">GST:</span> {invoice.company.gst}
-                  </p>
+                  {contractor?.address && <p>{contractor.address}</p>}
+                  {contractor?.city && <p>{contractor.city}</p>}
+                  {contractor?.pan && (
+                    <p className="mt-3">
+                      <span className="font-semibold">PAN:</span> {contractor.pan}
+                    </p>
+                  )}
+                  {contractor?.gst && (
+                    <p>
+                      <span className="font-semibold">GSTIN:</span> {contractor.gst}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="text-right text-sm text-gray-700">
                 <div className="mb-4">
                   <p className="font-semibold">
-                    <span className="text-gray-600">INVOICE ID:</span>{' '}
-                    <span className="text-gray-900 font-bold">{invoice.id}</span>
+                    <span className="text-gray-600">INVOICE NO:</span>{' '}
+                    <span className="text-gray-900 font-bold">{invoice.invoice_number}</span>
                   </p>
                   <p>
-                    <span className="text-gray-600">Date:</span> {invoice.date}
+                    <span className="text-gray-600">Date:</span> {formatDate(invoice.invoice_date)}
                   </p>
                 </div>
                 <div>
                   <p>
-                    <span className="text-gray-600">Due Date:</span> {invoice.dueDate}
+                    <span className="text-gray-600">Due Date:</span> {formatDate(invoice.due_date)}
                   </p>
+                  {invoice.billing_period_start && invoice.billing_period_end && (
+                    <p className="mt-2">
+                      <span className="text-gray-600">Billing Period:</span>{' '}
+                      {formatDate(invoice.billing_period_start)} - {formatDate(invoice.billing_period_end)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -190,12 +205,14 @@ export default function InvoiceDetailPage({ params: _params }: { params: { id: s
           {/* To Section */}
           <div className="mb-8 pb-8 border-b border-gray-300">
             <div className="text-sm text-gray-700">
-              <p className="font-semibold text-gray-900 mb-2">To: {invoice.client.name}</p>
-              <p>{invoice.client.address}</p>
-              <p>
-                {invoice.client.city}, {invoice.client.country}
-              </p>
-              <p>{invoice.client.companyCode}</p>
+              <p className="font-semibold text-gray-900 mb-2">Bill To: {company?.name || 'Company'}</p>
+              {company?.address && <p>{company.address}</p>}
+              {company?.city && <p>{company.city}</p>}
+              {company?.gstin && (
+                <p className="mt-2">
+                  <span className="font-semibold">GSTIN:</span> {company.gstin}
+                </p>
+              )}
             </div>
           </div>
 
@@ -208,52 +225,103 @@ export default function InvoiceDetailPage({ params: _params }: { params: { id: s
                     S.No.
                   </th>
                   <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">
-                    Item & Description
+                    Description
                   </th>
-                  <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">
-                    Tax Rate
-                  </th>
+                  {invoice.hours && (
+                    <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      Hours
+                    </th>
+                  )}
+                  {invoice.rate && (
+                    <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      Rate
+                    </th>
+                  )}
                   <th className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
                     Amount
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {invoice.items.map((item) => (
-                  <tr key={item.sno} className="border-b border-gray-300 hover:bg-gray-50">
-                    <td className="border border-gray-300 px-4 py-3 text-gray-700">{item.sno}</td>
-                    <td className="border border-gray-300 px-4 py-3 text-gray-700">
-                      {item.description}
+                <tr className="border-b border-gray-300 hover:bg-gray-50">
+                  <td className="border border-gray-300 px-4 py-3 text-gray-700">1</td>
+                  <td className="border border-gray-300 px-4 py-3 text-gray-700">
+                    Professional Services for {formatDate(invoice.billing_period_start)} - {formatDate(invoice.billing_period_end)}
+                  </td>
+                  {invoice.hours && (
+                    <td className="border border-gray-300 px-4 py-3 text-right text-gray-700">
+                      {invoice.hours}
                     </td>
-                    <td className="border border-gray-300 px-4 py-3 text-gray-700">{item.taxRate}</td>
-                    <td className="border border-gray-300 px-4 py-3 text-right text-gray-700 font-medium">
-                      ₹{item.amount.toLocaleString()}
+                  )}
+                  {invoice.rate && (
+                    <td className="border border-gray-300 px-4 py-3 text-right text-gray-700">
+                      {formatCurrency(invoice.rate)}
                     </td>
-                  </tr>
-                ))}
-                {/* Totals Row */}
+                  )}
+                  <td className="border border-gray-300 px-4 py-3 text-right text-gray-700 font-medium">
+                    {formatCurrency(subtotal)}
+                  </td>
+                </tr>
+                {/* Subtotal Row */}
                 <tr className="border-b border-gray-300 bg-gray-50">
-                  <td colSpan={3} className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                  <td colSpan={invoice.hours && invoice.rate ? 4 : 2} className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
                     Sub Total
                   </td>
                   <td className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
-                    ₹{invoice.subTotal.toLocaleString()}
+                    {formatCurrency(subtotal)}
                   </td>
                 </tr>
-                <tr className="border-b border-gray-300 bg-gray-50">
-                  <td colSpan={3} className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
-                    GST Amount
-                  </td>
-                  <td className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
-                    ₹{invoice.gstAmount.toLocaleString()}
-                  </td>
-                </tr>
+                {/* CGST Row */}
+                {cgstAmount > 0 && (
+                  <tr className="border-b border-gray-300 bg-gray-50">
+                    <td colSpan={invoice.hours && invoice.rate ? 4 : 2} className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      CGST ({invoice.cgst_percent || 0}%)
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      {formatCurrency(cgstAmount)}
+                    </td>
+                  </tr>
+                )}
+                {/* SGST Row */}
+                {sgstAmount > 0 && (
+                  <tr className="border-b border-gray-300 bg-gray-50">
+                    <td colSpan={invoice.hours && invoice.rate ? 4 : 2} className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      SGST ({invoice.sgst_percent || 0}%)
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      {formatCurrency(sgstAmount)}
+                    </td>
+                  </tr>
+                )}
+                {/* IGST Row */}
+                {igstAmount > 0 && (
+                  <tr className="border-b border-gray-300 bg-gray-50">
+                    <td colSpan={invoice.hours && invoice.rate ? 4 : 2} className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      IGST ({invoice.igst_percent || 0}%)
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      {formatCurrency(igstAmount)}
+                    </td>
+                  </tr>
+                )}
+                {/* Total GST if multiple components */}
+                {totalGst > 0 && (cgstAmount + sgstAmount > 0 || igstAmount > 0) && (
+                  <tr className="border-b border-gray-300 bg-gray-50">
+                    <td colSpan={invoice.hours && invoice.rate ? 4 : 2} className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      Total GST
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3 text-right font-semibold text-gray-900">
+                      {formatCurrency(totalGst)}
+                    </td>
+                  </tr>
+                )}
+                {/* Grand Total Row */}
                 <tr className="bg-primary/5">
-                  <td colSpan={3} className="border border-gray-300 px-4 py-3 text-right font-bold text-gray-900">
-                    Total Due
+                  <td colSpan={invoice.hours && invoice.rate ? 4 : 2} className="border border-gray-300 px-4 py-3 text-right font-bold text-gray-900">
+                    Total Amount
                   </td>
                   <td className="border border-gray-300 px-4 py-3 text-right font-bold text-lg text-primary">
-                    ₹{invoice.amount.toLocaleString()}
+                    {formatCurrency(totalAmount)}
                   </td>
                 </tr>
               </tbody>
@@ -263,43 +331,50 @@ export default function InvoiceDetailPage({ params: _params }: { params: { id: s
           {/* Amount in Words */}
           <div className="mb-8 pb-8 border-b border-gray-300">
             <p className="text-sm text-gray-700">
-              <span className="font-semibold">Amount in words:</span> Fifty Thousand Rupees
+              <span className="font-semibold">Amount in words:</span>{' '}
+              {numberToWords(Math.round(totalAmount))}
             </p>
           </div>
 
-          {/* Bank Details & Other Terms */}
+          {/* Bank Details & Terms */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Bank Details: ####</h4>
-              <div className="text-sm text-gray-700 space-y-2">
-                <p>
-                  <span className="font-semibold">Account Name:</span>{' '}
-                  {invoice.bankDetails.accountName}
-                </p>
-                <p>
-                  <span className="font-semibold">Account No.:</span>{' '}
-                  {invoice.bankDetails.accountNo}
-                </p>
-                <p>
-                  <span className="font-semibold">Bank IFSC code (SWIFT):</span>{' '}
-                  {invoice.bankDetails.ifscCode}
-                </p>
-                <p>
-                  <span className="font-semibold">Account Type:</span>{' '}
-                  {invoice.bankDetails.accountType}
-                </p>
-                <p>
-                  <span className="font-semibold">Bank Address:</span>{' '}
-                  {invoice.bankDetails.bankAddress}
-                </p>
+            {bankAccount && (
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Bank Details</h4>
+                <div className="text-sm text-gray-700 space-y-2">
+                  <p>
+                    <span className="font-semibold">Account Name:</span>{' '}
+                    {bankAccount.accountHolderName}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Account No.:</span>{' '}
+                    {bankAccount.accountNumber}
+                  </p>
+                  <p>
+                    <span className="font-semibold">IFSC Code:</span>{' '}
+                    {bankAccount.ifscCode}
+                  </p>
+                  {bankAccount.bankName && (
+                    <p>
+                      <span className="font-semibold">Bank:</span>{' '}
+                      {bankAccount.bankName}
+                    </p>
+                  )}
+                  {bankAccount.accountType && (
+                    <p>
+                      <span className="font-semibold">Account Type:</span>{' '}
+                      {bankAccount.accountType}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Other Terms</h4>
+              <h4 className="font-semibold text-gray-900 mb-3">Terms & Conditions</h4>
               <div className="text-sm text-gray-700 space-y-2">
-                {invoice.otherTerms.map((term, idx) => (
-                  <p key={idx}>{term}</p>
-                ))}
+                <p>- E & OE (Errors and Omissions Excepted)</p>
+                <p>- Payment due within 7 days from invoice date</p>
+                <p>- Subject to jurisdiction of local courts</p>
               </div>
             </div>
           </div>
@@ -307,17 +382,43 @@ export default function InvoiceDetailPage({ params: _params }: { params: { id: s
       </Card>
 
       {/* Status Badge */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 print:hidden">
         <Badge
           variant={invoice.status === 'paid' ? 'default' : 'secondary'}
-          className="text-base py-1.5 px-3"
+          className={`text-base py-1.5 px-3 ${
+            invoice.status === 'paid'
+              ? 'bg-green-100 text-green-800'
+              : invoice.status === 'approved'
+              ? 'bg-blue-100 text-blue-800'
+              : invoice.status === 'rejected'
+              ? 'bg-red-100 text-red-800'
+              : 'bg-yellow-100 text-yellow-800'
+          }`}
         >
-          {invoice.status === 'paid' ? 'Paid' : 'Pending'}
+          {invoice.status === 'paid'
+            ? 'Paid'
+            : invoice.status === 'approved'
+            ? 'Approved'
+            : invoice.status === 'rejected'
+            ? 'Rejected'
+            : 'Pending'}
         </Badge>
-        {invoice.status === 'pending' && (
+        {invoice.status === 'pending' && invoice.due_date && (
           <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
             <AlertCircle className="h-4 w-4" />
-            Payment is due by {invoice.dueDate}
+            Payment is due by {formatDate(invoice.due_date)}
+          </div>
+        )}
+        {invoice.status === 'paid' && invoice.paid_date && (
+          <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
+            Paid on {formatDate(invoice.paid_date)}
+            {invoice.payment_reference && ` (Ref: ${invoice.payment_reference})`}
+          </div>
+        )}
+        {invoice.status === 'rejected' && (
+          <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 px-3 py-2 rounded-lg">
+            <AlertCircle className="h-4 w-4" />
+            This invoice was rejected. Please contact your employer for details.
           </div>
         )}
       </div>

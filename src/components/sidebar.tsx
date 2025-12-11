@@ -161,6 +161,7 @@ const SUPER_ADMIN_SECTIONS: NavSection[] = [
   {
     title: 'FINANCE',
     items: [
+      { label: 'Finance', href: '/super-admin/finance', icon: <DollarSign className="h-4 w-4" /> },
       { label: 'Invoices', href: '/super-admin/invoices', icon: <DollarSign className="h-4 w-4" /> },
       { label: 'Payroll', href: '/super-admin/payroll', icon: <DollarSign className="h-4 w-4" /> },
     ],

@@ -53,6 +53,9 @@ export function useApproveLeave() {
       queryClient.invalidateQueries({ queryKey: ['leaves'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
+    onError: (error) => {
+      console.error('[Leave Approval] Failed:', error)
+    },
   })
 }
 
@@ -73,6 +76,9 @@ export function useRejectLeave() {
       // Invalidate all leave-related queries
       queryClient.invalidateQueries({ queryKey: ['leaves'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (error) => {
+      console.error('[Leave Rejection] Failed:', error)
     },
   })
 }
@@ -102,6 +108,9 @@ export function useCreateLeaveRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaves'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (error) => {
+      console.error('[Leave Request Creation] Failed:', error)
     },
   })
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -76,7 +77,7 @@ export default function ApplyLeavePage() {
     e.preventDefault()
 
     if (!employeeId) {
-      alert('Please log in as an employee to apply for leave')
+      toast.error('Please log in as an employee to apply for leave')
       return
     }
 
@@ -90,11 +91,10 @@ export default function ApplyLeavePage() {
         isHalfDay: formData.halfDay,
         halfDayPeriod: formData.halfDay ? formData.halfDayPeriod : undefined,
       })
-      alert('Leave application submitted successfully!')
+      toast.success('Leave application submitted successfully!')
       router.push('/employee/leave/history')
-    } catch (error) {
-      console.error('Error submitting leave request:', error)
-      alert('Failed to submit leave request. Please try again.')
+    } catch {
+      toast.error('Failed to submit leave request. Please try again.')
     }
   }
 

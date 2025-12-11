@@ -1,12 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
+import {
+  useInvestmentDeclaration,
+  useSaveDeclaration,
+  useSubmitDeclaration,
+} from '@/lib/hooks'
 
 export default function TaxDeclarationPage() {
   const router = useRouter()
+  const { user } = useAuth()
+  const employeeId = user?.id
   const [selectedRegime, setSelectedRegime] = useState<'old' | 'new'>('old')
+
+  const { data: existingDeclaration, isLoading } = useInvestmentDeclaration(employeeId)
+  const saveDeclaration = useSaveDeclaration()
+  const submitDeclaration = useSubmitDeclaration()
 
   const [declarations, setDeclarations] = useState({
     hra: { rent: '', landlordName: '', landlordPAN: '', address: '' },
@@ -16,6 +31,43 @@ export default function TaxDeclarationPage() {
     section24: { homeLoanInterest: '' },
     otherInvestments: { nps: '', educationCess: '' },
   })
+
+  // Load existing declaration data
+  useEffect(() => {
+    if (existingDeclaration) {
+      setSelectedRegime((existingDeclaration.tax_regime as 'old' | 'new') || 'old')
+      setDeclarations({
+        hra: {
+          rent: existingDeclaration.hra_rent_paid?.toString() || '',
+          landlordName: existingDeclaration.hra_landlord_name || '',
+          landlordPAN: existingDeclaration.hra_landlord_pan || '',
+          address: existingDeclaration.hra_rental_address || '',
+        },
+        section80C: {
+          ppf: existingDeclaration.section_80c_ppf?.toString() || '',
+          elss: existingDeclaration.section_80c_elss?.toString() || '',
+          insurance: existingDeclaration.section_80c_lic?.toString() || '',
+          nsc: existingDeclaration.section_80c_nsc?.toString() || '',
+          fd: existingDeclaration.section_80c_fd?.toString() || '',
+        },
+        section80D: {
+          selfInsurance: existingDeclaration.section_80d_health_insurance?.toString() || '',
+          parentsInsurance: existingDeclaration.section_80d_parents_insurance?.toString() || '',
+          preventiveCheckup: existingDeclaration.section_80d_preventive_checkup?.toString() || '',
+        },
+        section80E: {
+          educationLoan: existingDeclaration.section_80e_education_loan?.toString() || '',
+        },
+        section24: {
+          homeLoanInterest: existingDeclaration.section_24b_home_loan_interest?.toString() || '',
+        },
+        otherInvestments: {
+          nps: existingDeclaration.section_80ccd_nps?.toString() || '',
+          educationCess: '',
+        },
+      })
+    }
+  }, [existingDeclaration])
 
   const handleChange = (section: string, field: string, value: string) => {
     setDeclarations({
@@ -44,12 +96,84 @@ export default function TaxDeclarationPage() {
                           parseFloat(declarations.section24.homeLoanInterest || '0') +
                           parseFloat(declarations.otherInvestments.nps || '0')
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Tax declaration:', { regime: selectedRegime, declarations })
-    alert('Tax declaration submitted successfully!')
-    router.push('/employee/dashboard')
+  const handleSave = async () => {
+    if (!employeeId) return
+
+    try {
+      await saveDeclaration.mutateAsync({
+        employeeId,
+        declaration: {
+          tax_regime: selectedRegime,
+          hra_rent_paid: parseFloat(declarations.hra.rent) || 0,
+          hra_landlord_name: declarations.hra.landlordName,
+          hra_landlord_pan: declarations.hra.landlordPAN,
+          hra_rental_address: declarations.hra.address,
+          section_80c_ppf: parseFloat(declarations.section80C.ppf) || 0,
+          section_80c_elss: parseFloat(declarations.section80C.elss) || 0,
+          section_80c_lic: parseFloat(declarations.section80C.insurance) || 0,
+          section_80c_nsc: parseFloat(declarations.section80C.nsc) || 0,
+          section_80c_fd: parseFloat(declarations.section80C.fd) || 0,
+          section_80d_health_insurance: parseFloat(declarations.section80D.selfInsurance) || 0,
+          section_80d_parents_insurance: parseFloat(declarations.section80D.parentsInsurance) || 0,
+          section_80d_preventive_checkup: parseFloat(declarations.section80D.preventiveCheckup) || 0,
+          section_80e_education_loan: parseFloat(declarations.section80E.educationLoan) || 0,
+          section_24b_home_loan_interest: parseFloat(declarations.section24.homeLoanInterest) || 0,
+          section_80ccd_nps: parseFloat(declarations.otherInvestments.nps) || 0,
+        },
+      })
+      toast.success('Declaration saved as draft')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save declaration')
+    }
   }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!employeeId) return
+
+    try {
+      // First save the declaration
+      const saved = await saveDeclaration.mutateAsync({
+        employeeId,
+        declaration: {
+          tax_regime: selectedRegime,
+          hra_rent_paid: parseFloat(declarations.hra.rent) || 0,
+          hra_landlord_name: declarations.hra.landlordName,
+          hra_landlord_pan: declarations.hra.landlordPAN,
+          hra_rental_address: declarations.hra.address,
+          section_80c_ppf: parseFloat(declarations.section80C.ppf) || 0,
+          section_80c_elss: parseFloat(declarations.section80C.elss) || 0,
+          section_80c_lic: parseFloat(declarations.section80C.insurance) || 0,
+          section_80c_nsc: parseFloat(declarations.section80C.nsc) || 0,
+          section_80c_fd: parseFloat(declarations.section80C.fd) || 0,
+          section_80d_health_insurance: parseFloat(declarations.section80D.selfInsurance) || 0,
+          section_80d_parents_insurance: parseFloat(declarations.section80D.parentsInsurance) || 0,
+          section_80d_preventive_checkup: parseFloat(declarations.section80D.preventiveCheckup) || 0,
+          section_80e_education_loan: parseFloat(declarations.section80E.educationLoan) || 0,
+          section_24b_home_loan_interest: parseFloat(declarations.section24.homeLoanInterest) || 0,
+          section_80ccd_nps: parseFloat(declarations.otherInvestments.nps) || 0,
+        },
+      })
+
+      // Then submit it
+      await submitDeclaration.mutateAsync(saved.id)
+      toast.success('Tax declaration submitted successfully!')
+      router.push('/employee/dashboard')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to submit declaration')
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const isSubmitting = saveDeclaration.isPending || submitDeclaration.isPending
 
   return (
     <div className="space-y-8">
@@ -288,19 +412,30 @@ export default function TaxDeclarationPage() {
 
           {/* Actions */}
           <div className="flex justify-end space-x-3">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => router.back()}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              disabled={isSubmitting}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleSave}
+              disabled={isSubmitting}
             >
+              {saveDeclaration.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Draft
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {submitDeclaration.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Submit Declaration
-            </button>
+            </Button>
           </div>
         </form>
       )}
@@ -311,14 +446,16 @@ export default function TaxDeclarationPage() {
             <p className="text-lg font-medium text-gray-900">New Tax Regime Selected</p>
             <p className="text-sm text-gray-600 mt-2">
               No investment declarations required under the new tax regime.
-              You'll enjoy lower tax rates without claiming deductions.
+              You&apos;ll enjoy lower tax rates without claiming deductions.
             </p>
-            <button
+            <Button
               onClick={handleSubmit}
-              className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={isSubmitting}
+              className="mt-6"
             >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirm Selection
-            </button>
+            </Button>
           </div>
         </div>
       )}

@@ -3,35 +3,34 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Eye, EyeOff, Info } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { AuthLayout } from '@/components/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, DEMO_USERS } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userType = searchParams.get('type') || 'employer';
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user, logout } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showDemoInfo, setShowDemoInfo] = useState(true);
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
+  // Redirect if already authenticated - use actual user's role, not URL param
+  if (isAuthenticated && user) {
     const dashboardPaths: Record<string, string> = {
       employer: '/employer/dashboard',
       employee: '/employee/dashboard',
       contractor: '/contractor/dashboard',
-      super_admin: '/superadmin/dashboard',
+      superadmin: '/super-admin/dashboard',
     };
-    router.push(dashboardPaths[userType] || '/employer/dashboard');
+    router.push(dashboardPaths[user.role] || '/employer/dashboard');
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +51,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Use auth context login
+    // Use auth context login (handles demo cookies via secure API routes)
     const result = await login(email, password);
 
     if (result.success && result.redirectTo) {
@@ -63,23 +62,9 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async (role: 'employer' | 'employee' | 'contractor' | 'superadmin') => {
-    setLoading(true);
-    setError('');
-    const demoUser = DEMO_USERS[role];
-    const result = await login(demoUser.email, 'demo');
-
-    if (result.success && result.redirectTo) {
-      router.push(result.redirectTo);
-    } else {
-      setError(result.error || 'Login failed');
-      setLoading(false);
-    }
-  };
-
   const handleGoogleSignIn = () => {
-    // Mock Google sign-in - use employer demo account
-    handleDemoLogin('employer');
+    // TODO: Implement real Google OAuth sign-in
+    setError('Google sign-in coming soon. Please use email/password login.');
   };
 
   return (
@@ -96,69 +81,27 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Demo Credentials Info */}
-      {showDemoInfo && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-2">
-              <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-blue-800 mb-2">Quick Demo Login</p>
-                <div className="space-y-1 text-blue-700">
-                  <p><strong>Employer:</strong> demo@rapidone.com</p>
-                  <p><strong>Employee:</strong> aarav@rapidone.com (Aarav Sharma)</p>
-                  <p><strong>Contractor:</strong> amit@rapidone.com (Amit Kapoor)</p>
-                  <p className="text-blue-600 mt-2">Password: any value or use buttons below</p>
-                </div>
-              </div>
+      {/* Already logged in - show switch account option */}
+      {isAuthenticated && user && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <p className="font-medium text-amber-800">
+                Already logged in as <strong>{user.name}</strong> ({user.role})
+              </p>
+              <p className="text-amber-600 mt-1">Redirecting to dashboard...</p>
             </div>
-            <button
-              onClick={() => setShowDemoInfo(false)}
-              className="text-blue-400 hover:text-blue-600"
-            >
-              &times;
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-3">
             <Button
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => handleDemoLogin('employer')}
-              disabled={loading}
-              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+              onClick={async () => {
+                // Logout handles clearing demo cookies via secure API route
+                await logout();
+              }}
+              className="text-xs border-amber-400 text-amber-700 hover:bg-amber-100"
             >
-              Login as Employer
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => handleDemoLogin('employee')}
-              disabled={loading}
-              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
-            >
-              Login as Employee
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => handleDemoLogin('contractor')}
-              disabled={loading}
-              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
-            >
-              Login as Contractor
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => handleDemoLogin('superadmin')}
-              disabled={loading}
-              className="text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
-            >
-              Login as Admin
+              Switch Account
             </Button>
           </div>
         </div>

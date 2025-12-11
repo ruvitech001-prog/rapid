@@ -2,15 +2,21 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload } from 'lucide-react'
+import { Upload, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from '@/lib/auth'
+import { useCreateExpenseClaim } from '@/lib/hooks'
 
 export default function SubmitExpensePage() {
   const router = useRouter()
+  const { user } = useAuth()
+  const createExpenseMutation = useCreateExpenseClaim()
+
   const [formData, setFormData] = useState({
     category: '',
     amount: '',
@@ -40,11 +46,42 @@ export default function SubmitExpensePage() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Expense submission:', formData)
-    alert('Expense claim submitted successfully!')
-    router.push('/employee/expenses/history')
+
+    if (!user?.id) {
+      toast.error('Please log in to submit an expense claim')
+      return
+    }
+
+    if (!formData.category || !formData.amount || !formData.date || !formData.merchant) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    // Validate amount is a valid number
+    const parsedAmount = parseFloat(formData.amount)
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast.error('Please enter a valid expense amount')
+      return
+    }
+
+    try {
+      await createExpenseMutation.mutateAsync({
+        employeeId: user.id,
+        category: formData.category,
+        amount: parsedAmount,
+        merchant: formData.merchant,
+        expenseDate: formData.date,
+        description: formData.description || undefined,
+      })
+
+      toast.success('Expense claim submitted successfully!')
+      router.push('/employee/expenses/history')
+    } catch (error) {
+      console.error('Failed to submit expense:', error)
+      toast.error('Failed to submit expense claim. Please try again.')
+    }
   }
 
   const selectedCategory = expenseCategories.find(c => c.value === formData.category)
@@ -222,11 +259,19 @@ export default function SubmitExpensePage() {
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
+                disabled={createExpenseMutation.isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                Submit Expense Claim
+              <Button type="submit" disabled={createExpenseMutation.isPending}>
+                {createExpenseMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Expense Claim'
+                )}
               </Button>
             </div>
           </form>

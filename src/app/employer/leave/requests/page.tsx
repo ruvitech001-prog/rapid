@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Clock, CheckCircle, XCircle, Calendar, X, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -96,7 +97,7 @@ export default function LeaveRequestsPage() {
 
   const handleReject = async (requestId: string) => {
     if (!rejectReason.trim()) {
-      alert('Please provide a reason for rejection')
+      toast.error('Please provide a reason for rejection')
       return
     }
     try {
@@ -105,11 +106,12 @@ export default function LeaveRequestsPage() {
         approverId: employerId,
         reason: rejectReason,
       })
+      toast.success('Leave request rejected')
       setSelectedRequest(null)
       setShowRejectModal(false)
       setRejectReason('')
-    } catch (error) {
-      console.error('Failed to reject leave:', error)
+    } catch {
+      toast.error('Failed to reject leave request')
     }
   }
 

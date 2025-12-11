@@ -1,20 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
+import { useEmployeeProfile, useUpdateEmployeeInfo, useChangePassword } from '@/lib/hooks'
 
 export default function ProfileSettingsPage() {
+  const { user } = useAuth()
+  const employeeId = user?.id
+  const { data: profile, isLoading } = useEmployeeProfile(employeeId)
+  const updateEmployee = useUpdateEmployeeInfo()
+  const changePassword = useChangePassword()
+
   const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@company.com',
-    phone: '+91 98765 43210',
-    personalEmail: 'john.doe@gmail.com',
-    dateOfBirth: '1990-05-15',
-    gender: 'male',
-    address: '456 Park Avenue, Bangalore',
-    emergencyContactName: 'Jane Doe',
-    emergencyContactPhone: '+91 98765 43211',
-    emergencyContactRelation: 'Spouse',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    personalEmail: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelation: '',
   })
 
   const [passwordData, setPasswordData] = useState({
@@ -32,29 +42,94 @@ export default function ProfileSettingsPage() {
     policyUpdates: true,
   })
 
-  const handleProfileSave = () => {
-    console.log('Saving profile:', profileData)
-    alert('Profile updated successfully!')
+  // Load profile data when it's available
+  useEffect(() => {
+    if (profile) {
+      const nameParts = profile.full_name?.split(' ') || ['', '']
+      const primaryContact = profile.emergencyContacts?.[0]
+      const currentAddress = profile.currentAddress
+
+      setProfileData({
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: profile.personal_email || '',
+        phone: profile.phone_number || '',
+        personalEmail: profile.personal_email || '',
+        dateOfBirth: profile.date_of_birth || '',
+        gender: profile.gender || '',
+        address: currentAddress
+          ? `${currentAddress.address_line_1}${currentAddress.address_line_2 ? ', ' + currentAddress.address_line_2 : ''}, ${currentAddress.city}, ${currentAddress.state} ${currentAddress.pin_code}`
+          : '',
+        emergencyContactName: primaryContact?.name || '',
+        emergencyContactPhone: primaryContact?.phone_number || '',
+        emergencyContactRelation: primaryContact?.relationship || '',
+      })
+    }
+  }, [profile])
+
+  const handleProfileSave = async () => {
+    if (!employeeId) return
+
+    try {
+      await updateEmployee.mutateAsync({
+        employeeId,
+        data: {
+          full_name: `${profileData.firstName} ${profileData.lastName}`.trim(),
+          phone_number: profileData.phone,
+          personal_email: profileData.personalEmail,
+          date_of_birth: profileData.dateOfBirth || null,
+          gender: profileData.gender || null,
+        },
+      })
+      toast.success('Profile updated successfully!')
+    } catch {
+      toast.error('Failed to update profile. Please try again.')
+    }
   }
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!user?.email) {
+      toast.error('Unable to verify user. Please try logging in again.')
+      return
+    }
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match!')
+      toast.error('New passwords do not match!')
       return
     }
+
     if (passwordData.newPassword.length < 8) {
-      alert('Password must be at least 8 characters long!')
+      toast.error('Password must be at least 8 characters long!')
       return
     }
-    console.log('Changing password')
-    alert('Password changed successfully!')
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+
+    try {
+      await changePassword.mutateAsync({
+        email: user.email,
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      })
+      toast.success('Password changed successfully!')
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change password'
+      toast.error(errorMessage)
+    }
   }
 
   const handlePreferencesSave = () => {
-    console.log('Saving preferences:', preferences)
-    alert('Preferences updated successfully!')
+    // TODO: Implement preferences saving to backend
+    toast.success('Preferences updated successfully!')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -63,6 +138,22 @@ export default function ProfileSettingsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
         <p className="mt-1 text-sm text-gray-500">Manage your personal information and preferences</p>
       </div>
+
+      {/* Employee Info Card */}
+      {profile?.contract && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-4">
+            <div className="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-semibold">
+              {profile.full_name?.charAt(0) || '?'}
+            </div>
+            <div>
+              <p className="font-medium text-gray-900">{profile.full_name}</p>
+              <p className="text-sm text-gray-600">{profile.contract.designation} - {profile.contract.department}</p>
+              <p className="text-xs text-gray-500">Employee ID: {profile.employee_code || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Personal Information */}
       <div className="bg-white rounded-lg shadow p-6 space-y-6">
@@ -131,6 +222,7 @@ export default function ProfileSettingsPage() {
                 onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
+                <option value="">Select gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
@@ -185,12 +277,33 @@ export default function ProfileSettingsPage() {
         <div className="flex justify-end">
           <button
             onClick={handleProfileSave}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            disabled={updateEmployee.isPending}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save Profile
+            {updateEmployee.isPending ? 'Saving...' : 'Save Profile'}
           </button>
         </div>
       </div>
+
+      {/* Bank Account Info (Read-only) */}
+      {profile?.bankAccounts && profile.bankAccounts.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Bank Account</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {profile.bankAccounts.map((account, idx) => (
+              <div key={idx} className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm font-medium text-gray-900">{account.bank_name}</p>
+                <p className="text-sm text-gray-600">A/C: {account.account_number?.replace(/\d(?=\d{4})/g, '*')}</p>
+                <p className="text-sm text-gray-600">IFSC: {account.ifsc_code}</p>
+                {account.is_primary && (
+                  <span className="inline-block mt-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Primary</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-4">Contact HR to update bank details</p>
+        </div>
+      )}
 
       {/* Change Password */}
       <div className="bg-white rounded-lg shadow p-6">
@@ -231,9 +344,17 @@ export default function ProfileSettingsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={changePassword.isPending}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              Update Password
+              {changePassword.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Password'
+              )}
             </button>
           </div>
         </form>

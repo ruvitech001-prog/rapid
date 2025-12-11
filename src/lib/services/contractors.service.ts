@@ -128,6 +128,67 @@ class ContractorsServiceClass extends BaseService {
     if (error) this.handleError(error)
     return count || 0
   }
+
+  /**
+   * Update contractor details
+   */
+  async updateContractor(
+    contractorId: string,
+    updates: {
+      fullName?: string
+      phoneNumber?: string
+      businessName?: string
+      status?: string
+    }
+  ): Promise<Contractor> {
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    }
+
+    if (updates.fullName !== undefined) updateData.full_name = updates.fullName
+    if (updates.phoneNumber !== undefined) updateData.phone_number = updates.phoneNumber
+    if (updates.businessName !== undefined) updateData.business_name = updates.businessName
+    if (updates.status !== undefined) updateData.status = updates.status
+
+    const { data, error } = await this.supabase
+      .from('contractor_contractor')
+      .update(updateData)
+      .eq('id', contractorId)
+      .select()
+      .single()
+
+    if (error) this.handleError(error)
+    return data as Contractor
+  }
+
+  /**
+   * Deactivate a contractor (soft delete)
+   */
+  async deactivateContractor(contractorId: string): Promise<void> {
+    // Update contractor status
+    const { error: contractorError } = await this.supabase
+      .from('contractor_contractor')
+      .update({
+        status: 'terminated',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', contractorId)
+
+    if (contractorError) this.handleError(contractorError)
+
+    // Deactivate their current contract
+    const { error: contractError } = await this.supabase
+      .from('contractor_contractorcontract')
+      .update({
+        is_current: false,
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('contractor_id', contractorId)
+      .eq('is_current', true)
+
+    if (contractError) this.handleError(contractError)
+  }
 }
 
 export const contractorsService = new ContractorsServiceClass()

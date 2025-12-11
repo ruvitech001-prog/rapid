@@ -2,12 +2,21 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
+import { useUploadEmployeeDocument } from '@/lib/hooks'
 
 export default function UploadDocumentsPage() {
   const router = useRouter()
+  const { user } = useAuth()
+  const employeeId = user?.id
+
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [description, setDescription] = useState('')
+
+  const uploadDocument = useUploadEmployeeDocument()
 
   const categories = [
     'Identity Proof (Aadhaar/PAN)',
@@ -22,16 +31,51 @@ export default function UploadDocumentsPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0])
+      const file = e.target.files[0]
+
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024
+      if (file.size > maxSize) {
+        toast.error('File size must be less than 10MB')
+        return
+      }
+
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Only PDF, JPG, PNG, and DOCX files are allowed')
+        return
+      }
+
+      setSelectedFile(file)
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Uploading document:', { category: selectedCategory, file: selectedFile, description })
-    alert('Document uploaded successfully!')
-    router.push('/employee/documents/library')
+
+    if (!employeeId || !selectedFile || !selectedCategory) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    try {
+      await uploadDocument.mutateAsync({
+        employeeId,
+        input: {
+          file: selectedFile,
+          category: selectedCategory,
+          description,
+        },
+      })
+      toast.success('Document uploaded successfully!')
+      router.push('/employee/documents/library')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload document')
+    }
   }
+
+  const isSubmitting = uploadDocument.isPending
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -111,14 +155,17 @@ export default function UploadDocumentsPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            disabled={isSubmitting}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            disabled={isSubmitting || !selectedFile || !selectedCategory}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Upload Document
           </button>
         </div>

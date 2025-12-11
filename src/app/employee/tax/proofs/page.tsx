@@ -1,12 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef } from 'react'
+import { toast } from 'sonner'
+import { Loader2, Upload } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
+import { useTaxProofs, useUploadTaxProof, useDeleteTaxProof } from '@/lib/hooks'
 
 export default function TaxProofsUploadPage() {
-  const [uploadedProofs] = useState([
-    { id: 1, category: 'Section 80C', subCategory: 'LIC Premium', fileName: 'lic_premium_2023.pdf', uploadedOn: '2024-02-15', status: 'approved' },
-    { id: 2, category: 'Section 80D', subCategory: 'Health Insurance', fileName: 'health_insurance.pdf', uploadedOn: '2024-02-14', status: 'pending' },
-  ])
+  const { user } = useAuth()
+  const employeeId = user?.id
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const currentUploadRef = useRef<{ category: string; subCategory: string } | null>(null)
+
+  const { data: uploadedProofs = [], isLoading } = useTaxProofs(employeeId)
+  const uploadMutation = useUploadTaxProof()
+  const deleteMutation = useDeleteTaxProof()
 
   const proofCategories = [
     { category: 'Section 80C', items: ['LIC Premium', 'PPF', 'ELSS', 'NSC', 'FD', 'Tuition Fees'] },
@@ -18,8 +26,55 @@ export default function TaxProofsUploadPage() {
   ]
 
   const handleFileUpload = (category: string, subCategory: string) => {
-    // Mock file upload
-    alert(`Uploading proof for ${category} - ${subCategory}`)
+    currentUploadRef.current = { category, subCategory }
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !employeeId || !currentUploadRef.current) return
+
+    const { category, subCategory } = currentUploadRef.current
+
+    // Validate file
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      toast.error('File size must be less than 5MB')
+      return
+    }
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png']
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Only PDF, JPG, and PNG files are allowed')
+      return
+    }
+
+    try {
+      await uploadMutation.mutateAsync({
+        employeeId,
+        file,
+        category,
+        subCategory,
+      })
+      toast.success(`Proof uploaded for ${category} - ${subCategory}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to upload proof')
+    }
+
+    // Reset file input
+    e.target.value = ''
+    currentUploadRef.current = null
+  }
+
+  const handleDelete = async (proofId: string) => {
+    if (!employeeId) return
+
+    try {
+      await deleteMutation.mutateAsync({ proofId, employeeId })
+      toast.success('Proof deleted successfully')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete proof')
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -35,8 +90,25 @@ export default function TaxProofsUploadPage() {
     )
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+      />
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Tax Proofs Upload</h1>
         <p className="mt-1 text-sm text-gray-500">Submit investment proofs to support your tax declarations</p>
@@ -119,14 +191,27 @@ export default function TaxProofsUploadPage() {
                     {proof.fileName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(proof.uploadedOn).toLocaleDateString()}
+                    {new Date(proof.uploadedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(proof.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                    <button className="text-blue-600 hover:text-blue-900">View</button>
-                    <button className="text-red-600 hover:text-red-900">Delete</button>
+                    <a
+                      href={proof.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      View
+                    </a>
+                    <button
+                      onClick={() => handleDelete(proof.id)}
+                      disabled={deleteMutation.isPending || proof.status === 'approved'}
+                      className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}

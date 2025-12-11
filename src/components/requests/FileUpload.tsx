@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { Upload, X, FileText, Image, File } from 'lucide-react'
+import { toast } from 'sonner'
 import { Label } from '@/components/ui/label'
 
 export interface UploadedFile {
@@ -58,7 +59,7 @@ export function FileUpload({
 
       // Check file size
       if (file.size > maxSize * 1024 * 1024) {
-        alert(`File ${file.name} is too large. Maximum size is ${maxSize}MB.`)
+        toast.error(`File ${file.name} is too large. Maximum size is ${maxSize}MB.`)
         return
       }
 

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronLeft, Calendar, Download } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface FieldOption {
   id: string
@@ -116,14 +117,8 @@ export default function PaymentCustomReportPage() {
 
   // Handle generate report
   const handleGenerateReport = () => {
-    const selectedFields = fieldGroups.flatMap(group =>
-      group.fields.filter(f => f.selected).map(f => ({ group: group.title, field: f.label }))
-    )
-    console.log('Generating report with fields:', selectedFields)
-    console.log('Date range:', dateRange)
-    console.log('Format:', reportFormat)
-    // In real implementation, this would trigger an API call
-    alert(`Report generation started!\n\nSelected fields: ${selectedCount}\nFormat: ${reportFormat.toUpperCase()}`)
+    // TODO: Implement actual report generation via API
+    toast.success(`Report generation started! ${selectedCount} fields, format: ${reportFormat.toUpperCase()}`)
   }
 
   return (

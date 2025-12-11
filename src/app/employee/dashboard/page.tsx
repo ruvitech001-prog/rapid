@@ -24,7 +24,17 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useEmployeeDashboard, useLeaveBalances } from '@/lib/hooks'
+import {
+  useEmployeeDashboard,
+  useLeaveBalances,
+  useEmployeePayrollHistory,
+  useEmployeeNotifications,
+  useCurrentPayslip,
+  useAttendanceStats,
+  useTaxDeclarationStatus,
+  usePendingAssetConfirmations,
+  useConfirmAssetReceipt,
+} from '@/lib/hooks'
 import { useAuth } from '@/lib/auth'
 
 // Figma Design Tokens
@@ -44,6 +54,7 @@ const colors = {
   secondaryBlue200: '#9ACEFE',
   secondaryBlue600: '#026ACA',
   success600: '#22957F',
+  success200: '#A7ECCA',
   success50: '#EDF9F7',
   warning600: '#CC7A00',
   warning200: '#FFDD99',
@@ -55,21 +66,14 @@ const colors = {
   border: '#DEE4EB',
 }
 
-// Payroll data - last 6 months (mock - not available in current services)
-const payrollData = [
-  { month: 'Nov', amount: 4.5, fill: colors.aqua200 },
-  { month: 'Dec', amount: 4.8, fill: colors.secondaryBlue200 },
-  { month: 'Jan', amount: 4.5, fill: colors.green200 },
-  { month: 'Feb', amount: 5.0, fill: colors.warning200 },
-  { month: 'Mar', amount: 4.8, fill: colors.aqua400 },
-  { month: 'Apr', amount: 4.5, fill: colors.rose200 },
-]
-
-// Updates data (mock - notifications not implemented yet)
-const updatesData = [
-  { id: '1', message: 'Time-off request for 23 Nov 22 has been approved.' },
-  { id: '2', message: 'Expense request for 15 Nov 22 has been approved.' },
-  { id: '3', message: 'Payroll for November has been processed.' },
+// Color palette for charts
+const chartColors = [
+  colors.aqua200,
+  colors.secondaryBlue200,
+  colors.green200,
+  colors.warning200,
+  colors.aqua400,
+  colors.rose200,
 ]
 
 export default function EmployeeDashboard() {
@@ -82,6 +86,36 @@ export default function EmployeeDashboard() {
   // Fetch real data
   const { data: dashboardStats, isLoading } = useEmployeeDashboard(employeeId)
   const { data: leaveBalancesData = [] } = useLeaveBalances(employeeId)
+  const { data: payrollHistory = [] } = useEmployeePayrollHistory(employeeId, 6)
+  const { data: notifications = [] } = useEmployeeNotifications(employeeId, 5)
+  const { data: currentPayslip } = useCurrentPayslip(employeeId)
+  const { data: attendanceStats } = useAttendanceStats(employeeId)
+  const { data: taxDeadline } = useTaxDeclarationStatus(employeeId)
+  const { data: pendingAssets } = usePendingAssetConfirmations(employeeId)
+  const confirmAssetMutation = useConfirmAssetReceipt()
+
+  // Transform payroll history for chart
+  const payrollData = useMemo(() => {
+    if (payrollHistory.length === 0) {
+      return [{ month: 'No data', amount: 0, fill: colors.neutral400 }]
+    }
+    return payrollHistory.map((p, i) => ({
+      month: p.month,
+      amount: p.netPay / 10000, // Convert to 10K units for display
+      fill: chartColors[i % chartColors.length],
+    }))
+  }, [payrollHistory])
+
+  // Transform notifications for updates section
+  const updatesData = useMemo(() => {
+    if (notifications.length === 0) {
+      return [{ id: '1', message: 'No recent updates' }]
+    }
+    return notifications.map((n) => ({
+      id: n.id,
+      message: n.message,
+    }))
+  }, [notifications])
 
   // Calculate totals from leave balances
   const leaveStats = useMemo(() => {
@@ -446,13 +480,12 @@ export default function EmployeeDashboard() {
                 <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
                   Payroll
                 </CardTitle>
-                <Link
-                  href="#"
-                  className="text-xs font-semibold flex items-center gap-0.5"
+                <span
+                  className="text-xs font-semibold flex items-center gap-0.5 cursor-default"
                   style={{ color: colors.iconBlue }}
                 >
                   Last 6 months <ChevronDown className="h-4 w-4" />
-                </Link>
+                </span>
               </div>
             </CardHeader>
             <CardContent className="pt-2">
@@ -490,8 +523,12 @@ export default function EmployeeDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs mb-2" style={{ color: colors.neutral600 }}>Net Pay (Last)</p>
-                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>$45,000</p>
-                    <p className="text-xs mt-2" style={{ color: colors.neutral500 }}>April 2024</p>
+                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>
+                      {currentPayslip ? `₹${currentPayslip.netPay.toLocaleString()}` : '—'}
+                    </p>
+                    <p className="text-xs mt-2" style={{ color: colors.neutral500 }}>
+                      {currentPayslip ? `${currentPayslip.month} ${currentPayslip.year}` : 'No data'}
+                    </p>
                   </div>
                   <DollarSign className="h-7 w-7" style={{ color: colors.primary100 }} />
                 </div>
@@ -503,7 +540,9 @@ export default function EmployeeDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs mb-2" style={{ color: colors.neutral600 }}>Attendance</p>
-                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>94%</p>
+                    <p className="text-xl font-bold" style={{ color: colors.neutral800 }}>
+                      {attendanceStats ? `${attendanceStats.attendancePercentage}%` : '—'}
+                    </p>
                     <p className="text-xs mt-2" style={{ color: colors.neutral500 }}>This month</p>
                   </div>
                   <Calendar className="h-7 w-7" style={{ color: colors.primary100 }} />
@@ -540,19 +579,55 @@ export default function EmployeeDashboard() {
 
           {/* Eligibility Cards */}
           <div className="space-y-4">
-            {/* Tax Declaration */}
-            <Card className="rounded-2xl" style={{ backgroundColor: colors.warning200, borderColor: colors.warning200 }}>
+            {/* Tax Declaration - Dynamic */}
+            <Card
+              className="rounded-2xl"
+              style={{
+                backgroundColor: taxDeadline?.isWindowOpen ? colors.warning200 : colors.neutral50,
+                borderColor: taxDeadline?.isWindowOpen ? colors.warning200 : colors.border,
+              }}
+            >
               <CardContent className="p-5">
-                <h3 className="font-semibold mb-2" style={{ color: colors.neutral800 }}>Tax declaration</h3>
+                <h3 className="font-semibold mb-2" style={{ color: colors.neutral800 }}>
+                  Tax declaration {taxDeadline?.financialYear || ''}
+                </h3>
                 <p className="text-sm mb-4" style={{ color: colors.neutral700 }}>
-                  Last date for tax declaration is 26/Feb/23.
+                  {taxDeadline?.isWindowOpen ? (
+                    <>
+                      Last date: {taxDeadline.deadline.toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: '2-digit',
+                      })}
+                      {taxDeadline.daysRemaining > 0 && (
+                        <span className="ml-1">({taxDeadline.daysRemaining} days left)</span>
+                      )}
+                    </>
+                  ) : (
+                    'Declaration window is currently closed'
+                  )}
                 </p>
-                <Button
-                  className="w-full text-xs font-semibold"
-                  style={{ backgroundColor: colors.primary500 }}
-                >
-                  Upload declarations
-                </Button>
+                {taxDeadline?.declarationStatus === 'submitted' || taxDeadline?.declarationStatus === 'verified' ? (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full text-xs font-semibold bg-white"
+                    style={{ color: colors.success600, borderColor: colors.success600 }}
+                  >
+                    <Link href="/employee/tax/declaration">View Declaration</Link>
+                  </Button>
+                ) : (
+                  <Button
+                    asChild
+                    className="w-full text-xs font-semibold"
+                    style={{ backgroundColor: colors.primary500 }}
+                    disabled={!taxDeadline?.isWindowOpen}
+                  >
+                    <Link href="/employee/tax/declaration">
+                      {taxDeadline?.declarationStatus === 'draft' ? 'Continue Declaration' : 'Upload declarations'}
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -589,6 +664,66 @@ export default function EmployeeDashboard() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Device/Gift Receipt Confirmation - Only show when pending */}
+            {pendingAssets && pendingAssets.count > 0 && (
+              <Card className="rounded-2xl" style={{ backgroundColor: colors.success200, borderColor: colors.success200 }}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold" style={{ color: colors.neutral800 }}>
+                      Confirm receipt
+                    </h3>
+                    <span
+                      className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full"
+                      style={{ backgroundColor: colors.success600, color: 'white' }}
+                    >
+                      {pendingAssets.count}
+                    </span>
+                  </div>
+                  <p className="text-sm mb-3" style={{ color: colors.neutral700 }}>
+                    {pendingAssets.count === 1
+                      ? 'You have 1 item delivered that needs receipt confirmation.'
+                      : `You have ${pendingAssets.count} items delivered that need receipt confirmation.`}
+                  </p>
+                  <div className="space-y-2 mb-4">
+                    {pendingAssets.items.slice(0, 2).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-2 rounded-lg bg-white/60"
+                      >
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: colors.neutral800 }}>
+                            {item.name}
+                          </p>
+                          <p className="text-xs capitalize" style={{ color: colors.neutral500 }}>
+                            {item.type.replace('_', ' ')}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="text-xs px-3 h-7"
+                          style={{ backgroundColor: colors.success600 }}
+                          onClick={() => confirmAssetMutation.mutate({ assetId: item.id })}
+                          disabled={confirmAssetMutation.isPending}
+                        >
+                          Confirm
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  {pendingAssets.count > 2 && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full text-xs font-semibold bg-white"
+                      style={{ color: colors.success600, borderColor: colors.success600 }}
+                    >
+                      <Link href="/employee/assets">View all ({pendingAssets.count})</Link>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

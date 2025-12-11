@@ -37,6 +37,8 @@ import {
   Loader2,
   Search,
   Building2,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react'
 import {
   useSuperAdminTeam,
@@ -44,6 +46,7 @@ import {
   useUpdateTeamMember,
   useDeleteTeamMember,
 } from '@/lib/hooks'
+import { superadminTeamService } from '@/lib/services/superadmin-team.service'
 import type { TeamMember, TeamMemberRole } from '@/types/superadmin'
 import { toast } from 'sonner'
 
@@ -77,6 +80,8 @@ export default function AccessControlPage() {
   const [roleFilter, setRoleFilter] = useState<TeamMemberRole | 'all'>('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null)
+  const [isSearchingUser, setIsSearchingUser] = useState(false)
+  const [foundUser, setFoundUser] = useState<{ id: string; email: string; name: string } | null>(null)
   const [formData, setFormData] = useState({
     email: '',
     role: 'viewer' as TeamMemberRole,
@@ -84,12 +89,15 @@ export default function AccessControlPage() {
 
   // Fetch data using hooks
   const {
-    data: teamMembers = [],
+    data: teamResponse,
     isLoading,
+    error,
     refetch,
   } = useSuperAdminTeam({
     role: roleFilter === 'all' ? undefined : roleFilter,
   })
+
+  const teamMembers = teamResponse?.data || []
 
   const createMember = useCreateTeamMember()
   const updateMember = useUpdateTeamMember()
@@ -108,6 +116,7 @@ export default function AccessControlPage() {
   const handleOpenCreate = () => {
     setEditingMember(null)
     setFormData({ email: '', role: 'viewer' })
+    setFoundUser(null)
     setIsModalOpen(true)
   }
 
@@ -117,7 +126,51 @@ export default function AccessControlPage() {
     setIsModalOpen(true)
   }
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const validateRole = (role: string): role is TeamMemberRole => {
+    return ['super_admin', 'admin', 'support', 'viewer'].includes(role)
+  }
+
+  const handleSearchUser = async () => {
+    if (!formData.email.trim()) {
+      toast.error('Email is required')
+      return
+    }
+    if (!validateEmail(formData.email)) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+
+    setIsSearchingUser(true)
+    try {
+      const user = await superadminTeamService.findUserByEmail(formData.email)
+      if (user) {
+        setFoundUser(user)
+        toast.success(`Found user: ${user.name}`)
+      } else {
+        setFoundUser(null)
+        toast.error('No user found with this email. They must have an existing account.')
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to search user'
+      toast.error(message)
+      setFoundUser(null)
+    } finally {
+      setIsSearchingUser(false)
+    }
+  }
+
   const handleSubmit = async () => {
+    // Validate role
+    if (!validateRole(formData.role)) {
+      toast.error('Please select a valid role')
+      return
+    }
+
     try {
       if (editingMember) {
         await updateMember.mutateAsync({
@@ -126,14 +179,35 @@ export default function AccessControlPage() {
         })
         toast.success('Team member updated successfully')
       } else {
-        // For create, we would need to find user by email first
-        // For now, show a message
-        toast.info('To add a new team member, they must have an existing user account')
+        // Validate email for new member
+        if (!formData.email.trim()) {
+          toast.error('Email is required')
+          return
+        }
+        if (!validateEmail(formData.email)) {
+          toast.error('Please enter a valid email address')
+          return
+        }
+
+        // If user not found yet, search first
+        if (!foundUser) {
+          toast.error('Please search for the user first')
+          return
+        }
+
+        // Create team member with found user ID
+        await createMember.mutateAsync({
+          userId: foundUser.id,
+          role: formData.role,
+        })
+        toast.success(`${foundUser.name} added as team member`)
       }
       setIsModalOpen(false)
+      setFoundUser(null)
       refetch()
-    } catch {
-      toast.error('Failed to save team member')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save team member'
+      toast.error(message)
     }
   }
 
@@ -169,6 +243,28 @@ export default function AccessControlPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <AlertTriangle className="h-12 w-12 mb-4" style={{ color: '#CC7A00' }} />
+        <h2 className="text-lg font-semibold mb-2" style={{ color: colors.neutral800 }}>
+          Failed to load team members
+        </h2>
+        <p className="text-sm mb-4" style={{ color: colors.neutral600 }}>
+          {error instanceof Error ? error.message : 'An unexpected error occurred'}
+        </p>
+        <Button
+          onClick={() => refetch()}
+          variant="outline"
+          className="gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </Button>
       </div>
     )
   }
@@ -427,16 +523,46 @@ export default function AccessControlPage() {
             {!editingMember && (
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="user@rapid.one"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-                <p className="text-xs" style={{ color: colors.neutral500 }}>
-                  User must have an existing account
-                </p>
+                <div className="flex gap-2">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="user@rapid.one"
+                    value={formData.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value })
+                      setFoundUser(null) // Reset found user when email changes
+                    }}
+                    disabled={isSearchingUser}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSearchUser}
+                    disabled={isSearchingUser || !formData.email.trim()}
+                    className="shrink-0"
+                  >
+                    {isSearchingUser ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {foundUser ? (
+                  <div
+                    className="flex items-center gap-2 p-2 rounded-lg"
+                    style={{ backgroundColor: colors.success50, color: colors.success600 }}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm font-medium">{foundUser.name}</span>
+                    <span className="text-xs">({foundUser.email})</span>
+                  </div>
+                ) : (
+                  <p className="text-xs" style={{ color: colors.neutral500 }}>
+                    Search for a user with an existing account
+                  </p>
+                )}
               </div>
             )}
             <div className="space-y-2">
@@ -499,7 +625,12 @@ export default function AccessControlPage() {
             <Button
               onClick={handleSubmit}
               style={{ backgroundColor: colors.primary500 }}
-              disabled={createMember.isPending || updateMember.isPending}
+              disabled={
+                createMember.isPending ||
+                updateMember.isPending ||
+                isSearchingUser ||
+                (!editingMember && !foundUser)
+              }
             >
               {createMember.isPending || updateMember.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

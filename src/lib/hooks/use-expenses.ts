@@ -44,6 +44,9 @@ export function useApproveExpense() {
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
+    onError: (error) => {
+      console.error('[Expense Approval] Failed:', error)
+    },
   })
 }
 
@@ -64,6 +67,9 @@ export function useRejectExpense() {
       // Invalidate all expense-related queries
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (error) => {
+      console.error('[Expense Rejection] Failed:', error)
     },
   })
 }
@@ -92,6 +98,9 @@ export function useCreateExpenseClaim() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (error) => {
+      console.error('[Expense Claim Creation] Failed:', error)
     },
   })
 }

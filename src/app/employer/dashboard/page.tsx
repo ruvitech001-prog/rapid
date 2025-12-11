@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Bell,
   ChevronRight,
@@ -22,9 +22,35 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { useEmployees, useContractors } from '@/lib/hooks'
-import { useLeaveRequests, useExpenseRequests } from '@/lib/hooks'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import {
+  useEmployees,
+  useContractors,
+  useLeaveRequests,
+  useExpenseRequests,
+  usePendingInvoices,
+  useRecentlyPaidInvoices,
+  useCostOverview,
+  useEmployerNotifications,
+  useContractStats,
+  useEmployeeContracts,
+  usePayInvoice,
+  useApproveLeave,
+  useApproveExpense,
+  useCompanySetupStatus,
+  useJoiningThisMonth,
+  useCostOverviewPeriod,
+} from '@/lib/hooks'
 import { useAuth } from '@/lib/auth'
+import { dashboardService } from '@/lib/services'
+import { useQuery } from '@tanstack/react-query'
+import {
+  TeamHeadcountChart,
+  ProbationWidget,
+  CelebrationsWidget,
+  FirstTimeSetup,
+} from '@/components/employer/dashboard'
 
 // Figma Design Tokens
 const colors = {
@@ -54,119 +80,52 @@ const colors = {
   border: '#DEE4EB',
 }
 
-// Data for Team Overview (Semi-circle gauge)
-const teamData = [
-  { name: 'Employees', value: 14, fill: colors.aqua400 },
-  { name: 'Contractors', value: 6, fill: colors.rose200 },
-]
-
-// Data for Cost Overview (Bar Chart)
-const costData = [
-  { month: 'Nov', cost: 5.5, fill: colors.aqua200 },
-  { month: 'Dec', cost: 8.5, fill: colors.secondaryBlue200 },
-  { month: 'Jan', cost: 4, fill: colors.green200 },
-  { month: 'Feb', cost: 6, fill: colors.warning200 },
-  { month: 'Mar', cost: 2.5, fill: colors.aqua400 },
-  { month: 'Apr', cost: 7, fill: colors.rose200 },
-]
-
-// Data for Contract Summary (Donut Chart)
-const contractData = [
-  { name: 'In progress', value: 10, fill: colors.rose200 },
-  { name: 'Accepted', value: 25, fill: colors.aqua300 },
-  { name: 'Rejected', value: 15, fill: colors.warning200 },
-]
-
-// Updates data
-const updatesData = [
-  {
-    id: '1',
-    message: 'Time-off request for 16/May/2023 has been approved.',
-  },
-  {
-    id: '2',
-    message: 'Expense request for 12/May/23 has been approved.',
-  },
-  {
-    id: '3',
-    message: 'Time-off request for 25/May/23 has been approved.',
-  },
-]
-
-// Invoices data - Pending
-const pendingInvoicesData = [
-  {
-    id: '1',
-    amount: 90000,
-    name: 'Alex George',
-    type: 'Contractor, India',
-  },
-  {
-    id: '2',
-    amount: 90000,
-    name: 'Alex George',
-    type: 'Contractor, India',
-  },
-]
-
-// Recently paid invoices
-const recentlyPaidData = [
-  { id: '1', amount: 6000, name: 'Alia Veince', type: 'Contractor, India' },
-  { id: '2', amount: 6000, name: 'Genevive Bhatt', type: 'Contractor, India' },
-  { id: '3', amount: 6000, name: 'Rakesh Gaur', type: 'Contractor, India' },
-]
-
-// Requests data
-const requestsForApproval = [
-  {
-    id: '1',
-    type: 'Leave',
-    bgColor: colors.warning600,
-    label: '23/May/2023 - 28/May/2023',
-    user: 'Vidushi Maheshwari',
-    role: 'Employee',
-  },
-  {
-    id: '2',
-    type: 'Expense',
-    bgColor: colors.secondaryBlue600,
-    label: 'USD 5000',
-    user: 'Prithviraj Singh Hada',
-    role: 'Employee',
-  },
-  {
-    id: '3',
-    type: 'Leave',
-    bgColor: colors.warning600,
-    label: '02/Jun/2023 - 12/Jun/2023',
-    user: 'Khushi Mathur',
-    role: 'Contractor',
-  },
-]
-
-// Contracts data
-const recentContractsData = [
-  { id: '1', name: 'Abhishek Sharma', role: 'Asso. UI/UX Designer • India' },
-  { id: '2', name: 'Abhishek Sharma', role: 'Asso. UI/UX Designer • India' },
-]
-
-// Holidays data
-const holidaysData = [
-  { id: '1', date: 'Tue, 15/Aug/2023', name: 'Independence Day' },
-  { id: '2', date: 'Wed, 30/Aug/2023', name: 'Rakshabandhan' },
+// Color palette for charts
+const chartColors = [
+  colors.aqua200,
+  colors.secondaryBlue200,
+  colors.green200,
+  colors.warning200,
+  colors.aqua400,
+  colors.rose200,
 ]
 
 export default function EmployerDashboard() {
   const { user } = useAuth()
+  const router = useRouter()
   const companyId = user?.companyId || undefined
 
   const [activeRequestsTab, setActiveRequestsTab] = useState<'yours' | 'approval'>('approval')
+  const [processingInvoiceId, setProcessingInvoiceId] = useState<string | null>(null)
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null)
+  const [costPeriod, setCostPeriod] = useState<3 | 6 | 12>(6)
+
+  // Mutation hooks
+  const payInvoiceMutation = usePayInvoice()
+  const approveLeavesMutation = useApproveLeave()
+  const approveExpenseMutation = useApproveExpense()
 
   // Fetch real data
   const { data: employees = [], isLoading: loadingEmployees } = useEmployees(companyId)
   const { data: contractors = [], isLoading: loadingContractors } = useContractors(companyId)
   const { data: leaveRequests = [], isLoading: loadingLeaves } = useLeaveRequests(companyId, { status: 'pending' })
   const { data: expenseRequests = [], isLoading: loadingExpenses } = useExpenseRequests(companyId, { status: 'pending' })
+  const { data: pendingInvoices = [] } = usePendingInvoices(companyId, 4)
+  const { data: recentlyPaidInvoices = [] } = useRecentlyPaidInvoices(companyId, 5)
+  const { data: costOverviewData = [] } = useCostOverview(companyId, 6)
+  const { data: notifications = [] } = useEmployerNotifications(companyId, 5)
+  const { data: contractStats } = useContractStats(companyId)
+  const { data: recentContracts = [] } = useEmployeeContracts(companyId)
+  const { data: setupStatus } = useCompanySetupStatus(companyId)
+  const { data: joiningEmployees = [] } = useJoiningThisMonth(companyId)
+  const { data: costByPeriod = [] } = useCostOverviewPeriod(companyId, costPeriod)
+
+  // Fetch upcoming holidays for the company
+  const { data: upcomingHolidays = [] } = useQuery({
+    queryKey: ['holidays', 'upcoming', companyId],
+    queryFn: () => dashboardService.getCompanyHolidays(companyId!),
+    enabled: !!companyId,
+  })
 
   const isLoading = loadingEmployees || loadingContractors || loadingLeaves || loadingExpenses
 
@@ -177,9 +136,109 @@ export default function EmployerDashboard() {
 
   // Dynamic team data for chart
   const dynamicTeamData = [
-    { name: 'Employees', value: activeEmployees, fill: colors.aqua400 },
-    { name: 'Contractors', value: activeContractors, fill: colors.rose200 },
+    { name: 'Employees', value: activeEmployees || 1, fill: colors.aqua400 },
+    { name: 'Contractors', value: activeContractors || 1, fill: colors.rose200 },
   ]
+
+  // Transform cost overview for chart - use period-based data
+  const costData = useMemo(() => {
+    const data = costByPeriod.length > 0 ? costByPeriod : costOverviewData
+    if (data.length === 0) {
+      return [{ month: 'No data', cost: 0, fill: colors.neutral400 }]
+    }
+    return data.map((c, i) => ({
+      month: c.month,
+      cost: c.cost / 100000, // Convert to Lakhs
+      fill: chartColors[i % chartColors.length],
+    }))
+  }, [costByPeriod, costOverviewData])
+
+  // Period options for cost overview
+  const periodOptions = [
+    { label: '3 months', value: 3 as const },
+    { label: '6 months', value: 6 as const },
+    { label: '1 year', value: 12 as const },
+  ]
+
+  // Transform notifications for updates section
+  const updatesData = useMemo(() => {
+    if (notifications.length === 0) {
+      return [{ id: '1', message: 'No recent updates' }]
+    }
+    return notifications.map(n => ({
+      id: n.id,
+      message: n.message,
+    }))
+  }, [notifications])
+
+  // Transform pending invoices
+  const pendingInvoicesData = useMemo(() => {
+    return pendingInvoices.map(inv => ({
+      id: inv.id,
+      amount: inv.total_amount || 0,
+      name: inv.contractorName,
+      type: `Contractor${inv.businessName ? `, ${inv.businessName}` : ''}`,
+    }))
+  }, [pendingInvoices])
+
+  // Transform recently paid invoices
+  const recentlyPaidData = useMemo(() => {
+    return recentlyPaidInvoices.map(inv => ({
+      id: inv.id,
+      amount: inv.total_amount || 0,
+      name: inv.contractorName,
+      type: `Contractor${inv.businessName ? `, ${inv.businessName}` : ''}`,
+    }))
+  }, [recentlyPaidInvoices])
+
+  // Contract summary data
+  const contractSummaryData = useMemo(() => {
+    const total = (contractStats?.activeEmployeeContracts || 0) + (contractStats?.activeContractorContracts || 0)
+    return {
+      data: [
+        { name: 'Employees', value: contractStats?.activeEmployeeContracts || 0, fill: colors.aqua300 },
+        { name: 'Contractors', value: contractStats?.activeContractorContracts || 0, fill: colors.rose200 },
+        { name: 'Expiring', value: contractStats?.expiringThisMonth || 0, fill: colors.warning200 },
+      ],
+      total,
+    }
+  }, [contractStats])
+
+  // Recent contracts
+  const recentContractsData = useMemo(() => {
+    return recentContracts.slice(0, 3).map(c => ({
+      id: c.id,
+      name: c.employeeName,
+      role: `${c.designation} • ${c.department || 'General'}`,
+    }))
+  }, [recentContracts])
+
+  // Holidays data
+  const holidaysData = useMemo(() => {
+    if (upcomingHolidays.length === 0) {
+      return [{ id: '1', date: 'No upcoming holidays', name: '' }]
+    }
+    return upcomingHolidays.slice(0, 4).map((h, i) => ({
+      id: String(i + 1),
+      date: new Date(h.date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }),
+      name: h.name,
+    }))
+  }, [upcomingHolidays])
+
+  // Calculate new hires this month
+  const newHiresThisMonth = useMemo(() => {
+    const thisMonth = new Date()
+    thisMonth.setDate(1)
+    const employeeHires = employees.filter(e => {
+      if (!e.startDate) return false
+      return new Date(e.startDate) >= thisMonth
+    }).length
+    const contractorHires = contractors.filter(c => {
+      if (!c.startDate) return false
+      return new Date(c.startDate) >= thisMonth
+    }).length
+    return { employees: employeeHires, contractors: contractorHires }
+  }, [employees, contractors])
 
   // Combine pending requests for approval
   const pendingRequests = [
@@ -205,10 +264,78 @@ export default function EmployerDashboard() {
 
   const totalPendingRequests = leaveRequests.length + expenseRequests.length
 
+  // Handler: Pay Invoice
+  const handlePayInvoice = async (invoiceId: string) => {
+    if (!user?.id) {
+      toast.error('Please log in to continue')
+      return
+    }
+
+    setProcessingInvoiceId(invoiceId)
+    try {
+      await payInvoiceMutation.mutateAsync({
+        invoiceId,
+        paymentReference: `PAY-${Date.now()}`
+      })
+      toast.success('Invoice marked as paid successfully')
+    } catch (error) {
+      toast.error('Failed to process payment')
+      console.error('Payment error:', error)
+    } finally {
+      setProcessingInvoiceId(null)
+    }
+  }
+
+  // Handler: Approve Request (Leave or Expense)
+  const handleApproveRequest = async (request: typeof pendingRequests[0]) => {
+    if (!user?.id) {
+      toast.error('Please log in to continue')
+      return
+    }
+
+    setProcessingRequestId(request.id)
+    try {
+      if (request.type === 'Leave') {
+        await approveLeavesMutation.mutateAsync({
+          requestId: request.id,
+          approverId: user.id
+        })
+        toast.success('Leave request approved')
+      } else if (request.type === 'Expense') {
+        await approveExpenseMutation.mutateAsync({
+          requestId: request.id,
+          approverId: user.id
+        })
+        toast.success('Expense request approved')
+      }
+    } catch (error) {
+      toast.error(`Failed to approve ${request.type.toLowerCase()} request`)
+      console.error('Approval error:', error)
+    } finally {
+      setProcessingRequestId(null)
+    }
+  }
+
+  // Handler: View All Requests
+  const handleViewAllRequests = () => {
+    router.push('/employer/leave/requests')
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
+      </div>
+    )
+  }
+
+  // Show first-time experience when no employees
+  const showFirstTimeSetup = setupStatus && !setupStatus.hasEmployees
+
+  if (showFirstTimeSetup) {
+    return (
+      <div className="pb-32">
+        <FirstTimeSetup companyId={companyId} companyName={user?.companyName || undefined} />
       </div>
     )
   }
@@ -323,38 +450,57 @@ export default function EmployerDashboard() {
 
                 {/* Right: Joining This Month */}
                 <div className="flex-1 pl-6">
-                  <p
-                    className="text-xs font-medium tracking-widest uppercase mb-4"
-                    style={{ color: colors.neutral600 }}
-                  >
-                    Joining this month
-                  </p>
-                  <div className="space-y-0">
-                    <div
-                      className="flex items-center justify-between py-4 border-b"
-                      style={{ borderColor: colors.border }}
+                  <div className="flex items-center justify-between mb-4">
+                    <p
+                      className="text-xs font-medium tracking-widest uppercase"
+                      style={{ color: colors.neutral600 }}
                     >
-                      <span className="text-xs" style={{ color: colors.neutral500 }}>Employees</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>2</span>
+                      Joining this month ({joiningEmployees.length})
+                    </p>
+                    {joiningEmployees.length > 3 && (
+                      <Link
+                        href="/employer/employees"
+                        className="text-xs font-semibold"
+                        style={{ color: colors.iconBlue }}
+                      >
+                        View all
+                      </Link>
+                    )}
+                  </div>
+                  <div className="space-y-0">
+                    {joiningEmployees.length === 0 ? (
+                      <p className="text-sm py-4" style={{ color: colors.neutral500 }}>
+                        No new joiners this month
+                      </p>
+                    ) : (
+                      joiningEmployees.slice(0, 3).map((emp, index) => (
                         <div
-                          className="w-5 h-5 rounded-full bg-white flex items-center justify-center"
+                          key={emp.id}
+                          className={`flex items-center justify-between py-3 ${
+                            index !== Math.min(joiningEmployees.length, 3) - 1 ? 'border-b' : ''
+                          }`}
+                          style={{ borderColor: colors.border }}
                         >
-                          <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
+                          <div>
+                            <p className="text-sm font-medium" style={{ color: colors.neutral700 }}>
+                              {emp.name}
+                            </p>
+                            <p className="text-xs" style={{ color: colors.neutral500 }}>
+                              {emp.designation}
+                            </p>
+                          </div>
+                          <span
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: emp.type === 'employee' ? colors.aqua400 : colors.rose200,
+                              color: 'white',
+                            }}
+                          >
+                            {emp.type === 'employee' ? 'EMP' : 'CON'}
+                          </span>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between py-4">
-                      <span className="text-xs" style={{ color: colors.neutral500 }}>Contractors</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-base font-semibold" style={{ color: colors.neutral700 }}>2</span>
-                        <div
-                          className="w-5 h-5 rounded-full bg-white flex items-center justify-center"
-                        >
-                          <ChevronRight className="h-3 w-3" style={{ color: colors.neutral500 }} />
-                        </div>
-                      </div>
-                    </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -419,7 +565,7 @@ export default function EmployerDashboard() {
                   className="text-xs font-medium tracking-widest uppercase"
                   style={{ color: colors.neutral500 }}
                 >
-                  Pending invoices (4)
+                  Pending invoices ({pendingInvoicesData.length})
                 </p>
                 <Link
                   href="/employer/invoices"
@@ -450,8 +596,14 @@ export default function EmployerDashboard() {
                     size="sm"
                     className="text-xs font-semibold px-3 py-2 h-8 rounded-lg"
                     style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
+                    onClick={() => handlePayInvoice(invoice.id)}
+                    disabled={processingInvoiceId === invoice.id}
                   >
-                    Pay now
+                    {processingInvoiceId === invoice.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      'Pay now'
+                    )}
                   </Button>
                 </div>
               ))}
@@ -463,7 +615,7 @@ export default function EmployerDashboard() {
                     className="text-xs font-medium tracking-widest uppercase"
                     style={{ color: colors.neutral500 }}
                   >
-                    Recently paid invoices (5)
+                    Recently paid invoices ({recentlyPaidData.length})
                   </p>
                   <Link
                     href="/employer/invoices/paid"
@@ -503,13 +655,25 @@ export default function EmployerDashboard() {
                 <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
                   Cost overview
                 </CardTitle>
-                <Link
-                  href="#"
-                  className="text-xs font-semibold flex items-center gap-0.5"
-                  style={{ color: colors.iconBlue }}
-                >
-                  Last 6 months <ChevronDown className="h-4 w-4" />
-                </Link>
+                <div className="flex items-center gap-1">
+                  {periodOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setCostPeriod(option.value)}
+                      className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${
+                        costPeriod === option.value
+                          ? 'bg-opacity-100'
+                          : 'bg-opacity-0 hover:bg-opacity-50'
+                      }`}
+                      style={{
+                        backgroundColor: costPeriod === option.value ? colors.primary50 : 'transparent',
+                        color: costPeriod === option.value ? colors.primary500 : colors.neutral500,
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-2">
@@ -627,8 +791,14 @@ export default function EmployerDashboard() {
                             size="sm"
                             className="text-xs font-semibold px-3 py-2 h-8 rounded-lg"
                             style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
+                            onClick={() => handleApproveRequest(request)}
+                            disabled={processingRequestId === request.id}
                           >
-                            Approve
+                            {processingRequestId === request.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              'Approve'
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -646,6 +816,7 @@ export default function EmployerDashboard() {
               <Button
                 className="w-full mt-4 text-xs font-semibold"
                 style={{ backgroundColor: colors.primary50, color: colors.iconBlue }}
+                onClick={handleViewAllRequests}
               >
                 View all requests
               </Button>
@@ -659,13 +830,12 @@ export default function EmployerDashboard() {
                 <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
                   Contract summary
                 </CardTitle>
-                <Link
-                  href="#"
-                  className="text-xs font-semibold flex items-center gap-0.5"
+                <span
+                  className="text-xs font-semibold flex items-center gap-0.5 cursor-default"
                   style={{ color: colors.iconBlue }}
                 >
                   Last 6 months <ChevronDown className="h-4 w-4" />
-                </Link>
+                </span>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
@@ -675,7 +845,7 @@ export default function EmployerDashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={contractData}
+                        data={contractSummaryData.data}
                         cx="50%"
                         cy="50%"
                         innerRadius={35}
@@ -684,23 +854,23 @@ export default function EmployerDashboard() {
                         cornerRadius={4}
                         dataKey="value"
                       >
-                        {contractData.map((entry, index) => (
+                        {contractSummaryData.data.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <p className="text-2xl font-semibold" style={{ color: colors.neutral700 }}>50</p>
+                    <p className="text-2xl font-semibold" style={{ color: colors.neutral700 }}>{contractSummaryData.total}</p>
                     <p className="text-[10px] text-center leading-tight" style={{ color: colors.neutral600 }}>
-                      Contracts<br />rolled out
+                      Active<br />contracts
                     </p>
                   </div>
                 </div>
 
                 {/* Legend */}
                 <div className="flex gap-6">
-                  {contractData.map((item) => (
+                  {contractSummaryData.data.map((item) => (
                     <div key={item.name} className="flex flex-col items-start gap-1">
                       <div className="flex items-center gap-2">
                         <div
@@ -731,7 +901,7 @@ export default function EmployerDashboard() {
                     className="text-xs font-medium tracking-widest uppercase"
                     style={{ color: colors.neutral500 }}
                   >
-                    Recent contracts (8)
+                    Recent contracts ({recentContractsData.length})
                   </p>
                   <Link
                     href="/employer/contracts"
@@ -769,7 +939,14 @@ export default function EmployerDashboard() {
         </div>
       </div>
 
-      {/* ROW 3: Help & Support & Upcoming Holidays */}
+      {/* ROW 3: Team Headcount & Probation & Celebrations */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TeamHeadcountChart companyId={companyId} />
+        <ProbationWidget companyId={companyId} />
+        <CelebrationsWidget companyId={companyId} />
+      </div>
+
+      {/* ROW 4: Help & Support & Upcoming Holidays */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Help & Support */}
         <Card className="rounded-2xl" style={{ borderColor: colors.border }}>

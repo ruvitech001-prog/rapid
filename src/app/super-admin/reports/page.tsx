@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Download, Eye, TrendingUp, BarChart3, PieChart as PieChartIcon } from 'lucide-react'
-import Link from 'next/link'
+import { toast } from 'sonner'
 
 export default function ReportsPage() {
   const savedReports = [
@@ -70,11 +70,9 @@ export default function ReportsPage() {
           <h1 className="text-3xl font-bold text-foreground">Reports</h1>
           <p className="text-muted-foreground mt-2">Generate and manage system reports</p>
         </div>
-        <Button asChild>
-          <Link href="#create-report">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Custom Report
-          </Link>
+        <Button onClick={() => toast.info('Custom report builder coming soon')}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Custom Report
         </Button>
       </div>
 

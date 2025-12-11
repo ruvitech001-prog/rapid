@@ -1,106 +1,86 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
+import { useEmployeeNotifications } from '@/lib/hooks'
+import type { Notification } from '@/lib/services'
 
-type Notification = {
-  id: number
-  type: 'payroll' | 'leave' | 'attendance' | 'document' | 'system' | 'announcement'
-  title: string
-  message: string
-  timestamp: string
-  read: boolean
-  actionLink?: string
-  actionText?: string
+const NOTIFICATIONS_STORAGE_KEY = 'employee_notifications_state'
+
+interface NotificationState {
+  readIds: string[]
+  deletedIds: string[]
 }
 
 export default function NotificationsPage() {
+  const { user } = useAuth()
+  const employeeId = user?.id
+  const { data: notificationsData, isLoading } = useEmployeeNotifications(employeeId)
+
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      type: 'payroll',
-      title: 'Payslip Generated',
-      message: 'Your payslip for March 2024 is now available for download.',
-      timestamp: '2024-03-01T09:00:00',
-      read: false,
-      actionLink: '/employee/payroll',
-      actionText: 'View Payslip'
-    },
-    {
-      id: 2,
-      type: 'leave',
-      title: 'Leave Request Approved',
-      message: 'Your casual leave request for March 15-16 has been approved.',
-      timestamp: '2024-02-28T14:30:00',
-      read: false,
-      actionLink: '/employee/leave',
-      actionText: 'View Details'
-    },
-    {
-      id: 3,
-      type: 'attendance',
-      title: 'Missing Clock-Out',
-      message: 'You forgot to clock out yesterday. Please regularize your attendance.',
-      timestamp: '2024-02-27T18:00:00',
-      read: true,
-      actionLink: '/employee/attendance/regularization',
-      actionText: 'Regularize'
-    },
-    {
-      id: 4,
-      type: 'document',
-      title: 'Document Requires Signature',
-      message: 'Please sign your employment contract - expires in 3 days.',
-      timestamp: '2024-02-26T10:00:00',
-      read: false,
-      actionLink: '/employee/documents/esign/1',
-      actionText: 'Sign Now'
-    },
-    {
-      id: 5,
-      type: 'announcement',
-      title: 'Company Holiday Announced',
-      message: 'March 25 has been declared a company holiday for Holi celebrations.',
-      timestamp: '2024-02-25T11:00:00',
-      read: true,
-    },
-    {
-      id: 6,
-      type: 'system',
-      title: 'Tax Declaration Reminder',
-      message: 'Submit your tax declarations by March 15 to avoid last-minute rush.',
-      timestamp: '2024-02-24T09:00:00',
-      read: true,
-      actionLink: '/employee/tax/declaration',
-      actionText: 'Declare Now'
-    },
-    {
-      id: 7,
-      type: 'leave',
-      title: 'Leave Balance Update',
-      message: 'Your leave balance has been credited. You now have 12 days of casual leave.',
-      timestamp: '2024-02-23T08:00:00',
-      read: true,
-    },
-  ])
+  const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
 
-  const filteredNotifications = notifications.filter(n => filter === 'all' || !n.read)
-  const unreadCount = notifications.filter(n => !n.read).length
+  // Load persisted state from localStorage
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY)
+      if (savedState) {
+        const parsed: NotificationState = JSON.parse(savedState)
+        setReadIds(new Set(parsed.readIds || []))
+        setDeletedIds(new Set(parsed.deletedIds || []))
+      }
+    } catch (error) {
+      console.error('Failed to load notification state:', error)
+    }
+  }, [])
 
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map(n =>
-      n.id === id ? { ...n, read: true } : n
-    ))
+  // Persist state to localStorage
+  const persistState = useCallback((newReadIds: Set<string>, newDeletedIds: Set<string>) => {
+    try {
+      const state: NotificationState = {
+        readIds: Array.from(newReadIds),
+        deletedIds: Array.from(newDeletedIds),
+      }
+      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(state))
+    } catch (error) {
+      console.error('Failed to save notification state:', error)
+    }
+  }, [])
+
+  const notifications = notificationsData?.filter(n => !deletedIds.has(n.id)) || []
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === 'unread') {
+      return !n.isRead && !readIds.has(n.id)
+    }
+    return true
+  })
+  const unreadCount = notifications.filter(n => !n.isRead && !readIds.has(n.id)).length
+
+  const markAsRead = (id: string) => {
+    const newReadIds = new Set([...readIds, id])
+    setReadIds(newReadIds)
+    persistState(newReadIds, deletedIds)
+    toast.success('Marked as read')
   }
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })))
+    const allIds = notifications.map(n => n.id)
+    const newReadIds = new Set(allIds)
+    setReadIds(newReadIds)
+    persistState(newReadIds, deletedIds)
+    toast.success('All notifications marked as read')
   }
 
-  const deleteNotification = (id: number) => {
+  const deleteNotification = (id: string) => {
     if (confirm('Delete this notification?')) {
-      setNotifications(notifications.filter(n => n.id !== id))
+      const newDeletedIds = new Set([...deletedIds, id])
+      setDeletedIds(newDeletedIds)
+      persistState(readIds, newDeletedIds)
+      toast.success('Notification deleted')
     }
   }
 
@@ -108,9 +88,8 @@ export default function NotificationsPage() {
     switch (type) {
       case 'payroll': return '💰'
       case 'leave': return '🏖️'
-      case 'attendance': return '📅'
-      case 'document': return '📄'
-      case 'announcement': return '📢'
+      case 'expense': return '💳'
+      case 'contract': return '📄'
       case 'system': return '⚙️'
       default: return '🔔'
     }
@@ -120,9 +99,8 @@ export default function NotificationsPage() {
     switch (type) {
       case 'payroll': return 'bg-green-100 text-green-800'
       case 'leave': return 'bg-blue-100 text-blue-800'
-      case 'attendance': return 'bg-yellow-100 text-yellow-800'
-      case 'document': return 'bg-purple-100 text-purple-800'
-      case 'announcement': return 'bg-indigo-100 text-indigo-800'
+      case 'expense': return 'bg-orange-100 text-orange-800'
+      case 'contract': return 'bg-purple-100 text-purple-800'
       case 'system': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
     }
@@ -140,6 +118,14 @@ export default function NotificationsPage() {
     if (diffHours < 24) return `${diffHours} hours ago`
     if (diffDays < 7) return `${diffDays} days ago`
     return date.toLocaleDateString()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -197,75 +183,80 @@ export default function NotificationsPage() {
           {filteredNotifications.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-6xl mb-4">🔔</div>
-              <p className="text-gray-500">No notifications to display</p>
+              <p className="text-gray-500">
+                {filter === 'unread' ? 'No unread notifications' : 'No notifications to display'}
+              </p>
             </div>
           ) : (
-            filteredNotifications.map(notification => (
-              <div
-                key={notification.id}
-                className={`p-4 hover:bg-gray-50 transition-colors ${
-                  !notification.read ? 'bg-blue-50' : ''
-                }`}
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="text-3xl flex-shrink-0">
-                    {getTypeIcon(notification.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-sm font-medium text-gray-900">
-                            {notification.title}
-                          </h3>
-                          {!notification.read && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-600 text-white">
-                              New
+            filteredNotifications.map(notification => {
+              const isRead = notification.isRead || readIds.has(notification.id)
+              return (
+                <div
+                  key={notification.id}
+                  className={`p-4 hover:bg-gray-50 transition-colors ${
+                    !isRead ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className="text-3xl flex-shrink-0">
+                      {getTypeIcon(notification.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-sm font-medium text-gray-900">
+                              {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)} Notification
+                            </h3>
+                            {!isRead && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-600 text-white">
+                                New
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(notification.type)}`}>
+                              {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}
                             </span>
-                          )}
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(notification.type)}`}>
-                            {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}
-                          </span>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-2">{notification.message}</p>
+                          <div className="flex items-center space-x-4">
+                            <p className="text-xs text-gray-500">
+                              {formatTimestamp(notification.createdAt)}
+                            </p>
+                            {notification.actionUrl && (
+                              <Link
+                                href={notification.actionUrl}
+                                onClick={() => markAsRead(notification.id)}
+                                className="text-xs font-medium text-blue-600 hover:text-blue-900"
+                              >
+                                View Details →
+                              </Link>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-700 mb-2">{notification.message}</p>
-                        <div className="flex items-center space-x-4">
-                          <p className="text-xs text-gray-500">
-                            {formatTimestamp(notification.timestamp)}
-                          </p>
-                          {notification.actionLink && notification.actionText && (
-                            <Link
-                              href={notification.actionLink}
+                        <div className="flex items-center space-x-2 ml-4">
+                          {!isRead && (
+                            <button
                               onClick={() => markAsRead(notification.id)}
-                              className="text-xs font-medium text-blue-600 hover:text-blue-900"
+                              className="text-sm text-blue-600 hover:text-blue-900"
+                              title="Mark as read"
                             >
-                              {notification.actionText} →
-                            </Link>
+                              ✓
+                            </button>
                           )}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        {!notification.read && (
                           <button
-                            onClick={() => markAsRead(notification.id)}
-                            className="text-sm text-blue-600 hover:text-blue-900"
-                            title="Mark as read"
+                            onClick={() => deleteNotification(notification.id)}
+                            className="text-sm text-gray-400 hover:text-red-600"
+                            title="Delete"
                           >
-                            ✓
+                            ✕
                           </button>
-                        )}
-                        <button
-                          onClick={() => deleteNotification(notification.id)}
-                          className="text-sm text-gray-400 hover:text-red-600"
-                          title="Delete"
-                        >
-                          ✕
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>

@@ -10,11 +10,13 @@ import {
   Search,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Clock,
   ChevronRight,
   X,
   Loader2,
   User,
+  RefreshCw,
 } from 'lucide-react'
 import {
   useSuperAdminRequests,
@@ -95,8 +97,9 @@ export default function SuperAdminRequestsPage() {
 
   // Fetch data using hooks
   const {
-    data: requests = [],
+    data: requestsResponse,
     isLoading,
+    error,
     refetch,
   } = useSuperAdminRequests({
     category: activeTab === 'all' ? undefined : activeTab,
@@ -104,7 +107,10 @@ export default function SuperAdminRequestsPage() {
     search: searchQuery || undefined,
   })
 
-  const { data: counts } = useSuperAdminRequestCounts()
+  const requests = requestsResponse?.data || []
+  const pagination = requestsResponse?.pagination
+
+  const { data: counts, error: countsError } = useSuperAdminRequestCounts()
   const approveRequest = useApproveRequest()
   const rejectRequest = useRejectRequest()
 
@@ -155,6 +161,28 @@ export default function SuperAdminRequestsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <AlertTriangle className="h-12 w-12 mb-4" style={{ color: colors.warning600 }} />
+        <h2 className="text-lg font-semibold mb-2" style={{ color: colors.neutral800 }}>
+          Failed to load requests
+        </h2>
+        <p className="text-sm mb-4" style={{ color: colors.neutral600 }}>
+          {error instanceof Error ? error.message : 'An unexpected error occurred'}
+        </p>
+        <Button
+          onClick={() => refetch()}
+          variant="outline"
+          className="gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Try Again
+        </Button>
       </div>
     )
   }

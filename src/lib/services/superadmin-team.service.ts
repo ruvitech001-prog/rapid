@@ -3,14 +3,43 @@ import type {
   TeamMember,
   TeamMemberRole,
   TeamMemberFilters,
+  PaginatedResponse,
 } from '@/types/superadmin'
 
+const DEFAULT_PAGE_SIZE = 20
+
+// Valid team member roles
+const VALID_ROLES: TeamMemberRole[] = ['super_admin', 'admin', 'support', 'viewer']
+
+// Type guard for role validation
+function isValidRole(role: unknown): role is TeamMemberRole {
+  return typeof role === 'string' && VALID_ROLES.includes(role as TeamMemberRole)
+}
+
+// Safe company parser from Supabase relation
+function parseCompanyRelation(company: unknown): { id: string; legal_name: string; display_name: string | null } | null {
+  if (!company || typeof company !== 'object') return null
+  const c = company as Record<string, unknown>
+  if (typeof c.id !== 'string' || typeof c.legal_name !== 'string') return null
+  return {
+    id: c.id,
+    legal_name: c.legal_name,
+    display_name: typeof c.display_name === 'string' ? c.display_name : null,
+  }
+}
+
 class SuperAdminTeamServiceClass extends BaseService {
-  async getTeamMembers(filters?: TeamMemberFilters): Promise<TeamMember[]> {
+  async getTeamMembers(
+    filters?: TeamMemberFilters
+  ): Promise<PaginatedResponse<TeamMember>> {
+    const page = filters?.page || 1
+    const limit = filters?.limit || DEFAULT_PAGE_SIZE
+    const offset = (page - 1) * limit
+
     // Build query on superadmin_team table
     let query = this.supabase
       .from('superadmin_team')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
 
     // Apply role filter
@@ -23,10 +52,18 @@ class SuperAdminTeamServiceClass extends BaseService {
       query = query.eq('is_active', filters.isActive)
     }
 
-    const { data: members, error } = await query
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1)
+
+    const { data: members, error, count } = await query
     if (error) this.handleError(error)
 
-    if (!members || members.length === 0) return []
+    if (!members || members.length === 0) {
+      return {
+        data: [],
+        pagination: { page, limit, total: 0, totalPages: 0, hasMore: false },
+      }
+    }
 
     // Get unique user IDs
     const userIds = members.map((m) => m.user_id)
@@ -61,7 +98,7 @@ class SuperAdminTeamServiceClass extends BaseService {
       if (!assignmentsMap[memberId]) {
         assignmentsMap[memberId] = []
       }
-      const company = a.company as unknown as { id: string; legal_name: string; display_name: string | null } | null
+      const company = parseCompanyRelation(a.company)
       if (company) {
         assignmentsMap[memberId]!.push({
           id: company.id,
@@ -82,22 +119,39 @@ class SuperAdminTeamServiceClass extends BaseService {
     }
 
     // Transform results
-    return filteredMembers.map((member) => {
+    const data = filteredMembers.map((member) => {
       const user = usersMap[member.user_id]
+      const role = isValidRole(member.role) ? member.role : 'viewer' // Default to most restrictive role
       return {
         id: member.id,
         userId: member.user_id,
         name: user?.name || 'Unknown',
         email: user?.email || '',
-        role: member.role as TeamMemberRole,
+        role,
         isActive: member.is_active ?? true,
         assignedClients: assignmentsMap[member.id] || [],
         createdAt: member.created_at || new Date().toISOString(),
       }
     })
+
+    const total = count || data.length
+    const totalPages = Math.ceil(total / limit)
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasMore: page < totalPages,
+      },
+    }
   }
 
   async getTeamMemberById(id: string): Promise<TeamMember | null> {
+    if (!id) return null
+
     const { data: member, error } = await this.supabase
       .from('superadmin_team')
       .select('*')
@@ -108,6 +162,9 @@ class SuperAdminTeamServiceClass extends BaseService {
       if (error.code === 'PGRST116') return null
       this.handleError(error)
     }
+
+    // Return null if no data (safety check)
+    if (!member) return null
 
     // Fetch user info
     const { data: user } = await this.supabase
@@ -124,7 +181,7 @@ class SuperAdminTeamServiceClass extends BaseService {
 
     const assignedClients: { id: string; name: string }[] = []
     assignments?.forEach((a) => {
-      const company = a.company as unknown as { id: string; legal_name: string; display_name: string | null } | null
+      const company = parseCompanyRelation(a.company)
       if (company) {
         assignedClients.push({
           id: company.id,
@@ -133,6 +190,8 @@ class SuperAdminTeamServiceClass extends BaseService {
       }
     })
 
+    const role = isValidRole(member.role) ? member.role : 'viewer'
+
     return {
       id: member.id,
       userId: member.user_id,
@@ -140,11 +199,15 @@ class SuperAdminTeamServiceClass extends BaseService {
         ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
         : 'Unknown',
       email: user?.email || '',
-      role: member.role as TeamMemberRole,
+      role,
       isActive: member.is_active ?? true,
       assignedClients,
       createdAt: member.created_at || new Date().toISOString(),
     }
+  }
+
+  private validateRole(role: unknown): role is TeamMemberRole {
+    return isValidRole(role)
   }
 
   async createTeamMember(data: {
@@ -152,6 +215,25 @@ class SuperAdminTeamServiceClass extends BaseService {
     role: TeamMemberRole
     clientIds?: string[]
   }): Promise<TeamMember> {
+    // Validate inputs
+    if (!data.userId || typeof data.userId !== 'string') {
+      throw new Error('Invalid user ID')
+    }
+    if (!this.validateRole(data.role)) {
+      throw new Error('Invalid role')
+    }
+
+    // Check if user already exists in team
+    const { data: existing } = await this.supabase
+      .from('superadmin_team')
+      .select('id')
+      .eq('user_id', data.userId)
+      .single()
+
+    if (existing) {
+      throw new Error('User is already a team member')
+    }
+
     // Create team member
     const { data: member, error } = await this.supabase
       .from('superadmin_team')
@@ -193,6 +275,14 @@ class SuperAdminTeamServiceClass extends BaseService {
       clientIds?: string[]
     }
   ): Promise<TeamMember> {
+    // Validate inputs
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid team member ID')
+    }
+    if (data.role !== undefined && !this.validateRole(data.role)) {
+      throw new Error('Invalid role')
+    }
+
     // Update team member
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -207,27 +297,15 @@ class SuperAdminTeamServiceClass extends BaseService {
 
     if (error) this.handleError(error)
 
-    // Update client assignments if provided
+    // Update client assignments if provided using atomic RPC function
     if (data.clientIds !== undefined) {
-      // Remove existing assignments
-      await this.supabase
-        .from('superadmin_team_client')
-        .delete()
-        .eq('team_member_id', id)
+      const validClientIds = data.clientIds.filter((cid) => typeof cid === 'string' && cid.trim())
+      const { error: assignError } = await this.supabase.rpc('assign_team_clients', {
+        p_team_member_id: id,
+        p_client_ids: validClientIds,
+      })
 
-      // Add new assignments
-      if (data.clientIds.length > 0) {
-        const assignments = data.clientIds.map((companyId) => ({
-          team_member_id: id,
-          company_id: companyId,
-        }))
-
-        const { error: assignError } = await this.supabase
-          .from('superadmin_team_client')
-          .insert(assignments)
-
-        if (assignError) this.handleError(assignError)
-      }
+      if (assignError) this.handleError(assignError)
     }
 
     // Return updated team member
@@ -237,6 +315,29 @@ class SuperAdminTeamServiceClass extends BaseService {
   }
 
   async deleteTeamMember(id: string): Promise<void> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid team member ID')
+    }
+
+    // Check if trying to delete last super_admin
+    const { data: member } = await this.supabase
+      .from('superadmin_team')
+      .select('role')
+      .eq('id', id)
+      .single()
+
+    if (member?.role === 'super_admin') {
+      const { count } = await this.supabase
+        .from('superadmin_team')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'super_admin')
+        .eq('is_active', true)
+
+      if (count && count <= 1) {
+        throw new Error('Cannot delete the last super admin')
+      }
+    }
+
     const { error } = await this.supabase
       .from('superadmin_team')
       .delete()
@@ -245,29 +346,58 @@ class SuperAdminTeamServiceClass extends BaseService {
     if (error) this.handleError(error)
   }
 
+  async findUserByEmail(email: string): Promise<{ id: string; email: string; name: string } | null> {
+    if (!email || typeof email !== 'string') {
+      throw new Error('Invalid email address')
+    }
+
+    const normalizedEmail = email.trim().toLowerCase()
+
+    const { data: user, error } = await this.supabase
+      .from('users_user')
+      .select('id, email, first_name, last_name')
+      .eq('email', normalizedEmail)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No user found
+        return null
+      }
+      this.handleError(error)
+    }
+
+    if (!user) return null
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+    }
+  }
+
   async assignClients(
     teamMemberId: string,
     clientIds: string[]
   ): Promise<void> {
-    // Remove existing assignments
-    await this.supabase
-      .from('superadmin_team_client')
-      .delete()
-      .eq('team_member_id', teamMemberId)
-
-    // Add new assignments
-    if (clientIds.length > 0) {
-      const assignments = clientIds.map((companyId) => ({
-        team_member_id: teamMemberId,
-        company_id: companyId,
-      }))
-
-      const { error } = await this.supabase
-        .from('superadmin_team_client')
-        .insert(assignments)
-
-      if (error) this.handleError(error)
+    // Validate inputs
+    if (!teamMemberId || typeof teamMemberId !== 'string') {
+      throw new Error('Invalid team member ID')
     }
+    if (!Array.isArray(clientIds)) {
+      throw new Error('Client IDs must be an array')
+    }
+    // Validate all client IDs are strings (filter out empty strings)
+    const validClientIds = clientIds.filter((id) => typeof id === 'string' && id.trim())
+
+    // Use the atomic RPC function to assign clients
+    // This handles the delete + insert in a single transaction
+    const { error } = await this.supabase.rpc('assign_team_clients', {
+      p_team_member_id: teamMemberId,
+      p_client_ids: validClientIds,
+    })
+
+    if (error) this.handleError(error)
   }
 }
 

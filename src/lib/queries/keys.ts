@@ -85,5 +85,14 @@ export const queryKeys = {
       detail: (id: string) =>
         ['superadmin', 'companies', 'detail', id] as const,
     },
+    services: {
+      all: ['superadmin', 'services'] as const,
+      list: () => ['superadmin', 'services', 'list'] as const,
+      detail: (id: string) =>
+        ['superadmin', 'services', 'detail', id] as const,
+      stats: () => ['superadmin', 'services', 'stats'] as const,
+      enrollments: (serviceId: string) =>
+        ['superadmin', 'services', 'enrollments', serviceId] as const,
+    },
   },
 }

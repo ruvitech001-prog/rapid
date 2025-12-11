@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import {
@@ -18,6 +18,7 @@ import {
   Eye,
   X,
   User,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -46,29 +47,19 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { DateRangePicker } from '@/components/requests'
-import { getCurrentMockCompany, getMockDataByCompany, getMockData, updateMockData } from '@/lib/mock-data'
+import { useAuth } from '@/lib/auth'
+import {
+  useEmployerRequests,
+  useEmployerRequestCounts,
+  useApproveEmployerRequest,
+  useRejectEmployerRequest,
+  useWithdrawEmployerRequest,
+  type EmployerRequest,
+} from '@/lib/hooks'
 
 // ============================================================================
 // TYPES
 // ============================================================================
-
-interface Request {
-  id: string
-  company_id: string
-  requester_id: string
-  request_type: string
-  title: string
-  description: string
-  request_data: Record<string, any>
-  status: string
-  assigned_to: string | null
-  notes: string | null
-  created_at: string
-  updated_at: string
-  // Enriched fields
-  requester_name?: string
-  requester_avatar?: string
-}
 
 type Tab = 'your_requests' | 'for_approval'
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'withdrawn'
@@ -135,13 +126,21 @@ const TYPE_OPTIONS = [
 
 export default function RequestsPage() {
   const router = useRouter()
-  const company = getCurrentMockCompany()
+  const { user } = useAuth()
+  const companyId = user?.companyId
+
+  // Fetch requests from database
+  const { data: requests = [], isLoading } = useEmployerRequests(companyId)
+  const { data: counts } = useEmployerRequestCounts(companyId)
+
+  // Mutations
+  const approveMutation = useApproveEmployerRequest()
+  const rejectMutation = useRejectEmployerRequest()
+  const withdrawMutation = useWithdrawEmployerRequest()
 
   // State
   const [activeTab, setActiveTab] = useState<Tab>('your_requests')
-  const [requests, setRequests] = useState<Request[]>([])
-  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [selectedRequest, setSelectedRequest] = useState<EmployerRequest | null>(null)
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('')
@@ -153,147 +152,127 @@ export default function RequestsPage() {
   // Approval panel state
   const [remarks, setRemarks] = useState('')
 
-  // Load requests
-  useEffect(() => {
-    const loadRequests = async () => {
-      setIsLoading(true)
-      try {
-        const companyId = company?.id || ''
-        // Get special requests
-        const specialRequests = getMockDataByCompany('specialRequests', companyId)
-
-        // Get leave requests and transform
-        const leaveRequests = getMockDataByCompany('leaveRequests', companyId).map((lr: any) => ({
-          id: lr.id,
-          company_id: lr.company_id,
-          requester_id: lr.employee_id,
-          request_type: 'leave',
-          title: `${lr.leave_type} Leave`,
-          description: `${lr.days_count} days - ${lr.reason}`,
-          request_data: {
-            start_date: lr.start_date,
-            end_date: lr.end_date,
-            days_count: lr.days_count,
-            leave_type: lr.leave_type,
-            reason: lr.reason,
-          },
-          status: lr.status,
-          assigned_to: lr.approver_id,
-          notes: null,
-          created_at: lr.created_at,
-          updated_at: lr.created_at,
-        }))
-
-        // Get expense requests and transform
-        const expenseRequests = getMockDataByCompany('expenseRequests', companyId).map((er: any) => ({
-          id: er.id,
-          company_id: er.company_id,
-          requester_id: er.employee_id,
-          request_type: 'expense',
-          title: `Expense Claim`,
-          description: `INR ${er.amount.toLocaleString('en-IN')} - ${er.category}`,
-          request_data: {
-            amount: er.amount,
-            category: er.category,
-            description: er.description,
-          },
-          status: er.status === 'completed' ? 'approved' : er.status,
-          assigned_to: er.approver_id,
-          notes: null,
-          created_at: er.created_at,
-          updated_at: er.created_at,
-        }))
-
-        // Combine and enrich with requester info
-        const employees = getMockData('employees')
-        const allRequests = [...specialRequests, ...leaveRequests, ...expenseRequests].map((req) => {
-          const employee = employees.find((e: any) => e.id === req.requester_id)
-          return {
-            ...req,
-            requester_name: employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown',
-          }
-        })
-
-        // Sort by created_at descending
-        allRequests.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
-        setRequests(allRequests)
-        if (allRequests.length > 0) {
-          setSelectedRequest(allRequests[0])
-        }
-      } catch (error) {
-        console.error('Error loading requests:', error)
-        toast.error('Failed to load requests')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadRequests()
-  }, [company?.id])
+  // Calculate status counts from real data
+  const statusCounts = useMemo(() => ({
+    pending: counts?.pending || requests.filter((r) => r.status === 'pending').length,
+    approved: counts?.approved || requests.filter((r) => r.status === 'approved' || r.status === 'completed').length,
+    rejected: counts?.rejected || requests.filter((r) => r.status === 'rejected').length,
+    withdrawn: counts?.withdrawn || requests.filter((r) => r.status === 'withdrawn' || r.status === 'cancelled').length,
+  }), [requests, counts])
 
   // Filter requests
-  const filteredRequests = requests.filter((req) => {
-    // Status filter
-    if (statusFilter !== 'all' && req.status !== statusFilter) return false
+  const filteredRequests = useMemo(() => {
+    return requests.filter((req) => {
+      // Status filter
+      if (statusFilter !== 'all' && req.status !== statusFilter) return false
 
-    // Type filter
-    if (typeFilter !== 'all' && req.request_type !== typeFilter) return false
+      // Type filter
+      if (typeFilter !== 'all' && req.request_type !== typeFilter) return false
 
-    // Search
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      const matchesId = req.id.toLowerCase().includes(query)
-      const matchesTitle = req.title.toLowerCase().includes(query)
-      const matchesRequester = req.requester_name?.toLowerCase().includes(query)
-      if (!matchesId && !matchesTitle && !matchesRequester) return false
+      // Search
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesId = req.id.toLowerCase().includes(query)
+        const matchesTitle = req.title.toLowerCase().includes(query)
+        const matchesRequester = req.requester_name?.toLowerCase().includes(query)
+        if (!matchesId && !matchesTitle && !matchesRequester) return false
+      }
+
+      // Date range
+      if (startDate && endDate) {
+        const reqDate = new Date(req.created_at)
+        if (reqDate < startDate || reqDate > endDate) return false
+      }
+
+      return true
+    })
+  }, [requests, statusFilter, typeFilter, searchQuery, startDate, endDate])
+
+  // Select first request when data loads
+  useMemo(() => {
+    if (filteredRequests.length > 0 && !selectedRequest) {
+      setSelectedRequest(filteredRequests[0] || null)
     }
-
-    // Date range
-    if (startDate && endDate) {
-      const reqDate = new Date(req.created_at)
-      if (reqDate < startDate || reqDate > endDate) return false
-    }
-
-    return true
-  })
-
-  // Calculate status counts
-  const statusCounts = {
-    pending: requests.filter((r) => r.status === 'pending').length,
-    approved: requests.filter((r) => r.status === 'approved' || r.status === 'completed').length,
-    rejected: requests.filter((r) => r.status === 'rejected').length,
-    withdrawn: requests.filter((r) => r.status === 'withdrawn' || r.status === 'cancelled').length,
-  }
+  }, [filteredRequests, selectedRequest])
 
   // Handlers
-  const handleApprove = (requestId: string) => {
-    updateMockData('specialRequests', requestId, { status: 'approved' })
-    setRequests(requests.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r)))
-    if (selectedRequest?.id === requestId) {
-      setSelectedRequest({ ...selectedRequest, status: 'approved' })
+  const handleApprove = async (requestId: string) => {
+    if (!user?.id) {
+      toast.error('Please log in to approve requests')
+      return
     }
-    toast.success('Request approved')
-    setRemarks('')
+
+    const request = requests.find((r) => r.id === requestId)
+    if (!request) return
+
+    try {
+      await approveMutation.mutateAsync({
+        requestId,
+        requestType: request.request_type,
+        approverId: user.id,
+        remarks: remarks || undefined,
+      })
+      toast.success('Request approved')
+      setRemarks('')
+      // Update selected request if it's the one we just approved
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest({ ...selectedRequest, status: 'approved' })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to approve request'
+      toast.error(message)
+    }
   }
 
-  const handleReject = (requestId: string) => {
-    updateMockData('specialRequests', requestId, { status: 'rejected', notes: remarks })
-    setRequests(requests.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r)))
-    if (selectedRequest?.id === requestId) {
-      setSelectedRequest({ ...selectedRequest, status: 'rejected' })
+  const handleReject = async (requestId: string) => {
+    if (!user?.id) {
+      toast.error('Please log in to reject requests')
+      return
     }
-    toast.success('Request rejected')
-    setRemarks('')
+
+    if (!remarks.trim()) {
+      toast.error('Please provide remarks for rejection')
+      return
+    }
+
+    const request = requests.find((r) => r.id === requestId)
+    if (!request) return
+
+    try {
+      await rejectMutation.mutateAsync({
+        requestId,
+        requestType: request.request_type,
+        approverId: user.id,
+        remarks,
+      })
+      toast.success('Request rejected')
+      setRemarks('')
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest({ ...selectedRequest, status: 'rejected' })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to reject request'
+      toast.error(message)
+    }
   }
 
-  const handleWithdraw = (requestId: string) => {
-    updateMockData('specialRequests', requestId, { status: 'withdrawn' })
-    setRequests(requests.map((r) => (r.id === requestId ? { ...r, status: 'withdrawn' } : r)))
-    if (selectedRequest?.id === requestId) {
-      setSelectedRequest({ ...selectedRequest, status: 'withdrawn' })
+  const handleWithdraw = async (requestId: string) => {
+    const request = requests.find((r) => r.id === requestId)
+    if (!request) return
+
+    try {
+      await withdrawMutation.mutateAsync({
+        requestId,
+        requestType: request.request_type,
+      })
+      toast.success('Request withdrawn')
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest({ ...selectedRequest, status: 'withdrawn' })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to withdraw request'
+      toast.error(message)
     }
-    toast.success('Request withdrawn')
   }
 
   const formatDate = (dateStr: string) => {
@@ -312,12 +291,12 @@ export default function RequestsPage() {
     return STATUS_CONFIG[status] || { label: status, className: 'bg-gray-100 text-gray-800' }
   }
 
-  const getRequestDetails = (req: Request) => {
+  const getRequestDetails = (req: EmployerRequest) => {
     switch (req.request_type) {
       case 'leave':
-        return `${formatDate(req.request_data.start_date)} - ${formatDate(req.request_data.end_date)}`
+        return `${formatDate(req.request_data.start_date as string)} - ${formatDate(req.request_data.end_date as string)}`
       case 'expense':
-        return `INR ${req.request_data.amount?.toLocaleString('en-IN')} - ${req.request_data.category}`
+        return `INR ${(req.request_data.amount as number)?.toLocaleString('en-IN')} - ${req.request_data.category}`
       default:
         return req.description || req.title
     }
@@ -476,7 +455,10 @@ export default function RequestsPage() {
           {/* Table Section */}
           <div className="flex-1 bg-white rounded-xl border border-[#DEE4EB] overflow-hidden">
             {isLoading ? (
-              <div className="p-12 text-center text-gray-500">Loading requests...</div>
+              <div className="p-12 text-center text-gray-500">
+                <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-primary" />
+                <p>Loading requests...</p>
+              </div>
             ) : filteredRequests.length === 0 ? (
               <div className="p-12 text-center text-gray-500">
                 <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -569,16 +551,16 @@ export default function RequestsPage() {
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase mb-1">Dates</p>
                       <p className="text-sm text-gray-900">
-                        {formatDate(selectedRequest.request_data.start_date)} - {formatDate(selectedRequest.request_data.end_date)}
+                        {formatDate(selectedRequest.request_data.start_date as string)} - {formatDate(selectedRequest.request_data.end_date as string)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase mb-1">Total days</p>
-                      <p className="text-sm text-gray-900">{selectedRequest.request_data.days_count}</p>
+                      <p className="text-sm text-gray-900">{selectedRequest.request_data.days_count as number}</p>
                     </div>
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase mb-1">Leave category</p>
-                      <p className="text-sm text-gray-900 capitalize">{selectedRequest.request_data.leave_type}</p>
+                      <p className="text-sm text-gray-900 capitalize">{selectedRequest.request_data.leave_type as string}</p>
                     </div>
                   </>
                 )}
@@ -588,17 +570,17 @@ export default function RequestsPage() {
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase mb-1">Amount</p>
                       <p className="text-sm text-gray-900">
-                        INR {selectedRequest.request_data.amount?.toLocaleString('en-IN')}
+                        INR {(selectedRequest.request_data.amount as number)?.toLocaleString('en-IN')}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase mb-1">Category</p>
-                      <p className="text-sm text-gray-900 capitalize">{selectedRequest.request_data.category}</p>
+                      <p className="text-sm text-gray-900 capitalize">{selectedRequest.request_data.category as string}</p>
                     </div>
                     {selectedRequest.request_data.description && (
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase mb-1">Description</p>
-                        <p className="text-sm text-gray-900">{selectedRequest.request_data.description}</p>
+                        <p className="text-sm text-gray-900">{selectedRequest.request_data.description as string}</p>
                       </div>
                     )}
                   </>
@@ -618,6 +600,11 @@ export default function RequestsPage() {
                 )}
 
                 <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Requested by</p>
+                  <p className="text-sm text-gray-900">{selectedRequest.requester_name}</p>
+                </div>
+
+                <div>
                   <p className="text-xs font-medium text-gray-500 uppercase mb-1">Requested on</p>
                   <p className="text-sm text-gray-900">{formatDate(selectedRequest.created_at)}</p>
                 </div>
@@ -634,7 +621,7 @@ export default function RequestsPage() {
                   <p className="text-xs font-medium text-gray-500 uppercase mb-1">Documents</p>
                   <button className="text-sm text-[#642DFC] hover:underline flex items-center gap-1">
                     <Eye className="w-4 h-4" />
-                    View (2)
+                    View attachments
                   </button>
                 </div>
               </div>
@@ -657,15 +644,31 @@ export default function RequestsPage() {
                       <Button
                         className="flex-1 bg-[#642DFC] hover:bg-[#5224D9]"
                         onClick={() => handleApprove(selectedRequest.id)}
+                        disabled={approveMutation.isPending}
                       >
-                        Approve
+                        {approveMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Approving...
+                          </>
+                        ) : (
+                          'Approve'
+                        )}
                       </Button>
                       <Button
                         variant="outline"
                         className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
                         onClick={() => handleReject(selectedRequest.id)}
+                        disabled={rejectMutation.isPending}
                       >
-                        Reject
+                        {rejectMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Rejecting...
+                          </>
+                        ) : (
+                          'Reject'
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -674,8 +677,16 @@ export default function RequestsPage() {
                     variant="outline"
                     className="w-full"
                     onClick={() => handleWithdraw(selectedRequest.id)}
+                    disabled={withdrawMutation.isPending}
                   >
-                    Withdraw request
+                    {withdrawMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Withdrawing...
+                      </>
+                    ) : (
+                      'Withdraw request'
+                    )}
                   </Button>
                 ) : (
                   <div className="text-center text-sm text-gray-500">

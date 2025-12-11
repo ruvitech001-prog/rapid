@@ -14,6 +14,274 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_employeeattendance: {
+        Row: {
+          id: string
+          employee_id: string
+          company_id: string
+          date: string
+          clock_in: string | null
+          clock_out: string | null
+          clock_in_location_lat: number | null
+          clock_in_location_lng: number | null
+          clock_out_location_lat: number | null
+          clock_out_location_lng: number | null
+          total_hours: number | null
+          status: string
+          notes: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          company_id: string
+          date: string
+          clock_in?: string | null
+          clock_out?: string | null
+          clock_in_location_lat?: number | null
+          clock_in_location_lng?: number | null
+          clock_out_location_lat?: number | null
+          clock_out_location_lng?: number | null
+          total_hours?: number | null
+          status?: string
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          company_id?: string
+          date?: string
+          clock_in?: string | null
+          clock_out?: string | null
+          clock_in_location_lat?: number | null
+          clock_in_location_lng?: number | null
+          clock_out_location_lat?: number | null
+          clock_out_location_lng?: number | null
+          total_hours?: number | null
+          status?: string
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employeeattendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_employee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_employeeattendance_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_run: {
+        Row: {
+          id: string
+          company_id: string
+          pay_period_month: number
+          pay_period_year: number
+          pay_period_start: string | null
+          pay_period_end: string | null
+          status: string
+          total_employees: number
+          total_gross_amount: number
+          total_deductions: number
+          total_net_amount: number
+          processed_by: string | null
+          processed_at: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          pay_period_month: number
+          pay_period_year: number
+          pay_period_start?: string | null
+          pay_period_end?: string | null
+          status?: string
+          total_employees?: number
+          total_gross_amount?: number
+          total_deductions?: number
+          total_net_amount?: number
+          processed_by?: string | null
+          processed_at?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          pay_period_month?: number
+          pay_period_year?: number
+          pay_period_start?: string | null
+          pay_period_end?: string | null
+          status?: string
+          total_employees?: number
+          total_gross_amount?: number
+          total_deductions?: number
+          total_net_amount?: number
+          processed_by?: string | null
+          processed_at?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_run_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_run_detail: {
+        Row: {
+          id: string
+          payroll_run_id: string
+          employee_id: string
+          basic_salary: number
+          hra: number
+          lta: number
+          medical_allowance: number
+          special_allowance: number
+          telephone_allowance: number
+          performance_bonus: number
+          other_earnings: number
+          gross_salary: number
+          epf_employee: number
+          epf_employer: number
+          esic_employee: number
+          esic_employer: number
+          professional_tax: number
+          income_tax: number
+          other_deductions: number
+          total_deductions: number
+          net_salary: number
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          payroll_run_id: string
+          employee_id: string
+          basic_salary?: number
+          hra?: number
+          lta?: number
+          medical_allowance?: number
+          special_allowance?: number
+          telephone_allowance?: number
+          performance_bonus?: number
+          other_earnings?: number
+          gross_salary?: number
+          epf_employee?: number
+          epf_employer?: number
+          esic_employee?: number
+          esic_employer?: number
+          professional_tax?: number
+          income_tax?: number
+          other_deductions?: number
+          total_deductions?: number
+          net_salary?: number
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          payroll_run_id?: string
+          employee_id?: string
+          basic_salary?: number
+          hra?: number
+          lta?: number
+          medical_allowance?: number
+          special_allowance?: number
+          telephone_allowance?: number
+          performance_bonus?: number
+          other_earnings?: number
+          gross_salary?: number
+          epf_employee?: number
+          epf_employer?: number
+          esic_employee?: number
+          esic_employer?: number
+          professional_tax?: number
+          income_tax?: number
+          other_deductions?: number
+          total_deductions?: number
+          net_salary?: number
+          status?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_run_detail_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_run"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_run_detail_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_employee"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_revenue: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          invoice_count: number | null
+          month: string
+          paid_amount: number | null
+          total_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_count?: number | null
+          month: string
+          paid_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_count?: number | null
+          month?: string
+          paid_amount?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_revenue_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commons_address: {
         Row: {
           address_line_1: string
@@ -1777,6 +2045,97 @@ export type Database = {
           },
         ]
       }
+      superadmin_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_data: Json | null
+          old_data: Json | null
+          user_agent: string | null
+          user_email: string
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_email: string
+          user_id: string
+          user_role: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_email?: string
+          user_id?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "superadmin_audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      superadmin_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "superadmin_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       superadmin_team: {
         Row: {
           created_at: string | null
@@ -1962,6 +2321,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_team_clients: {
+        Args: { p_client_ids: string[]; p_team_member_id: string }
+        Returns: undefined
+      }
       auth_user_id: { Args: never; Returns: string }
       get_user_company_id: { Args: never; Returns: string }
       get_user_contractor_id: { Args: never; Returns: string }

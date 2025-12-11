@@ -1,48 +1,77 @@
-'use client';
+'use client'
 
-import { useParams } from 'next/navigation';
-import { Download, ChevronLeft, Printer } from 'lucide-react';
-import Link from 'next/link';
+import { useParams } from 'next/navigation'
+import { Download, ChevronLeft, Printer, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useAuth } from '@/lib/auth'
+import { useCurrentPayslip, useEmployeeProfile } from '@/lib/hooks'
 
 export default function PayslipDetailPage() {
-  const params = useParams();
-  const monthParam = params.month as string;
+  const params = useParams()
+  const monthParam = params.month as string
+  const { user } = useAuth()
+  const employeeId = user?.id
+
+  const { data: payslip, isLoading: payslipLoading } = useCurrentPayslip(employeeId)
+  const { data: profile, isLoading: profileLoading } = useEmployeeProfile(employeeId)
+
+  const isLoading = payslipLoading || profileLoading
 
   // Convert URL parameter to readable format
   const monthDisplay = monthParam.split('-').map(word =>
     word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ');
+  ).join(' ')
 
-  // Sample payslip data
-  const payslipData = {
-    month: monthDisplay,
-    employee: 'John Doe',
-    employeeId: 'EMP-001',
-    designation: 'Senior Software Engineer',
-    department: 'Engineering',
-    salary: '$5,000.00',
-    earnings: {
-      basicSalary: '$3,000.00',
-      dearness: '$500.00',
-      houseRent: '$800.00',
-      conveyance: '$200.00',
-      medical: '$300.00',
-      other: '$200.00',
-    },
-    deductions: {
-      incomeTax: '$450.00',
-      providentFund: '$350.00',
-      employeeContribution: '$200.00',
-      other: '$100.00',
-    },
-    netSalary: '$4,200.00',
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
-  const totalEarnings = Object.values(payslipData.earnings)
-    .reduce((sum, val) => sum + parseFloat(val.replace('$', '').replace(',', '')), 0);
+  if (!payslip) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/employee/payslips"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            <ChevronLeft size={20} className="text-slate-600" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Payslip - {monthDisplay}</h1>
+            <p className="text-slate-600 mt-1">Payslip not found</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg border border-slate-200 p-8 text-center">
+          <p className="text-muted-foreground">No payslip data available for this month.</p>
+        </div>
+      </div>
+    )
+  }
 
-  const totalDeductions = Object.values(payslipData.deductions)
-    .reduce((sum, val) => sum + parseFloat(val.replace('$', '').replace(',', '')), 0);
+  // Build earnings and deductions from individual fields
+  const earnings = [
+    { name: 'Basic Salary', amount: payslip.basicSalary },
+    { name: 'HRA', amount: payslip.hra },
+    { name: 'LTA', amount: payslip.lta },
+    { name: 'Medical Allowance', amount: payslip.medicalAllowance },
+    { name: 'Special Allowance', amount: payslip.specialAllowance },
+    { name: 'Telephone Allowance', amount: payslip.telephoneAllowance },
+    { name: 'Performance Bonus', amount: payslip.performanceBonus },
+  ].filter(e => e.amount > 0)
+
+  const deductions = [
+    { name: 'EPF (Employee)', amount: payslip.epfEmployee },
+    { name: 'ESIC (Employee)', amount: payslip.esicEmployee },
+    { name: 'Professional Tax', amount: payslip.professionalTax },
+    { name: 'Income Tax (TDS)', amount: payslip.incomeTax },
+  ].filter(d => d.amount > 0)
+
+  const totalEarnings = payslip.grossEarnings
+  const totalDeductions = payslip.totalDeductions
 
   return (
     <div className="space-y-6">
@@ -55,7 +84,7 @@ export default function PayslipDetailPage() {
           <ChevronLeft size={20} className="text-slate-600" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Payslip - {monthDisplay}</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Payslip - {payslip.month} {payslip.year}</h1>
           <p className="text-slate-600 mt-1">View and download your detailed payslip</p>
         </div>
       </div>
@@ -79,15 +108,15 @@ export default function PayslipDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h3 className="text-sm font-semibold text-slate-700 uppercase mb-4">Company</h3>
-              <p className="text-lg font-bold text-slate-900">Aether Inc.</p>
-              <p className="text-sm text-slate-600">Address: 123 Business Park</p>
-              <p className="text-sm text-slate-600">City, State ZIP</p>
+              <p className="text-lg font-bold text-slate-900">{profile?.contract?.companyName || 'Company'}</p>
+              <p className="text-sm text-slate-600">Pay Period: {payslip.month} {payslip.year}</p>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-700 uppercase mb-4">Employee</h3>
-              <p className="text-lg font-bold text-slate-900">{payslipData.employee}</p>
-              <p className="text-sm text-slate-600">ID: {payslipData.employeeId}</p>
-              <p className="text-sm text-slate-600">Department: {payslipData.department}</p>
+              <p className="text-lg font-bold text-slate-900">{profile?.full_name || 'Employee'}</p>
+              <p className="text-sm text-slate-600">ID: {profile?.employee_code || 'N/A'}</p>
+              <p className="text-sm text-slate-600">Department: {profile?.contract?.department || 'N/A'}</p>
+              <p className="text-sm text-slate-600">Designation: {profile?.contract?.designation || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -98,17 +127,15 @@ export default function PayslipDetailPage() {
           <div>
             <h3 className="text-lg font-bold text-slate-900 mb-4">Earnings</h3>
             <div className="space-y-3">
-              {Object.entries(payslipData.earnings).map(([key, value]) => (
-                <div key={key} className="flex justify-between text-sm">
-                  <span className="text-slate-600 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                  <span className="text-slate-900 font-medium">{value}</span>
+              {earnings.map((earning, idx) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span className="text-slate-600">{earning.name}</span>
+                  <span className="text-slate-900 font-medium">₹{earning.amount.toLocaleString()}</span>
                 </div>
               ))}
               <div className="pt-3 border-t border-slate-200 flex justify-between">
                 <span className="font-semibold text-slate-900">Gross Salary</span>
-                <span className="font-bold text-slate-900">${totalEarnings.toFixed(2)}</span>
+                <span className="font-bold text-slate-900">₹{totalEarnings.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -117,17 +144,15 @@ export default function PayslipDetailPage() {
           <div>
             <h3 className="text-lg font-bold text-slate-900 mb-4">Deductions</h3>
             <div className="space-y-3">
-              {Object.entries(payslipData.deductions).map(([key, value]) => (
-                <div key={key} className="flex justify-between text-sm">
-                  <span className="text-slate-600 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                  <span className="text-slate-900 font-medium">{value}</span>
+              {deductions.map((deduction, idx) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span className="text-slate-600">{deduction.name}</span>
+                  <span className="text-slate-900 font-medium">₹{deduction.amount.toLocaleString()}</span>
                 </div>
               ))}
               <div className="pt-3 border-t border-slate-200 flex justify-between">
                 <span className="font-semibold text-slate-900">Total Deductions</span>
-                <span className="font-bold text-slate-900">${totalDeductions.toFixed(2)}</span>
+                <span className="font-bold text-slate-900">₹{totalDeductions.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -137,7 +162,7 @@ export default function PayslipDetailPage() {
         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
           <div className="flex justify-between items-center">
             <span className="text-lg font-semibold text-slate-900">Net Salary (Take Home)</span>
-            <span className="text-2xl font-bold text-green-700">{payslipData.netSalary}</span>
+            <span className="text-2xl font-bold text-green-700">₹{payslip.netPay.toLocaleString()}</span>
           </div>
         </div>
 
@@ -147,10 +172,10 @@ export default function PayslipDetailPage() {
             This is an electronically generated payslip and does not require a signature.
           </p>
           <p className="text-xs text-slate-500 mt-4">
-            For queries regarding this payslip, please contact HR at hr@aether.com
+            For queries regarding this payslip, please contact HR
           </p>
         </div>
       </div>
     </div>
-  );
+  )
 }

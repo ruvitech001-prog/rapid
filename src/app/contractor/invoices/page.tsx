@@ -2,21 +2,32 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Loader2, FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button as _Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/lib/auth'
+import { useContractorInvoices } from '@/lib/hooks'
 
 export default function InvoicesPage() {
+  const { user } = useAuth()
+  const contractorId = user?.id
+  const { data: invoices, isLoading } = useContractorInvoices(contractorId)
   const [statusFilter, setStatusFilter] = useState('all')
 
-  const invoices = [
-    { id: 'INV-2024-003', date: '2024-02-28', amount: 20000, hours: 40, status: 'paid', paidOn: '2024-03-05' },
-    { id: 'INV-2024-002', date: '2024-02-14', amount: 20000, hours: 40, status: 'pending', paidOn: null },
-    { id: 'INV-2024-001', date: '2024-01-31', amount: 19000, hours: 38, status: 'paid', paidOn: '2024-02-07' },
-  ]
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
-  const filteredInvoices = invoices.filter(inv => statusFilter === 'all' || inv.status === statusFilter)
+  const invoiceList = invoices || []
+  const filteredInvoices = invoiceList.filter(inv => statusFilter === 'all' || inv.status === statusFilter)
+
+  const totalInvoiced = invoiceList.reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+  const paidAmount = invoiceList.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
+  const pendingAmount = invoiceList.filter(inv => inv.status === 'pending' || inv.status === 'submitted').reduce((sum, inv) => sum + (inv.total_amount || 0), 0)
 
   return (
     <div className="space-y-6">
@@ -33,7 +44,7 @@ export default function InvoicesPage() {
             <CardTitle className="text-sm font-medium">Total Invoiced</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">₹{invoices.reduce((sum, inv) => sum + inv.amount, 0).toLocaleString()}</p>
+            <p className="text-2xl font-semibold">₹{totalInvoiced.toLocaleString('en-IN')}</p>
           </CardContent>
         </Card>
         <Card>
@@ -42,7 +53,7 @@ export default function InvoicesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold text-primary">
-              ₹{invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0).toLocaleString()}
+              ₹{paidAmount.toLocaleString('en-IN')}
             </p>
           </CardContent>
         </Card>
@@ -52,7 +63,7 @@ export default function InvoicesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">
-              ₹{invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0).toLocaleString()}
+              ₹{pendingAmount.toLocaleString('en-IN')}
             </p>
           </CardContent>
         </Card>
@@ -71,61 +82,85 @@ export default function InvoicesPage() {
               <option value="all">All Invoices</option>
               <option value="paid">Paid</option>
               <option value="pending">Pending</option>
+              <option value="submitted">Submitted</option>
+              <option value="approved">Approved</option>
             </select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto border border-b-0 border-x-0 border-border rounded-b-lg">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30">
-                <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Invoice ID</th>
-                  <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Date</th>
-                  <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Hours</th>
-                  <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Amount</th>
-                  <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Status</th>
-                  <th className="px-6 py-3 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wide">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredInvoices.map(invoice => (
-                  <tr key={invoice.id} className="hover:bg-muted/20 transition-colors cursor-pointer">
-                    <td className="px-6 py-4 whitespace-nowrap font-medium">
-                      <Link
-                        href={`/contractor/invoices/${invoice.id}`}
-                        className="text-primary hover:underline"
-                      >
-                        {invoice.id}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{new Date(invoice.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{invoice.hours} hrs</td>
-                    <td className="px-6 py-4 whitespace-nowrap font-semibold">₹{invoice.amount.toLocaleString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
-                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                        </Badge>
-                        {invoice.paidOn && (
-                          <p className="text-xs text-muted-foreground mt-1">Paid: {new Date(invoice.paidOn).toLocaleDateString()}</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Link
-                        href={`/contractor/invoices/${invoice.id}`}
-                        className="inline-flex items-center gap-1 text-primary hover:text-primary hover:underline"
-                      >
-                        View <ChevronRight className="h-4 w-4" />
-                      </Link>
-                    </td>
+          {filteredInvoices.length === 0 ? (
+            <div className="py-12 text-center">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">No invoices found</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto border border-b-0 border-x-0 border-border rounded-b-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Invoice ID</th>
+                    <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Date</th>
+                    <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Company</th>
+                    <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Amount</th>
+                    <th className="px-6 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide">Status</th>
+                    <th className="px-6 py-3 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wide">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredInvoices.map(invoice => (
+                    <tr key={invoice.id} className="hover:bg-muted/20 transition-colors cursor-pointer">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">
+                        <Link
+                          href={`/contractor/invoices/${invoice.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {invoice.invoice_number || invoice.id}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-IN') : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {invoice.companyName || 'Unknown Company'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-semibold">
+                        ₹{(invoice.total_amount || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
+                            {(invoice.status || 'pending').charAt(0).toUpperCase() + (invoice.status || 'pending').slice(1)}
+                          </Badge>
+                          {invoice.paid_date && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Paid: {new Date(invoice.paid_date).toLocaleDateString('en-IN')}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <Link
+                          href={`/contractor/invoices/${invoice.id}`}
+                          className="inline-flex items-center gap-1 text-primary hover:text-primary hover:underline"
+                        >
+                          View <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Results Count */}
+      {filteredInvoices.length > 0 && (
+        <p className="text-sm text-muted-foreground text-center">
+          Showing {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? 's' : ''}
+        </p>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 export default function AttendanceRegularizationPage() {
   const router = useRouter()
@@ -24,8 +25,8 @@ export default function AttendanceRegularizationPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Regularization request:', formData)
-    alert('Attendance regularization request submitted successfully!')
+    // TODO: Implement actual regularization submission
+    toast.success('Attendance regularization request submitted successfully!')
     router.push('/employee/attendance/history')
   }
 

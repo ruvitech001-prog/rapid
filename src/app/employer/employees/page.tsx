@@ -36,8 +36,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { useEmployees } from '@/lib/hooks'
+import {
+  useEmployees,
+  useCompanyTeams,
+  useCreateTeam,
+  useAssignEmployeeToTeam,
+} from '@/lib/hooks'
 import { useAuth } from '@/lib/auth'
+import { toast } from 'sonner'
 
 interface Employee {
   id: string
@@ -70,16 +76,23 @@ export default function EmployeesPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
 
   // Form states for edit
-  const [editTeamName, setEditTeamName] = useState('')
+  const [editTeamId, setEditTeamId] = useState('')
   const [editReportingManager, setEditReportingManager] = useState('')
 
   // Form states for create team
   const [newTeamName, setNewTeamName] = useState('')
-  const [newTeamEmployees, setNewTeamEmployees] = useState('')
+  const [newTeamDescription, setNewTeamDescription] = useState('')
   const [newTeamManager, setNewTeamManager] = useState('')
 
   // Fetch real employee data
   const { data: employeesData = [], isLoading } = useEmployees(companyId || undefined)
+
+  // Fetch teams from database
+  const { data: teamsData = [] } = useCompanyTeams(companyId || null)
+
+  // Mutations for team operations
+  const createTeamMutation = useCreateTeam(companyId || '')
+  const assignEmployeeMutation = useAssignEmployeeToTeam(companyId || '')
 
   // Transform data to match expected interface
   const employees: Employee[] = useMemo(() => {
@@ -109,8 +122,13 @@ export default function EmployeesPage() {
     })
   }, [employeesData])
 
-  // Get unique teams and designations
-  const teams = useMemo(() => [...new Set(employees.map(e => e.team_name))], [employees])
+  // Get unique teams (from database) and designations
+  const teams = useMemo(() => {
+    // Combine database teams with unique department names from employees
+    const dbTeamNames = teamsData.map(t => t.name)
+    const employeeTeams = [...new Set(employees.map(e => e.team_name))]
+    return [...new Set([...dbTeamNames, ...employeeTeams])].filter(Boolean)
+  }, [teamsData, employees])
   const designations = useMemo(() => [...new Set(employees.map(e => e.designation))], [employees])
 
   // Count badges
@@ -149,32 +167,95 @@ export default function EmployeesPage() {
 
   const handleEditTeamDetails = (employee: Employee) => {
     setSelectedEmployee(employee)
-    setEditTeamName(employee.team_name)
+    // Find the team ID from team name
+    const team = teamsData.find(t => t.name === employee.team_name)
+    setEditTeamId(team?.id || '')
     setEditReportingManager(employee.reporting_manager_name || '')
     setEditSheetOpen(true)
   }
 
-  const handleUpdateTeamDetails = () => {
-    // In a real app, this would update the backend
-    console.log('Updating team details:', {
-      employeeId: selectedEmployee?.id,
-      teamName: editTeamName,
-      reportingManager: editReportingManager
-    })
-    setEditSheetOpen(false)
+  const handleUpdateTeamDetails = async () => {
+    if (!selectedEmployee) return
+
+    if (!editTeamId) {
+      toast.error('Please select a team')
+      return
+    }
+
+    // Find reporting manager ID if name is provided
+    const reportingManagerId = editReportingManager
+      ? employees.find(e => `${e.first_name} ${e.last_name}` === editReportingManager)?.id
+      : undefined
+
+    assignEmployeeMutation.mutate(
+      {
+        teamId: editTeamId,
+        employeeId: selectedEmployee.id,
+        reportingManagerId,
+        role: 'member',
+      },
+      {
+        onSuccess: () => {
+          setEditSheetOpen(false)
+        },
+      }
+    )
   }
 
-  const handleCreateTeam = () => {
-    // In a real app, this would create a new team
-    console.log('Creating team:', {
-      teamName: newTeamName,
-      employees: newTeamEmployees,
-      manager: newTeamManager
-    })
-    setCreateTeamSheetOpen(false)
-    setNewTeamName('')
-    setNewTeamEmployees('')
-    setNewTeamManager('')
+  const handleCreateTeam = async () => {
+    if (!newTeamName.trim()) {
+      toast.error('Team name is required')
+      return
+    }
+
+    // Find manager ID if name is provided
+    const managerId = newTeamManager
+      ? employees.find(e => `${e.first_name} ${e.last_name}` === newTeamManager)?.id
+      : undefined
+
+    createTeamMutation.mutate(
+      {
+        name: newTeamName,
+        description: newTeamDescription || undefined,
+        managerId,
+      },
+      {
+        onSuccess: () => {
+          setCreateTeamSheetOpen(false)
+          setNewTeamName('')
+          setNewTeamDescription('')
+          setNewTeamManager('')
+        },
+      }
+    )
+  }
+
+  const handleDownloadEmployees = () => {
+    if (filteredEmployees.length === 0) {
+      toast.error('No employees to export')
+      return
+    }
+
+    const headers = ['ID', 'Name', 'Designation', 'Team', 'Email', 'Phone']
+    const rows = filteredEmployees.map(emp => [
+      emp.employee_code,
+      `${emp.first_name} ${emp.last_name}`,
+      emp.designation,
+      emp.team_name,
+      emp.email,
+      emp.phone
+    ])
+
+    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `employees-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+
+    toast.success('Employee list exported successfully')
   }
 
   const removeTeamFilter = (team: string) => {
@@ -271,10 +352,13 @@ export default function EmployeesPage() {
             <Users className="mr-2 h-4 w-4" />
             Create team
           </Button>
-          <Button variant="outline" className="border-[#586AF5] text-[#586AF5]">
+          <Button
+            variant="outline"
+            className="border-[#586AF5] text-[#586AF5]"
+            onClick={handleDownloadEmployees}
+          >
             <Download className="mr-2 h-4 w-4" />
-            Download
-            <ChevronDown className="ml-2 h-4 w-4" />
+            Download CSV
           </Button>
         </div>
       </div>
@@ -489,13 +573,13 @@ export default function EmployeesPage() {
 
             <div className="space-y-2">
               <Label className="text-[#8593A3]">Team name</Label>
-              <Select value={editTeamName} onValueChange={setEditTeamName}>
+              <Select value={editTeamId} onValueChange={setEditTeamId}>
                 <SelectTrigger className="h-12 border-[#DEE4EB]">
                   <SelectValue placeholder="Select team" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teams.map(team => (
-                    <SelectItem key={team} value={team}>{team}</SelectItem>
+                  {teamsData.map(team => (
+                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -503,11 +587,21 @@ export default function EmployeesPage() {
 
             <div className="space-y-2">
               <Label className="text-[#8593A3]">Reporting manager</Label>
-              <Input
-                value={editReportingManager}
-                onChange={(e) => setEditReportingManager(e.target.value)}
-                className="h-12 border-[#DEE4EB]"
-              />
+              <Select value={editReportingManager} onValueChange={setEditReportingManager}>
+                <SelectTrigger className="h-12 border-[#DEE4EB]">
+                  <SelectValue placeholder="Select reporting manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {employees
+                    .filter(e => e.id !== selectedEmployee?.id)
+                    .map(emp => (
+                      <SelectItem key={emp.id} value={`${emp.first_name} ${emp.last_name}`}>
+                        {emp.first_name} {emp.last_name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-4 pt-4">
@@ -515,14 +609,23 @@ export default function EmployeesPage() {
                 variant="ghost"
                 onClick={() => setEditSheetOpen(false)}
                 className="text-[#586AF5]"
+                disabled={assignEmployeeMutation.isPending}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleUpdateTeamDetails}
                 className="bg-[#642DFC] hover:bg-[#5020d9]"
+                disabled={assignEmployeeMutation.isPending}
               >
-                Update
+                {assignEmployeeMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
             </div>
           </div>
@@ -550,23 +653,30 @@ export default function EmployeesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#8593A3]">Employees name</Label>
+              <Label className="text-[#8593A3]">Description (optional)</Label>
               <Input
-                value={newTeamEmployees}
-                onChange={(e) => setNewTeamEmployees(e.target.value)}
-                placeholder="Select employees"
+                value={newTeamDescription}
+                onChange={(e) => setNewTeamDescription(e.target.value)}
+                placeholder="Enter team description"
                 className="h-12 border-[#DEE4EB]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#8593A3]">Manager name</Label>
-              <Input
-                value={newTeamManager}
-                onChange={(e) => setNewTeamManager(e.target.value)}
-                placeholder="Select manager"
-                className="h-12 border-[#DEE4EB]"
-              />
+              <Label className="text-[#8593A3]">Team manager (optional)</Label>
+              <Select value={newTeamManager} onValueChange={setNewTeamManager}>
+                <SelectTrigger className="h-12 border-[#DEE4EB]">
+                  <SelectValue placeholder="Select manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {employees.map(emp => (
+                    <SelectItem key={emp.id} value={`${emp.first_name} ${emp.last_name}`}>
+                      {emp.first_name} {emp.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-4 pt-4">
@@ -574,14 +684,23 @@ export default function EmployeesPage() {
                 variant="ghost"
                 onClick={() => setCreateTeamSheetOpen(false)}
                 className="text-[#586AF5]"
+                disabled={createTeamMutation.isPending}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreateTeam}
                 className="bg-[#642DFC] hover:bg-[#5020d9]"
+                disabled={createTeamMutation.isPending}
               >
-                Create
+                {createTeamMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create'
+                )}
               </Button>
             </div>
           </div>

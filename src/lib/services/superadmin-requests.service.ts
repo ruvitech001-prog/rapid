@@ -6,30 +6,40 @@ import type {
   RequestCategory,
   RequestType,
   RequestStatus,
+  PaginatedResponse,
 } from '@/types/superadmin'
+
+const DEFAULT_PAGE_SIZE = 20
 
 // Map request_type to category
 const REQUEST_TYPE_CATEGORY: Record<string, RequestCategory> = {
+  // Employee-initiated requests
   leave: 'employee',
   expense: 'employee',
   payroll_query: 'employee',
   employment_letter: 'employee',
   travel_letter: 'employee',
   resignation: 'employee',
+  // Employer-initiated requests
+  termination: 'employer',
+  send_gifts: 'employer',
+  // Special/admin requests
   equipment_purchase: 'special',
   equipment_collect: 'special',
-  termination: 'special',
-  send_gifts: 'special',
 }
 
 class SuperAdminRequestsServiceClass extends BaseService {
   async getRequests(
     filters?: SuperAdminRequestFilters
-  ): Promise<RequestWithDetails[]> {
+  ): Promise<PaginatedResponse<RequestWithDetails>> {
+    const page = filters?.page || 1
+    const limit = filters?.limit || DEFAULT_PAGE_SIZE
+    const offset = (page - 1) * limit
+
     // Build query on request_request table
     let query = this.supabase
       .from('request_request')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
 
     // Apply status filter
@@ -42,10 +52,18 @@ class SuperAdminRequestsServiceClass extends BaseService {
       query = query.eq('request_type', filters.requestType)
     }
 
-    const { data: requests, error } = await query
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1)
+
+    const { data: requests, error, count } = await query
     if (error) this.handleError(error)
 
-    if (!requests || requests.length === 0) return []
+    if (!requests || requests.length === 0) {
+      return {
+        data: [],
+        pagination: { page, limit, total: 0, totalPages: 0, hasMore: false },
+      }
+    }
 
     // Get unique requester IDs
     const requesterIds = [
@@ -84,10 +102,18 @@ class SuperAdminRequestsServiceClass extends BaseService {
     const companyMap: Record<string, { id: string; name: string }> = {}
     employers?.forEach((e) => {
       if (e.user_id && e.company_id && e.company) {
-        const company = e.company as unknown as { legal_name: string; display_name: string | null }
-        companyMap[e.user_id] = {
-          id: e.company_id,
-          name: company.display_name || company.legal_name,
+        // Runtime validation for company object
+        const companyData = e.company
+        const isValidCompany = companyData &&
+          typeof companyData === 'object' &&
+          'legal_name' in companyData
+
+        if (isValidCompany) {
+          const company = companyData as { legal_name: string; display_name: string | null }
+          companyMap[e.user_id] = {
+            id: e.company_id,
+            name: company.display_name || company.legal_name,
+          }
         }
       }
     })
@@ -118,12 +144,12 @@ class SuperAdminRequestsServiceClass extends BaseService {
       }
     })
 
-    // Filter by category if specified
+    // Filter by category if specified (client-side for now)
     if (filters?.category) {
       results = results.filter((r) => r.category === filters.category)
     }
 
-    // Filter by search if specified
+    // Filter by search if specified (client-side for now)
     if (filters?.search) {
       const search = filters.search.toLowerCase()
       results = results.filter(
@@ -134,10 +160,24 @@ class SuperAdminRequestsServiceClass extends BaseService {
       )
     }
 
-    return results
+    const total = count || results.length
+    const totalPages = Math.ceil(total / limit)
+
+    return {
+      data: results,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasMore: page < totalPages,
+      },
+    }
   }
 
   async getRequestById(id: string): Promise<RequestWithDetails | null> {
+    if (!id) return null
+
     const { data: req, error } = await this.supabase
       .from('request_request')
       .select('*')
@@ -148,6 +188,9 @@ class SuperAdminRequestsServiceClass extends BaseService {
       if (error.code === 'PGRST116') return null
       this.handleError(error)
     }
+
+    // Return null if no data (safety check)
+    if (!req) return null
 
     // Fetch requester info
     let user: { id: string; email: string; first_name: string | null; last_name: string | null } | null = null
@@ -171,8 +214,16 @@ class SuperAdminRequestsServiceClass extends BaseService {
         .single()
       if (data?.company_id) {
         companyId = data.company_id
-        const companyData = data.company as unknown as { legal_name: string; display_name: string | null } | null
-        companyName = companyData?.display_name || companyData?.legal_name || 'Unknown'
+        // Runtime validation for company object
+        const companyData = data.company
+        const isValidCompany = companyData &&
+          typeof companyData === 'object' &&
+          'legal_name' in companyData
+
+        if (isValidCompany) {
+          const company = companyData as { legal_name: string; display_name: string | null }
+          companyName = company.display_name || company.legal_name || 'Unknown'
+        }
       }
     }
 
@@ -235,32 +286,58 @@ class SuperAdminRequestsServiceClass extends BaseService {
   }
 
   async approve(requestId: string, remarks?: string): Promise<void> {
-    const { error } = await this.supabase
+    if (!requestId || typeof requestId !== 'string') {
+      throw new Error('Invalid request ID')
+    }
+
+    const { error, count } = await this.supabase
       .from('request_request')
       .update({
         status: 'approved',
-        remarks: remarks || null,
+        remarks: remarks?.trim() || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', requestId)
+      .eq('status', 'pending') // Only approve pending requests
 
     if (error) this.handleError(error)
+    if (count === 0) {
+      throw new Error('Request not found or already processed')
+    }
   }
 
   async reject(requestId: string, remarks: string): Promise<void> {
-    const { error } = await this.supabase
+    if (!requestId || typeof requestId !== 'string') {
+      throw new Error('Invalid request ID')
+    }
+    if (!remarks || !remarks.trim()) {
+      throw new Error('Remarks are required for rejection')
+    }
+
+    const { error, count } = await this.supabase
       .from('request_request')
       .update({
         status: 'rejected',
-        remarks,
+        remarks: remarks.trim(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', requestId)
+      .eq('status', 'pending') // Only reject pending requests
 
     if (error) this.handleError(error)
+    if (count === 0) {
+      throw new Error('Request not found or already processed')
+    }
   }
 
   async assignTo(requestId: string, assigneeId: string): Promise<void> {
+    if (!requestId || typeof requestId !== 'string') {
+      throw new Error('Invalid request ID')
+    }
+    if (!assigneeId || typeof assigneeId !== 'string') {
+      throw new Error('Invalid assignee ID')
+    }
+
     const { error } = await this.supabase
       .from('request_request')
       .update({
