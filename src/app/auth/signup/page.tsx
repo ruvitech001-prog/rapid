@@ -93,9 +93,8 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
 
-    // Mock signup
+    // TODO: Implement actual signup via Supabase Auth
     setTimeout(() => {
-      console.log('Signup data:', formData);
       router.push('/auth/verify-email');
     }, 1000);
   };

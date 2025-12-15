@@ -95,10 +95,10 @@ export function useUpdateBankAccount() {
   return useMutation<
     BankAccount,
     Error,
-    { accountId: string; data: Partial<BankAccount> }
+    { accountId: string; userId: string; data: Partial<BankAccount> }
   >({
-    mutationFn: ({ accountId, data }) =>
-      profileService.updateBankAccount(accountId, data),
+    mutationFn: ({ accountId, userId, data }) =>
+      profileService.updateBankAccount(accountId, userId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
@@ -139,8 +139,8 @@ export function useUpdateEmergencyContact() {
 export function useDeleteEmergencyContact() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, string>({
-    mutationFn: (contactId) => profileService.deleteEmergencyContact(contactId),
+  return useMutation<void, Error, { contactId: string; userId: string }>({
+    mutationFn: ({ contactId, userId }) => profileService.deleteEmergencyContact(contactId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
     },

@@ -24,6 +24,7 @@ const documentKeys = {
   count: (employeeId: string) => [...documentKeys.all, 'count', employeeId] as const,
   pendingSignature: (employeeId: string) => [...documentKeys.all, 'pending-signature', employeeId] as const,
   signed: (employeeId: string) => [...documentKeys.all, 'signed', employeeId] as const,
+  onboarding: (employeeId: string) => [...documentKeys.all, 'onboarding', employeeId] as const,
 }
 
 export function useEmployeeDocuments(employeeId: string | undefined) {
@@ -269,9 +270,114 @@ export function useSignDocument() {
       queryClient.invalidateQueries({
         queryKey: documentKeys.employee(variables.employeeId),
       })
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.onboarding(variables.employeeId),
+      })
     },
     onError: (error) => {
       console.error('[Sign Document] Failed:', error)
+    },
+  })
+}
+
+/**
+ * Get onboarding documents for an employee
+ */
+export function useOnboardingDocuments(employeeId: string | undefined) {
+  return useQuery<DocumentWithDetails[]>({
+    queryKey: documentKeys.onboarding(employeeId!),
+    queryFn: () => documentsService.getOnboardingDocuments(employeeId!),
+    enabled: !!employeeId,
+    staleTime: 30000,
+  })
+}
+
+/**
+ * Ensure onboarding documents exist for employee
+ */
+export function useEnsureOnboardingDocuments() {
+  const queryClient = useQueryClient()
+
+  return useMutation<
+    DocumentWithDetails[],
+    Error,
+    { employeeId: string; companyId: string }
+  >({
+    mutationFn: ({ employeeId, companyId }) =>
+      documentsService.ensureOnboardingDocuments(employeeId, companyId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.onboarding(variables.employeeId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.employee(variables.employeeId),
+      })
+    },
+  })
+}
+
+/**
+ * Send document for signature
+ */
+export function useSendForSignature() {
+  const queryClient = useQueryClient()
+  const lastCallRef = useRef<number>(0)
+
+  return useMutation<
+    { success: boolean; sentAt: string },
+    Error,
+    { documentId: string; employeeEmail: string; employeeId: string }
+  >({
+    mutationFn: async ({ documentId, employeeEmail }) => {
+      const now = Date.now()
+      if (now - lastCallRef.current < RATE_LIMIT_MS) {
+        throw new Error('Please wait before trying again')
+      }
+      lastCallRef.current = now
+
+      return documentsService.sendForSignature(documentId, employeeEmail)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.document(variables.documentId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.onboarding(variables.employeeId),
+      })
+    },
+    onError: (error) => {
+      console.error('[Send For Signature] Failed:', error)
+    },
+  })
+}
+
+/**
+ * Complete all onboarding document signing
+ */
+export function useCompleteOnboardingDocuments() {
+  const queryClient = useQueryClient()
+  const lastCallRef = useRef<number>(0)
+
+  return useMutation<boolean, Error, { employeeId: string }>({
+    mutationFn: async ({ employeeId }) => {
+      const now = Date.now()
+      if (now - lastCallRef.current < RATE_LIMIT_MS) {
+        throw new Error('Please wait before trying again')
+      }
+      lastCallRef.current = now
+
+      return documentsService.completeOnboardingDocuments(employeeId)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.onboarding(variables.employeeId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.employee(variables.employeeId),
+      })
+    },
+    onError: (error) => {
+      console.error('[Complete Onboarding Documents] Failed:', error)
     },
   })
 }

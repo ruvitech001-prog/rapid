@@ -75,7 +75,7 @@ export function useCreateService() {
             action: 'services.service_created',
             entityType: 'service',
             entityId: result.id,
-            newData: input,
+            newData: input as unknown as Record<string, unknown>,
           })
         } catch (auditError) {
           console.error('[Audit] Failed to log service creation:', auditError)
@@ -119,7 +119,7 @@ export function useUpdateService() {
             action: 'services.service_updated',
             entityType: 'service',
             entityId: id,
-            newData: input,
+            newData: input as unknown as Record<string, unknown>,
           })
         } catch (auditError) {
           console.error('[Audit] Failed to log service update:', auditError)

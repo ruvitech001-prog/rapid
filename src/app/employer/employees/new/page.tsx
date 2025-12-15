@@ -57,7 +57,7 @@ export default function NewEmployeePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('New employee:', formData);
+    // TODO: Implement employee creation via API
     router.push('/employer/employees');
   };
 

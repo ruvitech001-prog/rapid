@@ -34,6 +34,19 @@ export interface EmployerRequestCounts {
   withdrawn: number
 }
 
+export interface CreateSpecialRequestInput {
+  companyId: string
+  requesterId: string
+  requesterName?: string
+  requestType: string
+  title: string
+  description?: string
+  requestData: Record<string, unknown>
+  referenceType?: string
+  referenceId?: string
+  priority?: 'low' | 'normal' | 'high' | 'critical'
+}
+
 class EmployerRequestsServiceClass extends BaseService {
   /**
    * Get all requests for a company (leaves, expenses, and special requests)
@@ -227,6 +240,43 @@ class EmployerRequestsServiceClass extends BaseService {
           .from('request_request')
           .update({ status: 'withdrawn', updated_at: now })
           .eq('id', requestId)
+    }
+  }
+
+  /**
+   * Create a new special request (equipment, gift, salary amendment, etc.)
+   */
+  async createSpecialRequest(input: CreateSpecialRequestInput): Promise<EmployerRequest> {
+    const { data, error } = await this.supabase
+      .from('request_request')
+      .insert({
+        requester_id: input.requesterId ?? null,
+        request_type: input.requestType,
+        remarks: input.title,
+        reference_type: input.referenceType || 'general',
+        reference_id: input.referenceId ?? null,
+        priority: input.priority || 'medium',
+        status: 'pending',
+      })
+      .select()
+      .single()
+
+    if (error) this.handleError(error)
+
+    return {
+      id: data.id,
+      company_id: input.companyId,
+      requester_id: input.requesterId,
+      request_type: input.requestType,
+      title: input.title,
+      description: input.description || '',
+      request_data: input.requestData,
+      status: 'pending',
+      assigned_to: null,
+      notes: null,
+      created_at: data.created_at ?? new Date().toISOString(),
+      updated_at: data.updated_at ?? data.created_at ?? new Date().toISOString(),
+      requester_name: input.requesterName || 'Unknown',
     }
   }
 

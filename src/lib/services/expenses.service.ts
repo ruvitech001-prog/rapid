@@ -1,4 +1,4 @@
-import { BaseService } from './base.service'
+import { BaseService, ServiceError } from './base.service'
 import type { Tables } from '@/types/database.types'
 
 export type ExpenseClaim = Tables<'expense_expenseclaim'>
@@ -81,6 +81,51 @@ class ExpensesServiceClass extends BaseService {
   }
 
   async approve(requestId: string, approverId: string): Promise<ExpenseClaim> {
+    // SECURITY: Get expense with employee's company for authorization
+    const { data: expense, error: fetchError } = await this.supabase
+      .from('expense_expenseclaim')
+      .select('*, employee:employee_employee!inner(id, user_id, employee_employeecontract!inner(company_id))')
+      .eq('id', requestId)
+      .single()
+
+    if (fetchError) this.handleError(fetchError)
+    if (!expense) throw new Error('Expense claim not found')
+
+    // SECURITY: Prevent self-approval
+    const employeeRecord = expense.employee as { id: string; user_id: string | null; employee_employeecontract: Array<{ company_id: string | null }> | null } | null
+    if (employeeRecord?.user_id === approverId) {
+      throw new ServiceError(
+        'Cannot approve your own expense claim',
+        'SELF_APPROVAL',
+        403
+      )
+    }
+
+    // SECURITY: Verify approver is from same company
+    const { data: approver } = await this.supabase
+      .from('company_employer')
+      .select('company_id, role')
+      .eq('user_id', approverId)
+      .single()
+
+    const employeeCompanyId = employeeRecord?.employee_employeecontract?.[0]?.company_id
+    if (!approver || !employeeCompanyId || approver.company_id !== employeeCompanyId) {
+      throw new ServiceError(
+        'Cannot approve expense claims from other companies',
+        'CROSS_COMPANY_APPROVAL',
+        403
+      )
+    }
+
+    // Verify status is pending
+    if (expense.status !== 'pending') {
+      throw new ServiceError(
+        `Cannot approve expense with status: ${expense.status}`,
+        'INVALID_STATUS',
+        400
+      )
+    }
+
     const { data, error } = await this.supabase
       .from('expense_expenseclaim')
       .update({

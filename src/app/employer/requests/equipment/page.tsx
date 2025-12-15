@@ -1,29 +1,11 @@
-/**
- * Equipment Request Form Screen
- * GROUP A - Example Screen 2 (FORM only pattern)
- *
- * This screen demonstrates:
- * - FormWrapper usage for single form submission
- * - Complex form with multiple fields and sections
- * - Zod validation with custom rules
- * - File upload handling (attachments)
- * - Form state management with react-hook-form
- * - Toast notifications for feedback
- * - Conditional field visibility
- * - Form reset and cleanup
- *
- * @route /employer/requests/equipment
- */
-
 'use client'
 
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useRouter } from 'next/navigation'
 import { PageHeader, FormWrapper } from '@/components/templates'
-import { getCurrentMockCompany, addMockData, generateId } from '@/lib/mock-data'
-import { Button as _Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -35,12 +17,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Paperclip, Plus as _Plus, X } from 'lucide-react'
+import { Paperclip, X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
+import { useCreateSpecialRequest } from '@/lib/hooks'
 
-/**
- * Equipment categories for request type
- */
 const EQUIPMENT_CATEGORIES = [
   { value: 'laptop', label: 'Laptop/Computer' },
   { value: 'monitor', label: 'Monitor' },
@@ -59,10 +40,6 @@ const URGENCY_LEVELS = [
   { value: 'critical', label: 'Critical - Needed immediately' },
 ]
 
-/**
- * Validation schema for equipment request form
- * Includes custom rules for interdependent fields
- */
 const equipmentRequestSchema = z.object({
   category: z.enum(['laptop', 'monitor', 'keyboard', 'headphones', 'phone', 'furniture', 'software', 'other'], {
     errorMap: () => ({ message: 'Please select an equipment category' }),
@@ -83,57 +60,27 @@ const equipmentRequestSchema = z.object({
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
       message: 'Please enter a valid cost amount',
     }),
-  business_case: z.string()
-    .optional(),
-  vendor_preference: z.string()
-    .optional(),
-  notes: z.string()
-    .optional(),
+  business_case: z.string().optional(),
+  vendor_preference: z.string().optional(),
+  notes: z.string().optional(),
 })
 
 type EquipmentRequestFormData = z.infer<typeof equipmentRequestSchema>
 
-/**
- * Equipment request interface for TypeScript type safety
- */
-interface EquipmentRequest {
-  id: string
-  company_id: string
-  requester_id: string
-  request_type: string
-  title: string
-  description: string
-  request_data: {
-    category: string
-    item_name: string
-    justification: string
-    urgency: string
-    estimated_cost: number
-    business_case?: string
-    vendor_preference?: string
-    notes?: string
-  }
-  status: string
-  assigned_to: string | null
-  notes: string | null
-  created_at: string
-  updated_at: string
-  attachments?: string[]
-}
-
 export default function EquipmentRequestPage() {
-  // ============================================================================
-  // STATE MANAGEMENT
-  // ============================================================================
+  const router = useRouter()
+  const { user } = useAuth()
+  const userId = user?.id
+  const companyId = user?.companyId
 
-  const company = getCurrentMockCompany()
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [attachments, setAttachments] = useState<string[]>([])
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     justification: true,
     additional: false,
   })
+
+  const createRequest = useCreateSpecialRequest()
 
   const {
     register,
@@ -151,33 +98,23 @@ export default function EquipmentRequestPage() {
     },
   })
 
-  // Watch category and urgency for conditional rendering
-  const _selectedCategory = watch('category')
   const selectedUrgency = watch('urgency')
 
-  // ============================================================================
-  // HANDLERS
-  // ============================================================================
-
-  /**
-   * Handle form submission for equipment request
-   */
   const onSubmit = async (data: EquipmentRequestFormData) => {
+    if (!userId || !companyId) {
+      toast.error('User or company information not available')
+      return
+    }
+
     try {
-      setIsSubmitting(true)
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      // Create new equipment request
-      const newRequest: EquipmentRequest = {
-        id: generateId(),
-        company_id: company?.id || '',
-        requester_id: generateId(), // In real app, use logged-in user ID
-        request_type: 'equipment',
+      await createRequest.mutateAsync({
+        companyId: companyId,
+        requesterId: userId,
+        requesterName: user?.email || 'Unknown',
+        requestType: 'equipment',
         title: `Equipment Request - ${data.item_name}`,
         description: data.description,
-        request_data: {
+        requestData: {
           category: data.category,
           item_name: data.item_name,
           justification: data.justification,
@@ -186,35 +123,20 @@ export default function EquipmentRequestPage() {
           business_case: data.business_case,
           vendor_preference: data.vendor_preference,
           notes: data.notes,
+          attachments: attachments.length > 0 ? attachments : undefined,
         },
-        status: 'pending',
-        assigned_to: null,
-        notes: null,
-        created_at: new Date().toISOString().split('T')[0] || '',
-        updated_at: new Date().toISOString().split('T')[0] || '',
-        attachments: attachments.length > 0 ? attachments : undefined,
-      }
+        priority: data.urgency === 'critical' ? 'critical' : data.urgency === 'high' ? 'high' : 'normal',
+      })
 
-      // Add to mock data
-      addMockData('specialRequests', newRequest)
-
-      // Reset form
       reset()
       setAttachments([])
-
-      // Show success message
       toast.success(`Equipment request for "${data.item_name}" submitted successfully`)
+      router.push('/employer/requests')
     } catch (error) {
-      console.error('Error submitting equipment request:', error)
-      toast.error('Failed to submit equipment request')
-    } finally {
-      setIsSubmitting(false)
+      toast.error(error instanceof Error ? error.message : 'Failed to submit equipment request')
     }
   }
 
-  /**
-   * Handle file attachment simulation
-   */
   const handleAddAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
@@ -225,16 +147,10 @@ export default function EquipmentRequestPage() {
     }
   }
 
-  /**
-   * Remove attachment
-   */
   const handleRemoveAttachment = (index: number) => {
     setAttachments(attachments.filter((_, i) => i !== index))
   }
 
-  /**
-   * Toggle section expansion
-   */
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections({
       ...expandedSections,
@@ -242,31 +158,21 @@ export default function EquipmentRequestPage() {
     })
   }
 
-  /**
-   * Get urgency badge color based on level
-   */
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
       case 'critical':
         return 'destructive'
       case 'high':
         return 'secondary'
-      case 'medium':
-        return 'outline'
-      case 'low':
-        return 'outline'
       default:
         return 'outline'
     }
   }
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
+  const isSubmitting = createRequest.isPending
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Page Header */}
       <PageHeader
         title="Request Equipment"
         description="Submit a request for new equipment or tools needed for your work"
@@ -277,7 +183,6 @@ export default function EquipmentRequestPage() {
         ]}
       />
 
-      {/* Form Wrapper */}
       <FormWrapper
         title="New Equipment Request"
         description="Please provide detailed information about the equipment you need. Your request will be reviewed by the admin team."
@@ -298,7 +203,6 @@ export default function EquipmentRequestPage() {
 
           {expandedSections.basic && (
             <div className="space-y-4 ml-4">
-              {/* Equipment Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Equipment Category *</Label>
                 <Controller
@@ -324,7 +228,6 @@ export default function EquipmentRequestPage() {
                 )}
               </div>
 
-              {/* Equipment Name */}
               <div className="space-y-2">
                 <Label htmlFor="item_name">Equipment Name *</Label>
                 <Input
@@ -337,7 +240,6 @@ export default function EquipmentRequestPage() {
                 )}
               </div>
 
-              {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">Description *</Label>
                 <Textarea
@@ -351,7 +253,6 @@ export default function EquipmentRequestPage() {
                 )}
               </div>
 
-              {/* Estimated Cost */}
               <div className="space-y-2">
                 <Label htmlFor="estimated_cost">Estimated Cost (₹) *</Label>
                 <Input
@@ -381,7 +282,6 @@ export default function EquipmentRequestPage() {
 
           {expandedSections.justification && (
             <div className="space-y-4 ml-4">
-              {/* Business Justification */}
               <div className="space-y-2">
                 <Label htmlFor="justification">Why do you need this equipment? *</Label>
                 <Textarea
@@ -395,7 +295,6 @@ export default function EquipmentRequestPage() {
                 )}
               </div>
 
-              {/* Urgency Level */}
               <div className="space-y-2">
                 <Label htmlFor="urgency">Urgency Level *</Label>
                 <Controller
@@ -421,12 +320,11 @@ export default function EquipmentRequestPage() {
                 )}
               </div>
 
-              {/* Urgency Indicator */}
               {selectedUrgency && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded">
                   <p className="text-sm text-blue-700">
                     <strong>Selected Urgency:</strong>{' '}
-                    <Badge variant={getUrgencyColor(selectedUrgency) as any}>
+                    <Badge variant={getUrgencyColor(selectedUrgency) as 'default' | 'destructive' | 'secondary' | 'outline'}>
                       {selectedUrgency.toUpperCase()}
                     </Badge>
                   </p>
@@ -449,7 +347,6 @@ export default function EquipmentRequestPage() {
 
           {expandedSections.additional && (
             <div className="space-y-4 ml-4">
-              {/* Business Case */}
               <div className="space-y-2">
                 <Label htmlFor="business_case">Business Case / ROI</Label>
                 <Textarea
@@ -460,7 +357,6 @@ export default function EquipmentRequestPage() {
                 />
               </div>
 
-              {/* Vendor Preference */}
               <div className="space-y-2">
                 <Label htmlFor="vendor_preference">Preferred Vendor/Brand</Label>
                 <Input
@@ -470,7 +366,6 @@ export default function EquipmentRequestPage() {
                 />
               </div>
 
-              {/* Additional Notes */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Additional Notes</Label>
                 <Textarea
@@ -481,7 +376,6 @@ export default function EquipmentRequestPage() {
                 />
               </div>
 
-              {/* File Attachments */}
               <div className="space-y-2">
                 <Label>Attachments (Optional)</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
@@ -502,7 +396,6 @@ export default function EquipmentRequestPage() {
                   </label>
                 </div>
 
-                {/* Attachments List */}
                 {attachments.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Attached files:</p>
@@ -530,7 +423,6 @@ export default function EquipmentRequestPage() {
           )}
         </div>
 
-        {/* Information Box */}
         <div className="p-4 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
           <p className="font-medium mb-2">Important Information:</p>
           <ul className="list-disc list-inside space-y-1 text-xs">

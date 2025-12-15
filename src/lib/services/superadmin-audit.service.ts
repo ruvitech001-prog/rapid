@@ -12,12 +12,38 @@ export type AuditAction =
   | 'team.clients_assigned'
   | 'company.viewed'
   | 'settings.updated'
+  // Finance actions
+  | 'finance.declaration_approved'
+  | 'finance.declaration_rejected'
+  | 'finance.tax_proof_verified'
+  | 'finance.tax_proof_rejected'
+  // Invoice actions
+  | 'invoice.marked_paid'
+  | 'invoice.reminder_sent'
+  | 'invoice.generated'
+  | 'invoice.status_draft'
+  | 'invoice.status_sent'
+  | 'invoice.status_approved'
+  | 'invoice.status_paid'
+  | 'invoice.status_overdue'
+  | 'invoice.status_cancelled'
+  // Services actions
+  | 'services.service_created'
+  | 'services.service_updated'
+  | 'services.service_deleted'
+  | 'services.company_enrolled'
+  | 'services.company_unenrolled'
 
 export type EntityType =
   | 'request'
   | 'team_member'
   | 'company'
   | 'settings'
+  | 'investment_declaration'
+  | 'tax_proof'
+  | 'invoice'
+  | 'service'
+  | 'service_enrollment'
 
 export interface AuditLogEntry {
   id: string

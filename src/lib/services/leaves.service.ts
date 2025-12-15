@@ -114,15 +114,41 @@ class LeavesServiceClass extends BaseService {
   }
 
   async approve(requestId: string, approverId: string): Promise<LeaveRequest> {
-    // First get the leave request details
+    // First get the leave request details with employee's company
     const { data: request, error: fetchError } = await this.supabase
       .from('leave_leaverequest')
-      .select('*')
+      .select('*, employee:employee_employee!inner(id, user_id, employee_employeecontract!inner(company_id))')
       .eq('id', requestId)
       .single()
 
     if (fetchError) this.handleError(fetchError)
     if (!request) throw new Error('Leave request not found')
+
+    // SECURITY: Prevent self-approval
+    const employeeRecord = request.employee as { id: string; user_id: string | null; employee_employeecontract: Array<{ company_id: string | null }> | null } | null
+    if (employeeRecord?.user_id === approverId) {
+      throw new ServiceError(
+        'Cannot approve your own leave request',
+        'SELF_APPROVAL',
+        403
+      )
+    }
+
+    // SECURITY: Verify approver is from same company
+    const { data: approver } = await this.supabase
+      .from('company_employer')
+      .select('company_id, role')
+      .eq('user_id', approverId)
+      .single()
+
+    const employeeCompanyId = employeeRecord?.employee_employeecontract?.[0]?.company_id
+    if (!approver || !employeeCompanyId || approver.company_id !== employeeCompanyId) {
+      throw new ServiceError(
+        'Cannot approve leave requests from other companies',
+        'CROSS_COMPANY_APPROVAL',
+        403
+      )
+    }
 
     // Verify request is still pending
     if (request.status !== 'pending') {

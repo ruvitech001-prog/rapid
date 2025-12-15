@@ -116,9 +116,9 @@ class TeamsServiceClass extends BaseService {
         description: team.description,
         managerId: team.manager_id,
         managerName: team.manager_id ? managerMap.get(team.manager_id) || null : null,
-        isActive: team.is_active,
-        createdAt: team.created_at,
-        updatedAt: team.updated_at,
+        isActive: team.is_active ?? true,
+        createdAt: team.created_at ?? '',
+        updatedAt: team.updated_at ?? '',
         memberCount: countMap.get(team.id) || 0,
       }))
     } catch (error) {
@@ -169,9 +169,9 @@ class TeamsServiceClass extends BaseService {
         description: team.description,
         managerId: team.manager_id,
         managerName,
-        isActive: team.is_active,
-        createdAt: team.created_at,
-        updatedAt: team.updated_at,
+        isActive: team.is_active ?? true,
+        createdAt: team.created_at ?? '',
+        updatedAt: team.updated_at ?? '',
         memberCount: count || 0,
       }
     } catch (error) {
@@ -211,9 +211,9 @@ class TeamsServiceClass extends BaseService {
         name: team.name,
         description: team.description,
         managerId: team.manager_id,
-        isActive: team.is_active,
-        createdAt: team.created_at,
-        updatedAt: team.updated_at,
+        isActive: team.is_active ?? true,
+        createdAt: team.created_at ?? '',
+        updatedAt: team.updated_at ?? '',
         memberCount: 0,
       }
     } catch (error) {
@@ -232,8 +232,8 @@ class TeamsServiceClass extends BaseService {
       }
 
       if (input.name !== undefined) updates.name = input.name
-      if (input.description !== undefined) updates.description = input.description
-      if (input.managerId !== undefined) updates.manager_id = input.managerId
+      if (input.description !== undefined) updates.description = input.description ?? undefined
+      if (input.managerId !== undefined) updates.manager_id = input.managerId ?? undefined
       if (input.isActive !== undefined) updates.is_active = input.isActive
 
       const { data: team, error } = await this.supabase
@@ -256,9 +256,9 @@ class TeamsServiceClass extends BaseService {
         name: team.name,
         description: team.description,
         managerId: team.manager_id,
-        isActive: team.is_active,
-        createdAt: team.created_at,
-        updatedAt: team.updated_at,
+        isActive: team.is_active ?? true,
+        createdAt: team.created_at ?? '',
+        updatedAt: team.updated_at ?? '',
       }
     } catch (error) {
       if (error instanceof ServiceError) throw error
@@ -361,15 +361,15 @@ class TeamsServiceClass extends BaseService {
           id: member.id,
           teamId: member.team_id,
           employeeId: member.employee_id,
-          employeeName: employee?.name || null,
-          employeeEmail: employee?.email || null,
-          employeeCode: employee?.code || null,
+          employeeName: employee?.name ?? undefined,
+          employeeEmail: employee?.email ?? undefined,
+          employeeCode: employee?.code ?? undefined,
           reportingManagerId: member.reporting_manager_id,
-          reportingManagerName: manager?.name || null,
+          reportingManagerName: manager?.name ?? undefined,
           role: member.role as 'member' | 'lead' | 'manager',
-          assignedAt: member.assigned_at,
-          createdAt: member.created_at,
-          updatedAt: member.updated_at,
+          assignedAt: member.assigned_at ?? '',
+          createdAt: member.created_at ?? '',
+          updatedAt: member.updated_at ?? '',
         }
       })
     } catch (error) {
@@ -407,9 +407,9 @@ class TeamsServiceClass extends BaseService {
           employeeId: membership.employee_id,
           reportingManagerId: membership.reporting_manager_id,
           role: membership.role as 'member' | 'lead' | 'manager',
-          assignedAt: membership.assigned_at,
-          createdAt: membership.created_at,
-          updatedAt: membership.updated_at,
+          assignedAt: membership.assigned_at ?? '',
+          createdAt: membership.created_at ?? '',
+          updatedAt: membership.updated_at ?? '',
         },
       }
     } catch (error) {
@@ -456,9 +456,9 @@ class TeamsServiceClass extends BaseService {
           employeeId: member.employee_id,
           reportingManagerId: member.reporting_manager_id,
           role: member.role as 'member' | 'lead' | 'manager',
-          assignedAt: member.assigned_at,
-          createdAt: member.created_at,
-          updatedAt: member.updated_at,
+          assignedAt: member.assigned_at ?? '',
+          createdAt: member.created_at ?? '',
+          updatedAt: member.updated_at ?? '',
         }
       }
 
@@ -486,9 +486,9 @@ class TeamsServiceClass extends BaseService {
         employeeId: member.employee_id,
         reportingManagerId: member.reporting_manager_id,
         role: member.role as 'member' | 'lead' | 'manager',
-        assignedAt: member.assigned_at,
-        createdAt: member.created_at,
-        updatedAt: member.updated_at,
+        assignedAt: member.assigned_at ?? '',
+        createdAt: member.created_at ?? '',
+        updatedAt: member.updated_at ?? '',
       }
     } catch (error) {
       if (error instanceof ServiceError) throw error
@@ -551,9 +551,9 @@ class TeamsServiceClass extends BaseService {
         employeeId: member.employee_id,
         reportingManagerId: member.reporting_manager_id,
         role: member.role as 'member' | 'lead' | 'manager',
-        assignedAt: member.assigned_at,
-        createdAt: member.created_at,
-        updatedAt: member.updated_at,
+        assignedAt: member.assigned_at ?? '',
+        createdAt: member.created_at ?? '',
+        updatedAt: member.updated_at ?? '',
       }
     } catch (error) {
       if (error instanceof ServiceError) throw error

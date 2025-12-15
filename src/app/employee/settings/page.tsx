@@ -5,8 +5,10 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useUserPreferences, useUpdateUserPreferences } from '@/lib/hooks';
 import { useChangePassword } from '@/lib/hooks/use-auth-actions';
+import { useAuth } from '@/lib/auth';
 
 export default function EmployeeSettingsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'preferences' | 'notifications' | 'security'>('preferences');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -94,7 +96,7 @@ export default function EmployeeSettingsPage() {
     }
 
     changePassword.mutate(
-      { currentPassword, newPassword },
+      { email: user?.email || '', currentPassword, newPassword },
       {
         onSuccess: () => {
           setShowPasswordModal(false);

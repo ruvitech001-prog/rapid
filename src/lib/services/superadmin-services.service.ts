@@ -1,6 +1,7 @@
 'use client'
 
 import { BaseService, ServiceError } from './base.service'
+import type { Json } from '@/types/database.types'
 
 export type ServiceCategory = 'health_insurance' | 'bgv' | 'equipment' | 'gifts' | 'office_space' | 'other'
 
@@ -144,7 +145,7 @@ class SuperAdminServicesServiceClass extends BaseService {
         name: input.name,
         description: input.description || null,
         category: input.category || null,
-        configuration: input.configuration || {},
+        configuration: (input.configuration || {}) as unknown as Json,
         is_active: true,
       })
       .select()
@@ -216,9 +217,9 @@ class SuperAdminServicesServiceClass extends BaseService {
       id: enrollment.id,
       serviceId: enrollment.service_id,
       companyId: enrollment.company_id,
-      status: enrollment.status,
-      enrolledAt: enrollment.enrolled_at,
-      configuration: enrollment.configuration || {},
+      status: (enrollment.status ?? 'pending') as 'pending' | 'active' | 'inactive',
+      enrolledAt: enrollment.enrolled_at ?? '',
+      configuration: (enrollment.configuration as Record<string, unknown>) || {},
       companyName: enrollment.company?.display_name || enrollment.company?.legal_name,
     }))
   }
@@ -237,7 +238,7 @@ class SuperAdminServicesServiceClass extends BaseService {
         service_id: serviceId,
         company_id: companyId,
         status: 'active',
-        configuration: configuration || {},
+        configuration: (configuration || {}) as unknown as Json,
       })
       .select()
       .single()
@@ -248,9 +249,9 @@ class SuperAdminServicesServiceClass extends BaseService {
       id: data.id,
       serviceId: data.service_id,
       companyId: data.company_id,
-      status: data.status,
-      enrolledAt: data.enrolled_at,
-      configuration: data.configuration || {},
+      status: (data.status ?? 'pending') as 'pending' | 'active' | 'inactive',
+      enrolledAt: data.enrolled_at ?? '',
+      configuration: (data.configuration as Record<string, unknown>) || {},
     }
   }
 

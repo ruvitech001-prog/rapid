@@ -129,7 +129,7 @@ export default function ProfilePage() {
     }
 
     changePassword.mutate(
-      { currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword },
+      { email: user?.email || '', currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword },
       {
         onSuccess: () => {
           setPasswordData({

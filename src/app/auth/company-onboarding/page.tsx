@@ -58,7 +58,7 @@ export default function CompanyOnboardingPage() {
 
   const handleSubmit = () => {
     setLoading(true);
-    console.log('Company onboarding data:', formData);
+    // TODO: Implement actual company creation via API
     setTimeout(() => {
       router.push('/employer/dashboard');
     }, 1000);

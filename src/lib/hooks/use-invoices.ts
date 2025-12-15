@@ -68,11 +68,13 @@ export function usePayInvoice() {
   return useMutation({
     mutationFn: ({
       invoiceId,
+      companyId,
       paymentReference,
     }: {
       invoiceId: string
+      companyId: string
       paymentReference: string
-    }) => invoicesService.payInvoice(invoiceId, paymentReference),
+    }) => invoicesService.payInvoice(invoiceId, companyId, paymentReference),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] })
     },
@@ -83,7 +85,8 @@ export function useApproveInvoice() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (invoiceId: string) => invoicesService.approveInvoice(invoiceId),
+    mutationFn: ({ invoiceId, companyId }: { invoiceId: string; companyId: string }) =>
+      invoicesService.approveInvoice(invoiceId, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] })
     },

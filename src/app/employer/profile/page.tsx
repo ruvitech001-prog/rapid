@@ -26,7 +26,7 @@ export default function EmployerProfilePage() {
   });
 
   const handleProfileSave = () => {
-    console.log('Saving profile:', profileData);
+    // TODO: Implement profile save via API
   };
 
   const handlePasswordChange = (e: React.FormEvent) => {
@@ -37,7 +37,7 @@ export default function EmployerProfilePage() {
     if (passwordData.newPassword.length < 8) {
       return;
     }
-    console.log('Changing password');
+    // TODO: Implement password change via Supabase Auth
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
   };
 

@@ -1,27 +1,11 @@
-/**
- * Gifts Request Form Screen
- * GROUP A - Screen 4 (FORM only pattern)
- *
- * This screen demonstrates:
- * - FormWrapper usage for single form submission
- * - Simpler form compared to equipment (gift-specific fields)
- * - Zod validation with gift-specific rules
- * - Form state management with react-hook-form
- * - Toast notifications for feedback
- * - Form reset and cleanup
- *
- * @route /employer/requests/gifts
- */
-
 'use client'
 
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useRouter } from 'next/navigation'
 import { PageHeader, FormWrapper } from '@/components/templates'
-import { getCurrentMockCompany, addMockData, generateId } from '@/lib/mock-data'
-import { Button as _Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -34,10 +18,9 @@ import {
 } from '@/components/ui/select'
 import { Gift } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
+import { useCreateSpecialRequest } from '@/lib/hooks'
 
-/**
- * Gift categories for request type
- */
 const GIFT_CATEGORIES = [
   { value: 'voucher', label: 'Gift Voucher/Card' },
   { value: 'tech', label: 'Tech Gadget' },
@@ -59,9 +42,6 @@ const OCCASIONS = [
   { value: 'other', label: 'Other Occasion' },
 ]
 
-/**
- * Validation schema for gifts request form
- */
 const giftsRequestSchema = z.object({
   recipient_name: z.string()
     .min(2, 'Recipient name must be at least 2 characters')
@@ -84,51 +64,24 @@ const giftsRequestSchema = z.object({
   justification: z.string()
     .min(10, 'Please provide justification (min 10 characters)')
     .max(500, 'Justification must be less than 500 characters'),
-  notes: z.string()
-    .optional(),
+  notes: z.string().optional(),
 })
 
 type GiftsRequestFormData = z.infer<typeof giftsRequestSchema>
 
-/**
- * Gift request interface for TypeScript type safety
- */
-interface GiftRequest {
-  id: string
-  company_id: string
-  requester_id: string
-  request_type: string
-  title: string
-  description: string
-  request_data: {
-    recipient_name: string
-    recipient_email: string
-    category: string
-    gift_description: string
-    occasion: string
-    amount: number
-    justification: string
-    notes?: string
-  }
-  status: string
-  assigned_to: string | null
-  notes: string | null
-  created_at: string
-  updated_at: string
-}
-
 export default function GiftsRequestPage() {
-  // ============================================================================
-  // STATE MANAGEMENT
-  // ============================================================================
+  const router = useRouter()
+  const { user } = useAuth()
+  const userId = user?.id
+  const companyId = user?.companyId
 
-  const company = getCurrentMockCompany()
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [expandedSections, setExpandedSections] = useState({
     recipient: true,
     giftDetails: true,
     justification: false,
   })
+
+  const createRequest = useCreateSpecialRequest()
 
   const {
     register,
@@ -145,29 +98,21 @@ export default function GiftsRequestPage() {
     },
   })
 
-  // ============================================================================
-  // HANDLERS
-  // ============================================================================
-
-  /**
-   * Handle form submission for gifts request
-   */
   const onSubmit = async (data: GiftsRequestFormData) => {
+    if (!userId || !companyId) {
+      toast.error('User or company information not available')
+      return
+    }
+
     try {
-      setIsSubmitting(true)
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      // Create new gifts request
-      const newRequest: GiftRequest = {
-        id: generateId(),
-        company_id: company?.id || '',
-        requester_id: generateId(), // In real app, use logged-in user ID
-        request_type: 'gifts',
+      await createRequest.mutateAsync({
+        companyId: companyId,
+        requesterId: userId,
+        requesterName: user?.email || 'Unknown',
+        requestType: 'gifts',
         title: `Gift Request - ${data.recipient_name}`,
         description: data.gift_description,
-        request_data: {
+        requestData: {
           recipient_name: data.recipient_name,
           recipient_email: data.recipient_email,
           category: data.category,
@@ -177,32 +122,16 @@ export default function GiftsRequestPage() {
           justification: data.justification,
           notes: data.notes,
         },
-        status: 'pending',
-        assigned_to: null,
-        notes: null,
-        created_at: new Date().toISOString().split('T')[0] || '',
-        updated_at: new Date().toISOString().split('T')[0] || '',
-      }
+      })
 
-      // Add to mock data
-      addMockData('specialRequests', newRequest)
-
-      // Reset form
       reset()
-
-      // Show success message
       toast.success(`Gift request for ${data.recipient_name} submitted successfully`)
+      router.push('/employer/requests')
     } catch (error) {
-      console.error('Error submitting gift request:', error)
-      toast.error('Failed to submit gift request')
-    } finally {
-      setIsSubmitting(false)
+      toast.error(error instanceof Error ? error.message : 'Failed to submit gift request')
     }
   }
 
-  /**
-   * Toggle section expansion
-   */
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections({
       ...expandedSections,
@@ -210,13 +139,10 @@ export default function GiftsRequestPage() {
     })
   }
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
+  const isSubmitting = createRequest.isPending
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Page Header */}
       <PageHeader
         title="Request Gifts"
         description="Submit a gift request for employees, clients, or business associates"
@@ -227,7 +153,6 @@ export default function GiftsRequestPage() {
         ]}
       />
 
-      {/* Form Wrapper */}
       <FormWrapper
         title="New Gifts Request"
         description="Please provide recipient details and gift preferences. Your request will be reviewed by the admin team."
@@ -248,7 +173,6 @@ export default function GiftsRequestPage() {
 
           {expandedSections.recipient && (
             <div className="space-y-4 ml-4">
-              {/* Recipient Name */}
               <div className="space-y-2">
                 <Label htmlFor="recipient_name">Recipient Name *</Label>
                 <Input
@@ -261,7 +185,6 @@ export default function GiftsRequestPage() {
                 )}
               </div>
 
-              {/* Recipient Email */}
               <div className="space-y-2">
                 <Label htmlFor="recipient_email">Recipient Email *</Label>
                 <Input
@@ -275,7 +198,6 @@ export default function GiftsRequestPage() {
                 )}
               </div>
 
-              {/* Occasion */}
               <div className="space-y-2">
                 <Label htmlFor="occasion">Occasion *</Label>
                 <Controller
@@ -317,7 +239,6 @@ export default function GiftsRequestPage() {
 
           {expandedSections.giftDetails && (
             <div className="space-y-4 ml-4">
-              {/* Gift Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Gift Category *</Label>
                 <Controller
@@ -343,7 +264,6 @@ export default function GiftsRequestPage() {
                 )}
               </div>
 
-              {/* Gift Description */}
               <div className="space-y-2">
                 <Label htmlFor="gift_description">Gift Description *</Label>
                 <Input
@@ -356,7 +276,6 @@ export default function GiftsRequestPage() {
                 )}
               </div>
 
-              {/* Amount */}
               <div className="space-y-2">
                 <Label htmlFor="amount">Gift Amount (₹) *</Label>
                 <Input
@@ -386,7 +305,6 @@ export default function GiftsRequestPage() {
 
           {expandedSections.justification && (
             <div className="space-y-4 ml-4">
-              {/* Justification */}
               <div className="space-y-2">
                 <Label htmlFor="justification">Why this gift? *</Label>
                 <Textarea
@@ -400,7 +318,6 @@ export default function GiftsRequestPage() {
                 )}
               </div>
 
-              {/* Additional Notes */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Additional Notes</Label>
                 <Textarea
@@ -414,7 +331,6 @@ export default function GiftsRequestPage() {
           )}
         </div>
 
-        {/* Information Box */}
         <div className="p-4 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
           <div className="flex gap-3">
             <Gift className="w-5 h-5 mt-0.5 flex-shrink-0 text-blue-600" />

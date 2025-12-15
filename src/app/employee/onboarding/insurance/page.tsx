@@ -1,11 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, FormWrapper } from '@/components/templates'
-import { Button as _Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
@@ -22,12 +21,20 @@ import {
   Gift,
   AlertCircle,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
+import {
+  useEmployeeProfile,
+  useInsurancePlans,
+  useEmployeeEnrollment,
+  useEnrollInInsurance,
+} from '@/lib/hooks'
 
 const insuranceSwagSchema = z.object({
-  health_insurance_plan: z.enum(['basic', 'standard', 'premium']),
-  dependent_coverage: z.enum(['self_only', 'self_spouse', 'self_children', 'family']),
+  health_insurance_plan: z.string().min(1, 'Please select a plan'),
+  dependent_coverage: z.enum(['self', 'self_spouse', 'self_children', 'family']),
   nominee_name: z.string().min(2, 'Nominee name required'),
   nominee_relationship: z.enum(['spouse', 'parent', 'child', 'sibling', 'other']),
   swag_size: z.enum(['xs', 's', 'm', 'l', 'xl', 'xxl']),
@@ -46,23 +53,38 @@ const SWAG_OPTIONS = [
 ]
 
 export default function InsurancePage() {
+  const { user } = useAuth()
+  const employeeId = user?.id
+
+  // Fetch employee profile for enrollment data
+  const { data: profile } = useEmployeeProfile(employeeId)
+
+  // Fetch available insurance plans from Plum
+  const { data: plans, isLoading: plansLoading, error: plansError } = useInsurancePlans()
+
+  // Check existing enrollment
+  const { data: enrollment, isLoading: enrollmentLoading } = useEmployeeEnrollment(employeeId)
+
+  // Enrollment mutation
+  const enrollMutation = useEnrollInInsurance()
+
   const [completedSections, setCompletedSections] = useState({
     insurance: false,
     swag: false,
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
     register,
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<InsuranceSwagFormData>({
     resolver: zodResolver(insuranceSwagSchema),
     defaultValues: {
-      health_insurance_plan: 'standard',
-      dependent_coverage: 'self_only',
+      health_insurance_plan: '',
+      dependent_coverage: 'self',
       nominee_name: '',
       nominee_relationship: 'spouse',
       swag_size: 'm',
@@ -70,48 +92,81 @@ export default function InsurancePage() {
     },
   })
 
+  // Set default plan when plans load
+  useEffect(() => {
+    if (plans && plans.length > 0) {
+      const currentValue = watch('health_insurance_plan')
+      if (!currentValue) {
+        // Default to standard plan if available, otherwise first plan
+        const standardPlan = plans.find(p => p.name.toLowerCase() === 'standard')
+        setValue('health_insurance_plan', standardPlan?.id || plans[0]?.id || '')
+      }
+    }
+  }, [plans, setValue, watch])
+
+  // Pre-fill if already enrolled
+  useEffect(() => {
+    if (enrollment?.member) {
+      setCompletedSections(prev => ({ ...prev, insurance: true }))
+      if (enrollment.plan) {
+        setValue('health_insurance_plan', enrollment.plan.id)
+      }
+      setValue('dependent_coverage', enrollment.member.coverage_type)
+    }
+  }, [enrollment, setValue])
+
   const selectedSwagItems = watch('swag_items')
+  const selectedPlanId = watch('health_insurance_plan')
+  const selectedPlan = plans?.find(p => p.id === selectedPlanId)
 
-  const onSubmit = async (_data: InsuranceSwagFormData) => {
+  const isAlreadyEnrolled = !!enrollment?.member
+
+  const onSubmit = async (data: InsuranceSwagFormData) => {
+    if (!employeeId || !profile) {
+      toast.error('Unable to identify employee profile')
+      return
+    }
+
     try {
-      setIsSubmitting(true)
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Enroll in insurance via Plum API
+      await enrollMutation.mutateAsync({
+        employee_id: employeeId,
+        employee_name: profile.full_name || user?.name || 'Employee',
+        employee_email: profile.personal_email || user?.email || '',
+        date_of_birth: profile.date_of_birth || '',
+        gender: (profile.gender as 'male' | 'female' | 'other') || 'other',
+        plan_id: data.health_insurance_plan,
+        coverage_type: data.dependent_coverage,
+        nominee_name: data.nominee_name,
+        nominee_relationship: data.nominee_relationship,
+      })
 
-      toast.success('Insurance and swag preferences saved successfully!')
+      // TODO: Save swag preferences to backend
+      // await swagService.savePreferences({ employeeId, size: data.swag_size, items: data.swag_items })
+
       setCompletedSections({
         insurance: true,
         swag: true,
       })
     } catch (error) {
       console.error('Error saving preferences:', error)
-      toast.error('Failed to save preferences')
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
-  const getPlanDetails = (plan: string) => {
-    const plans = {
-      basic: { coverage: '₹5,00,000', premium: '₹0', features: ['Hospitalization', 'OPD'] },
-      standard: {
-        coverage: '₹10,00,000',
-        premium: '₹0',
-        features: ['Hospitalization', 'OPD', 'Dental (₹25k)', 'Vision (₹10k)'],
-      },
-      premium: {
-        coverage: '₹25,00,000',
-        premium: '₹0',
-        features: [
-          'Hospitalization',
-          'OPD',
-          'Dental (₹50k)',
-          'Vision (₹20k)',
-          'Mental Health',
-          'Wellness',
-        ],
-      },
-    }
-    return plans[plan as keyof typeof plans]
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  if (plansLoading || enrollmentLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
   }
 
   return (
@@ -126,12 +181,27 @@ export default function InsurancePage() {
         ]}
       />
 
+      {isAlreadyEnrolled && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-green-800">
+              <p className="font-medium mb-1">Already Enrolled</p>
+              <p>
+                You are enrolled in the {enrollment?.plan?.name || 'insurance'} plan.
+                Status: <Badge variant="outline" className="ml-1">{enrollment?.member?.status}</Badge>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <FormWrapper
         title="Insurance & Swag Setup"
         description="Select your health insurance coverage and company swag items"
         onSubmit={handleSubmit(onSubmit)}
-        submitLabel={isSubmitting ? 'Saving...' : 'Complete Setup'}
-        isLoading={isSubmitting}
+        submitLabel={enrollMutation.isPending ? 'Saving...' : isAlreadyEnrolled ? 'Update Preferences' : 'Complete Setup'}
+        isLoading={enrollMutation.isPending}
       >
         <div className="space-y-8">
           {/* Insurance Section */}
@@ -144,6 +214,12 @@ export default function InsurancePage() {
               )}
             </div>
 
+            {plansError && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                Unable to fetch insurance plans. Showing default options.
+              </div>
+            )}
+
             {/* Plan Selection */}
             <div className="space-y-2">
               <Label htmlFor="health_insurance_plan">Select Your Plan *</Label>
@@ -153,46 +229,66 @@ export default function InsurancePage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="health_insurance_plan">
-                      <SelectValue />
+                      <SelectValue placeholder="Select a plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="basic">Basic Plan</SelectItem>
-                      <SelectItem value="standard">Standard Plan (Recommended)</SelectItem>
-                      <SelectItem value="premium">Premium Plan</SelectItem>
+                      {plans?.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.name} Plan {plan.name.toLowerCase() === 'standard' && '(Recommended)'}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               />
+              {errors.health_insurance_plan && (
+                <p className="text-sm text-red-600">{errors.health_insurance_plan.message}</p>
+              )}
             </div>
 
             {/* Plan Details Card */}
-            {(() => {
-              const planDetails = getPlanDetails(watch('health_insurance_plan'))
-              return (
-                <Card className="p-4 bg-white">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Coverage Amount</p>
-                      <p className="font-bold text-lg text-gray-900">{planDetails.coverage}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Employee Premium</p>
-                      <p className="font-bold text-lg text-green-600">{planDetails.premium}</p>
-                    </div>
-                    <div className="col-span-2 md:col-span-1">
-                      <p className="text-sm text-gray-600 mb-2">Features</p>
-                      <div className="space-y-1">
-                        {planDetails.features.map((feature, i) => (
-                          <p key={i} className="text-sm text-gray-700">
-                            ✓ {feature}
-                          </p>
-                        ))}
-                      </div>
+            {selectedPlan && (
+              <Card className="p-4 bg-white">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Coverage Amount</p>
+                    <p className="font-bold text-lg text-gray-900">
+                      {formatCurrency(selectedPlan.coverage_amount)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Employee Premium</p>
+                    <p className="font-bold text-lg text-green-600">
+                      {selectedPlan.premium === 0 ? '₹0' : formatCurrency(selectedPlan.premium)}
+                      {selectedPlan.premium > 0 && (
+                        <span className="text-xs text-gray-500 font-normal">
+                          /{selectedPlan.premium_frequency}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                    <p className="text-sm text-gray-600 mb-2">Features</p>
+                    <div className="space-y-1">
+                      {selectedPlan.features.map((feature, i) => (
+                        <p key={i} className="text-sm text-gray-700">
+                          ✓ {feature}
+                        </p>
+                      ))}
+                      {selectedPlan.includes_dental && (
+                        <p className="text-sm text-gray-700">✓ Dental Coverage</p>
+                      )}
+                      {selectedPlan.includes_vision && (
+                        <p className="text-sm text-gray-700">✓ Vision Coverage</p>
+                      )}
+                      {selectedPlan.includes_mental_health && (
+                        <p className="text-sm text-gray-700">✓ Mental Health</p>
+                      )}
                     </div>
                   </div>
-                </Card>
-              )
-            })()}
+                </div>
+              </Card>
+            )}
 
             {/* Dependent Coverage */}
             <div className="space-y-2">
@@ -206,7 +302,7 @@ export default function InsurancePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="self_only">Self Only</SelectItem>
+                      <SelectItem value="self">Self Only</SelectItem>
                       <SelectItem value="self_spouse">Self + Spouse</SelectItem>
                       <SelectItem value="self_children">Self + Children</SelectItem>
                       <SelectItem value="family">Family (All)</SelectItem>

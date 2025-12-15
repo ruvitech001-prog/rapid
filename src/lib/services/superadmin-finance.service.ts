@@ -196,7 +196,7 @@ class SuperAdminFinanceServiceClass extends BaseService {
 
     const proofs: TaxProof[] = (data || []).map(doc => ({
       id: doc.id,
-      employeeId: doc.employee_id,
+      employeeId: doc.employee_id ?? '',
       employeeName: doc.employee?.full_name || 'Unknown',
       documentType: doc.document_type,
       fileName: doc.file_name,
@@ -204,7 +204,7 @@ class SuperAdminFinanceServiceClass extends BaseService {
       category: doc.document_category,
       status: doc.verification_status === 'verified' ? 'verified' : doc.verification_status === 'rejected' ? 'rejected' : 'pending',
       verifiedAt: doc.verified_at,
-      createdAt: doc.created_at,
+      createdAt: doc.created_at ?? '',
     }))
 
     return {

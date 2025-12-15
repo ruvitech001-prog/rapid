@@ -602,8 +602,8 @@ export default function EmployeeDetailPage() {
                   <DocumentCard
                     name={edu.document}
                     uploadedDate="15 Jan 2024"
-                    onView={() => console.log('View')}
-                    onDownload={() => console.log('Download')}
+                    onView={() => {/* TODO: Implement view */}}
+                    onDownload={() => {/* TODO: Implement download */}}
                   />
                 </div>
               </div>
@@ -643,8 +643,8 @@ export default function EmployeeDetailPage() {
                   <DocumentCard
                     name={job.document}
                     uploadedDate="15 Jan 2024"
-                    onView={() => console.log('View')}
-                    onDownload={() => console.log('Download')}
+                    onView={() => {/* TODO: Implement view */}}
+                    onDownload={() => {/* TODO: Implement download */}}
                   />
                 </div>
               </div>
@@ -682,8 +682,8 @@ export default function EmployeeDetailPage() {
                     key={index}
                     name={doc.name}
                     uploadedDate={doc.uploadedDate}
-                    onView={() => console.log('View', doc.name)}
-                    onDownload={() => console.log('Download', doc.name)}
+                    onView={() => {/* TODO: Implement view */}}
+                    onDownload={() => {/* TODO: Implement download */}}
                   />
                 ))}
               </div>

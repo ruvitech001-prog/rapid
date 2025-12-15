@@ -266,7 +266,7 @@ export default function EmployerDashboard() {
 
   // Handler: Pay Invoice
   const handlePayInvoice = async (invoiceId: string) => {
-    if (!user?.id) {
+    if (!user?.id || !companyId) {
       toast.error('Please log in to continue')
       return
     }
@@ -275,6 +275,7 @@ export default function EmployerDashboard() {
     try {
       await payInvoiceMutation.mutateAsync({
         invoiceId,
+        companyId,
         paymentReference: `PAY-${Date.now()}`
       })
       toast.success('Invoice marked as paid successfully')

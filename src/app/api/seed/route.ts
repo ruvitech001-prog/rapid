@@ -5,10 +5,35 @@ import { NextResponse } from 'next/server'
  * Database seed endpoint
  * The database was seeded directly via SQL through the Supabase MCP.
  * This endpoint is kept for reference and future use.
+ * REQUIRES: Superadmin authentication
  */
 export async function POST() {
   try {
     const supabase = await createClient()
+
+    // Check authentication
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Verify user is superadmin
+    const { data: superadminUser } = await supabase
+      .from('superadmin_team')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .single()
+
+    if (!superadminUser || (superadminUser.role !== 'super_admin' && superadminUser.role !== 'admin')) {
+      return NextResponse.json(
+        { error: 'Forbidden - Superadmin access required' },
+        { status: 403 }
+      )
+    }
 
     // Check current data counts
     const { count: userCount } = await supabase

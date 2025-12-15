@@ -1,4 +1,5 @@
 import { BaseService } from './base.service'
+import type { Json } from '@/types/database.types'
 
 export interface Notification {
   id: string
@@ -10,7 +11,95 @@ export interface Notification {
   metadata?: Record<string, unknown>
 }
 
+interface NotificationState {
+  readIds: string[]
+  deletedIds: string[]
+}
+
 class NotificationsServiceClass extends BaseService {
+  private stateKey = 'notification_state'
+
+  /**
+   * Get notification state (read/deleted IDs) from user_preference
+   */
+  async getNotificationState(userId: string): Promise<NotificationState> {
+    const { data } = await this.supabase
+      .from('user_preference')
+      .select('notification_preferences')
+      .eq('user_id', userId)
+      .single()
+
+    const prefs = data?.notification_preferences as Record<string, unknown> | null
+    const state = prefs?.[this.stateKey] as NotificationState | undefined
+
+    return state || { readIds: [], deletedIds: [] }
+  }
+
+  /**
+   * Save notification state to user_preference
+   */
+  async saveNotificationState(userId: string, state: NotificationState): Promise<void> {
+    // First get current preferences
+    const { data: existing } = await this.supabase
+      .from('user_preference')
+      .select('notification_preferences')
+      .eq('user_id', userId)
+      .single()
+
+    const currentPrefs = (existing?.notification_preferences || {}) as Record<string, unknown>
+    const updatedPrefs = {
+      ...currentPrefs,
+      [this.stateKey]: state,
+    }
+
+    // Upsert the preference
+    const { error } = await this.supabase
+      .from('user_preference')
+      .upsert({
+        user_id: userId,
+        notification_preferences: updatedPrefs as unknown as Json,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id',
+      })
+
+    if (error) {
+      this.handleError(error)
+    }
+  }
+
+  /**
+   * Mark a notification as read
+   */
+  async markAsRead(userId: string, notificationId: string): Promise<void> {
+    const state = await this.getNotificationState(userId)
+    if (!state.readIds.includes(notificationId)) {
+      state.readIds.push(notificationId)
+      await this.saveNotificationState(userId, state)
+    }
+  }
+
+  /**
+   * Mark all notifications as read
+   */
+  async markAllAsRead(userId: string, notificationIds: string[]): Promise<void> {
+    const state = await this.getNotificationState(userId)
+    const newReadIds = new Set([...state.readIds, ...notificationIds])
+    state.readIds = Array.from(newReadIds)
+    await this.saveNotificationState(userId, state)
+  }
+
+  /**
+   * Delete a notification (soft delete by adding to deleted list)
+   */
+  async deleteNotification(userId: string, notificationId: string): Promise<void> {
+    const state = await this.getNotificationState(userId)
+    if (!state.deletedIds.includes(notificationId)) {
+      state.deletedIds.push(notificationId)
+      await this.saveNotificationState(userId, state)
+    }
+  }
+
   // Get notifications for an employee
   async getEmployeeNotifications(
     employeeId: string,

@@ -2,30 +2,61 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Check, FileText, Clock, DollarSign, Calendar } from 'lucide-react';
+import { ArrowLeft, Download, Check, FileText, Clock, DollarSign, Calendar, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
+import { useContractorProfile, useSignDocument } from '@/lib/hooks';
 
 export default function ContractorContractPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const contractorId = user?.id;
+  const { data: profile } = useContractorProfile(contractorId);
+  const signDocument = useSignDocument();
+
   const [agreed, setAgreed] = useState(false);
-  const [signing, setSigning] = useState(false);
 
   const contractDetails = {
-    client: 'Acme Inc.',
-    project: 'Website Redesign',
-    rate: '$75/hour',
+    client: profile?.contract?.companyName || 'Client Company',
+    project: profile?.contract?.scopeOfWork || 'Contract Services',
+    rate: profile?.contract?.hourlyRate ? `$${profile.contract.hourlyRate}/hour` : '$75/hour',
     duration: '6 months',
-    startDate: '15/Jan/2023',
-    endDate: '15/Jul/2023',
+    startDate: profile?.contract?.startDate
+      ? new Date(profile.contract.startDate).toLocaleDateString()
+      : new Date().toLocaleDateString(),
+    endDate: profile?.contract?.endDate
+      ? new Date(profile.contract.endDate).toLocaleDateString()
+      : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toLocaleDateString(),
     hoursPerWeek: '40 hours max',
   };
 
   const handleSign = async () => {
-    setSigning(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    router.push('/contractor/onboarding/details');
+    if (!contractorId || !user?.email) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    try {
+      // In a real scenario, we'd have a contract document ID from the backend
+      // For now, we create a placeholder contract signing
+      await signDocument.mutateAsync({
+        documentId: `contract_${contractorId}_${Date.now()}`,
+        signerId: contractorId,
+        signerName: profile?.full_name || user.email,
+        signerEmail: user.email,
+        employeeId: contractorId, // Used for cache invalidation
+      });
+
+      toast.success('Contract signed successfully!');
+      router.push('/contractor/onboarding/details');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to sign contract');
+    }
   };
+
+  const isSigning = signDocument.isPending;
 
   return (
     <div className="space-y-6 pb-8">
@@ -111,8 +142,8 @@ export default function ContractorContractPage() {
 
               <div className="space-y-4 text-gray-700">
                 <p>
-                  This Contractor Services Agreement ("Agreement") is made between {contractDetails.client}
-                  ("Client") and the Contractor identified below.
+                  This Contractor Services Agreement (&quot;Agreement&quot;) is made between {contractDetails.client}
+                  (&quot;Client&quot;) and the Contractor identified below.
                 </p>
 
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
@@ -195,12 +226,12 @@ export default function ContractorContractPage() {
       <div className="flex justify-end">
         <Button
           onClick={handleSign}
-          disabled={!agreed || signing}
+          disabled={!agreed || isSigning}
           className="bg-primary hover:bg-primary/90 text-white px-8"
         >
-          {signing ? (
+          {isSigning ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Signing...
             </>
           ) : (

@@ -16,64 +16,57 @@ export type Database = {
     Tables: {
       attendance_employeeattendance: {
         Row: {
-          id: string
-          employee_id: string
-          company_id: string
-          date: string
           clock_in: string | null
-          clock_out: string | null
           clock_in_location_lat: number | null
           clock_in_location_lng: number | null
+          clock_out: string | null
           clock_out_location_lat: number | null
           clock_out_location_lng: number | null
-          total_hours: number | null
-          status: string
-          notes: string | null
+          company_id: string | null
           created_at: string | null
+          date: string
+          employee_id: string | null
+          id: string
+          status: string | null
+          total_hours: number | null
           updated_at: string | null
+          work_type: string | null
         }
         Insert: {
-          id?: string
-          employee_id: string
-          company_id: string
-          date: string
           clock_in?: string | null
-          clock_out?: string | null
           clock_in_location_lat?: number | null
           clock_in_location_lng?: number | null
+          clock_out?: string | null
           clock_out_location_lat?: number | null
           clock_out_location_lng?: number | null
-          total_hours?: number | null
-          status?: string
-          notes?: string | null
+          company_id?: string | null
           created_at?: string | null
+          date: string
+          employee_id?: string | null
+          id?: string
+          status?: string | null
+          total_hours?: number | null
           updated_at?: string | null
+          work_type?: string | null
         }
         Update: {
-          id?: string
-          employee_id?: string
-          company_id?: string
-          date?: string
           clock_in?: string | null
-          clock_out?: string | null
           clock_in_location_lat?: number | null
           clock_in_location_lng?: number | null
+          clock_out?: string | null
           clock_out_location_lat?: number | null
           clock_out_location_lng?: number | null
-          total_hours?: number | null
-          status?: string
-          notes?: string | null
+          company_id?: string | null
           created_at?: string | null
+          date?: string
+          employee_id?: string | null
+          id?: string
+          status?: string | null
+          total_hours?: number | null
           updated_at?: string | null
+          work_type?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "attendance_employeeattendance_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employee_employee"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "attendance_employeeattendance_company_id_fkey"
             columns: ["company_id"]
@@ -81,159 +74,8 @@ export type Database = {
             referencedRelation: "company_company"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      payroll_run: {
-        Row: {
-          id: string
-          company_id: string
-          pay_period_month: number
-          pay_period_year: number
-          pay_period_start: string | null
-          pay_period_end: string | null
-          status: string
-          total_employees: number
-          total_gross_amount: number
-          total_deductions: number
-          total_net_amount: number
-          processed_by: string | null
-          processed_at: string | null
-          notes: string | null
-          created_at: string
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          pay_period_month: number
-          pay_period_year: number
-          pay_period_start?: string | null
-          pay_period_end?: string | null
-          status?: string
-          total_employees?: number
-          total_gross_amount?: number
-          total_deductions?: number
-          total_net_amount?: number
-          processed_by?: string | null
-          processed_at?: string | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          pay_period_month?: number
-          pay_period_year?: number
-          pay_period_start?: string | null
-          pay_period_end?: string | null
-          status?: string
-          total_employees?: number
-          total_gross_amount?: number
-          total_deductions?: number
-          total_net_amount?: number
-          processed_by?: string | null
-          processed_at?: string | null
-          notes?: string | null
-          created_at?: string
-          updated_at?: string | null
-        }
-        Relationships: [
           {
-            foreignKeyName: "payroll_run_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "company_company"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payroll_run_detail: {
-        Row: {
-          id: string
-          payroll_run_id: string
-          employee_id: string
-          basic_salary: number
-          hra: number
-          lta: number
-          medical_allowance: number
-          special_allowance: number
-          telephone_allowance: number
-          performance_bonus: number
-          other_earnings: number
-          gross_salary: number
-          epf_employee: number
-          epf_employer: number
-          esic_employee: number
-          esic_employer: number
-          professional_tax: number
-          income_tax: number
-          other_deductions: number
-          total_deductions: number
-          net_salary: number
-          status: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          payroll_run_id: string
-          employee_id: string
-          basic_salary?: number
-          hra?: number
-          lta?: number
-          medical_allowance?: number
-          special_allowance?: number
-          telephone_allowance?: number
-          performance_bonus?: number
-          other_earnings?: number
-          gross_salary?: number
-          epf_employee?: number
-          epf_employer?: number
-          esic_employee?: number
-          esic_employer?: number
-          professional_tax?: number
-          income_tax?: number
-          other_deductions?: number
-          total_deductions?: number
-          net_salary?: number
-          status?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          payroll_run_id?: string
-          employee_id?: string
-          basic_salary?: number
-          hra?: number
-          lta?: number
-          medical_allowance?: number
-          special_allowance?: number
-          telephone_allowance?: number
-          performance_bonus?: number
-          other_earnings?: number
-          gross_salary?: number
-          epf_employee?: number
-          epf_employer?: number
-          esic_employee?: number
-          esic_employer?: number
-          professional_tax?: number
-          income_tax?: number
-          other_deductions?: number
-          total_deductions?: number
-          net_salary?: number
-          status?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payroll_run_detail_payroll_run_id_fkey"
-            columns: ["payroll_run_id"]
-            isOneToOne: false
-            referencedRelation: "payroll_run"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payroll_run_detail_employee_id_fkey"
+            foreignKeyName: "attendance_employeeattendance_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employee_employee"
@@ -422,15 +264,29 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           document_category: string | null
+          document_subcategory: string | null
           document_type: string
           employee_id: string | null
           file_name: string
           file_size: number | null
           file_type: string
+          financial_year: string | null
           id: string
           is_deleted: boolean | null
+          is_signed: boolean | null
           is_verified: boolean | null
           previous_version_id: string | null
+          rejection_reason: string | null
+          requires_signature: boolean | null
+          signature_hash: string | null
+          signature_provider: string | null
+          signature_recipient_email: string | null
+          signature_sent_at: string | null
+          signature_status: string | null
+          signed_at: string | null
+          signed_by: string | null
+          signer_email: string | null
+          signer_name: string | null
           storage_bucket: string
           storage_path: string
           storage_url: string | null
@@ -438,7 +294,9 @@ export type Database = {
           uploaded_by_id: string | null
           verification_status: string | null
           verified_at: string | null
+          verified_by: string | null
           version: number | null
+          zoho_request_id: string | null
         }
         Insert: {
           company_id?: string | null
@@ -447,15 +305,29 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           document_category?: string | null
+          document_subcategory?: string | null
           document_type: string
           employee_id?: string | null
           file_name: string
           file_size?: number | null
           file_type: string
+          financial_year?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_signed?: boolean | null
           is_verified?: boolean | null
           previous_version_id?: string | null
+          rejection_reason?: string | null
+          requires_signature?: boolean | null
+          signature_hash?: string | null
+          signature_provider?: string | null
+          signature_recipient_email?: string | null
+          signature_sent_at?: string | null
+          signature_status?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
           storage_bucket: string
           storage_path: string
           storage_url?: string | null
@@ -463,7 +335,9 @@ export type Database = {
           uploaded_by_id?: string | null
           verification_status?: string | null
           verified_at?: string | null
+          verified_by?: string | null
           version?: number | null
+          zoho_request_id?: string | null
         }
         Update: {
           company_id?: string | null
@@ -472,15 +346,29 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           document_category?: string | null
+          document_subcategory?: string | null
           document_type?: string
           employee_id?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string
+          financial_year?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_signed?: boolean | null
           is_verified?: boolean | null
           previous_version_id?: string | null
+          rejection_reason?: string | null
+          requires_signature?: boolean | null
+          signature_hash?: string | null
+          signature_provider?: string | null
+          signature_recipient_email?: string | null
+          signature_sent_at?: string | null
+          signature_status?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
           storage_bucket?: string
           storage_path?: string
           storage_url?: string | null
@@ -488,7 +376,9 @@ export type Database = {
           uploaded_by_id?: string | null
           verification_status?: string | null
           verified_at?: string | null
+          verified_by?: string | null
           version?: number | null
+          zoho_request_id?: string | null
         }
         Relationships: [
           {
@@ -520,8 +410,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "commons_document_signed_by_fkey"
+            columns: ["signed_by"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "commons_document_uploaded_by_id_fkey"
             columns: ["uploaded_by_id"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commons_document_verified_by_fkey"
+            columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "users_user"
             referencedColumns: ["id"]
@@ -882,8 +786,55 @@ export type Database = {
           },
         ]
       }
+      company_status_history: {
+        Row: {
+          changed_by: string | null
+          company_id: string
+          created_at: string | null
+          id: string
+          previous_status: string | null
+          reason: string | null
+          status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          company_id: string
+          created_at?: string | null
+          id?: string
+          previous_status?: string | null
+          reason?: string | null
+          status: string
+        }
+        Update: {
+          changed_by?: string | null
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          previous_status?: string | null
+          reason?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_status_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contractor_contractor: {
         Row: {
+          bgv_completed_at: string | null
+          bgv_status: string | null
           business_name: string | null
           contractor_code: string | null
           created_at: string | null
@@ -893,11 +844,14 @@ export type Database = {
           kyc_status: string | null
           pan_number: string | null
           phone_number: string | null
+          springverify_candidate_id: string | null
           status: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          bgv_completed_at?: string | null
+          bgv_status?: string | null
           business_name?: string | null
           contractor_code?: string | null
           created_at?: string | null
@@ -907,11 +861,14 @@ export type Database = {
           kyc_status?: string | null
           pan_number?: string | null
           phone_number?: string | null
+          springverify_candidate_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          bgv_completed_at?: string | null
+          bgv_status?: string | null
           business_name?: string | null
           contractor_code?: string | null
           created_at?: string | null
@@ -921,6 +878,7 @@ export type Database = {
           kyc_status?: string | null
           pan_number?: string | null
           phone_number?: string | null
+          springverify_candidate_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1334,26 +1292,112 @@ export type Database = {
           },
         ]
       }
+      employee_asset: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          delivered_at: string | null
+          description: string | null
+          employee_id: string
+          id: string
+          name: string
+          ordered_at: string | null
+          receipt_notes: string | null
+          received_at: string | null
+          serial_number: string | null
+          shipped_at: string | null
+          status: string
+          tracking_number: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          delivered_at?: string | null
+          description?: string | null
+          employee_id: string
+          id?: string
+          name: string
+          ordered_at?: string | null
+          receipt_notes?: string | null
+          received_at?: string | null
+          serial_number?: string | null
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          description?: string | null
+          employee_id?: string
+          id?: string
+          name?: string
+          ordered_at?: string | null
+          receipt_notes?: string | null
+          received_at?: string | null
+          serial_number?: string | null
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_asset_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_asset_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_employee"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_employee: {
         Row: {
           aadhaar_number: string | null
+          bgv_completed_at: string | null
+          bgv_status: string | null
           blood_group: string | null
           created_at: string | null
           current_address_id: string | null
           date_of_birth: string | null
           deleted_at: string | null
+          documents_signed: boolean | null
           employee_code: string | null
           esic_number: string | null
           face_verified: boolean | null
+          first_name: string | null
           full_name: string
           gender: string | null
           id: string
+          insurance_enrolled_at: string | null
+          insurance_plan_id: string | null
+          insurance_status: string | null
+          keka_employee_id: string | null
+          keka_employee_number: string | null
+          keka_synced_at: string | null
           kyc_status: string | null
+          last_name: string | null
           marital_status: string | null
+          onboarding_documents_completed_at: string | null
           pan_number: string | null
           permanent_address_id: string | null
           personal_email: string | null
           phone_number: string | null
+          plum_member_id: string | null
+          springverify_candidate_id: string | null
           status: string | null
           uan_number: string | null
           updated_at: string | null
@@ -1361,23 +1405,37 @@ export type Database = {
         }
         Insert: {
           aadhaar_number?: string | null
+          bgv_completed_at?: string | null
+          bgv_status?: string | null
           blood_group?: string | null
           created_at?: string | null
           current_address_id?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
+          documents_signed?: boolean | null
           employee_code?: string | null
           esic_number?: string | null
           face_verified?: boolean | null
+          first_name?: string | null
           full_name: string
           gender?: string | null
           id?: string
+          insurance_enrolled_at?: string | null
+          insurance_plan_id?: string | null
+          insurance_status?: string | null
+          keka_employee_id?: string | null
+          keka_employee_number?: string | null
+          keka_synced_at?: string | null
           kyc_status?: string | null
+          last_name?: string | null
           marital_status?: string | null
+          onboarding_documents_completed_at?: string | null
           pan_number?: string | null
           permanent_address_id?: string | null
           personal_email?: string | null
           phone_number?: string | null
+          plum_member_id?: string | null
+          springverify_candidate_id?: string | null
           status?: string | null
           uan_number?: string | null
           updated_at?: string | null
@@ -1385,23 +1443,37 @@ export type Database = {
         }
         Update: {
           aadhaar_number?: string | null
+          bgv_completed_at?: string | null
+          bgv_status?: string | null
           blood_group?: string | null
           created_at?: string | null
           current_address_id?: string | null
           date_of_birth?: string | null
           deleted_at?: string | null
+          documents_signed?: boolean | null
           employee_code?: string | null
           esic_number?: string | null
           face_verified?: boolean | null
+          first_name?: string | null
           full_name?: string
           gender?: string | null
           id?: string
+          insurance_enrolled_at?: string | null
+          insurance_plan_id?: string | null
+          insurance_status?: string | null
+          keka_employee_id?: string | null
+          keka_employee_number?: string | null
+          keka_synced_at?: string | null
           kyc_status?: string | null
+          last_name?: string | null
           marital_status?: string | null
+          onboarding_documents_completed_at?: string | null
           pan_number?: string | null
           permanent_address_id?: string | null
           personal_email?: string | null
           phone_number?: string | null
+          plum_member_id?: string | null
+          springverify_candidate_id?: string | null
           status?: string | null
           uan_number?: string | null
           updated_at?: string | null
@@ -1615,7 +1687,11 @@ export type Database = {
           employee_id: string | null
           financial_year: string
           hra_exemption: number | null
+          hra_landlord_name: string | null
+          hra_landlord_pan: string | null
           hra_received: number | null
+          hra_rent_paid: number | null
+          hra_rental_address: string | null
           id: string
           metro_city: boolean | null
           previous_employer_income: number | null
@@ -1633,7 +1709,10 @@ export type Database = {
           section_80c_ppf: number | null
           section_80c_tuition_fees: number | null
           section_80c_ulip: number | null
+          section_80ccd_nps: number | null
           section_80d_health_insurance: number | null
+          section_80d_parents_insurance: number | null
+          section_80d_preventive_checkup: number | null
           section_80e_education_loan: number | null
           section_80g_donations: number | null
           section_80tta_savings_interest: number | null
@@ -1648,7 +1727,11 @@ export type Database = {
           employee_id?: string | null
           financial_year: string
           hra_exemption?: number | null
+          hra_landlord_name?: string | null
+          hra_landlord_pan?: string | null
           hra_received?: number | null
+          hra_rent_paid?: number | null
+          hra_rental_address?: string | null
           id?: string
           metro_city?: boolean | null
           previous_employer_income?: number | null
@@ -1666,7 +1749,10 @@ export type Database = {
           section_80c_ppf?: number | null
           section_80c_tuition_fees?: number | null
           section_80c_ulip?: number | null
+          section_80ccd_nps?: number | null
           section_80d_health_insurance?: number | null
+          section_80d_parents_insurance?: number | null
+          section_80d_preventive_checkup?: number | null
           section_80e_education_loan?: number | null
           section_80g_donations?: number | null
           section_80tta_savings_interest?: number | null
@@ -1681,7 +1767,11 @@ export type Database = {
           employee_id?: string | null
           financial_year?: string
           hra_exemption?: number | null
+          hra_landlord_name?: string | null
+          hra_landlord_pan?: string | null
           hra_received?: number | null
+          hra_rent_paid?: number | null
+          hra_rental_address?: string | null
           id?: string
           metro_city?: boolean | null
           previous_employer_income?: number | null
@@ -1699,7 +1789,10 @@ export type Database = {
           section_80c_ppf?: number | null
           section_80c_tuition_fees?: number | null
           section_80c_ulip?: number | null
+          section_80ccd_nps?: number | null
           section_80d_health_insurance?: number | null
+          section_80d_parents_insurance?: number | null
+          section_80d_preventive_checkup?: number | null
           section_80e_education_loan?: number | null
           section_80g_donations?: number | null
           section_80tta_savings_interest?: number | null
@@ -1714,6 +1807,129 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employee_employee"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employer_team: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          manager_id: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          manager_id?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          manager_id?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employer_team_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_team_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_team_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_employee"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employer_team_member: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          created_at: string | null
+          employee_id: string
+          id: string
+          reporting_manager_id: string | null
+          role: string | null
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          reporting_manager_id?: string | null
+          role?: string | null
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          reporting_manager_id?: string | null
+          role?: string | null
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employer_team_member_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_team_member_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employee_employee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_team_member_reporting_manager_id_fkey"
+            columns: ["reporting_manager_id"]
+            isOneToOne: false
+            referencedRelation: "employee_employee"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_team_member_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "employer_team"
             referencedColumns: ["id"]
           },
         ]
@@ -1913,6 +2129,8 @@ export type Database = {
           end_date: string
           id: string
           is_half_day: boolean | null
+          keka_leave_request_id: string | null
+          keka_synced_at: string | null
           leave_balance_id: string | null
           leave_type: string
           reason: string | null
@@ -1931,6 +2149,8 @@ export type Database = {
           end_date: string
           id?: string
           is_half_day?: boolean | null
+          keka_leave_request_id?: string | null
+          keka_synced_at?: string | null
           leave_balance_id?: string | null
           leave_type: string
           reason?: string | null
@@ -1949,6 +2169,8 @@ export type Database = {
           end_date?: string
           id?: string
           is_half_day?: boolean | null
+          keka_leave_request_id?: string | null
+          keka_synced_at?: string | null
           leave_balance_id?: string | null
           leave_type?: string
           reason?: string | null
@@ -2101,6 +2323,187 @@ export type Database = {
           },
         ]
       }
+      superadmin_permission: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      superadmin_report_template: {
+        Row: {
+          columns: Json
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          filters: Json | null
+          id: string
+          is_shared: boolean | null
+          name: string
+          report_type: string
+          schedule: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          columns: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          is_shared?: boolean | null
+          name: string
+          report_type: string
+          schedule?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          columns?: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          is_shared?: boolean | null
+          name?: string
+          report_type?: string
+          schedule?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "superadmin_report_template_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_user"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      superadmin_role_permission: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "superadmin_role_permission_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "superadmin_permission"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      superadmin_service: {
+        Row: {
+          category: string | null
+          configuration: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          configuration?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          configuration?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      superadmin_service_enrollment: {
+        Row: {
+          company_id: string
+          configuration: Json | null
+          enrolled_at: string | null
+          id: string
+          service_id: string
+          status: string | null
+        }
+        Insert: {
+          company_id: string
+          configuration?: Json | null
+          enrolled_at?: string | null
+          id?: string
+          service_id: string
+          status?: string | null
+        }
+        Update: {
+          company_id?: string
+          configuration?: Json | null
+          enrolled_at?: string | null
+          id?: string
+          service_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "superadmin_service_enrollment_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "superadmin_service_enrollment_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "superadmin_service"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       superadmin_settings: {
         Row: {
           created_at: string | null
@@ -2203,6 +2606,50 @@ export type Database = {
             columns: ["team_member_id"]
             isOneToOne: false
             referencedRelation: "superadmin_team"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preference: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          id: string
+          language: string | null
+          notification_preferences: Json | null
+          theme: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          language?: string | null
+          notification_preferences?: Json | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          language?: string | null
+          notification_preferences?: Json | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preference_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users_user"
             referencedColumns: ["id"]
           },
         ]

@@ -387,7 +387,7 @@ class ClientsServiceClass extends BaseService {
       legalName: company.legal_name,
       displayName: company.display_name,
       isActive: company.is_active ?? true,
-      createdAt: company.created_at,
+      createdAt: company.created_at ?? new Date().toISOString(),
       employeeCount: 0,
       contractorCount: 0,
     }

@@ -161,8 +161,8 @@ export default function TeamManagementPage() {
    * Handle team edit
    * Note: In a real app, this would open a separate edit modal
    */
-  const handleEditTeam = (team: Team) => {
-    console.log('Edit team:', team)
+  const handleEditTeam = (_team: Team) => {
+    // TODO: Implement team edit modal
     toast.info('Edit functionality - coming soon')
   }
 

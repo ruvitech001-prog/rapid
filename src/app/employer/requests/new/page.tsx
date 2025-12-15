@@ -27,7 +27,7 @@ export default function NewRequestPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Request created:', formData);
+    // TODO: Implement request creation via API
     router.push('/employer/requests');
   };
 

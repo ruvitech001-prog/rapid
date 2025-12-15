@@ -61,7 +61,7 @@ export default function EditEmployeePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Updated employee:', formData);
+    // TODO: Implement employee update via API
     router.push(`/employer/employees/${params.id}`);
   };
 

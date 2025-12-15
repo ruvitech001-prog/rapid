@@ -57,7 +57,7 @@ export default function NewContractorPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('New contractor:', formData);
+    // TODO: Implement contractor creation via API
     router.push('/employer/contractors');
   };
 

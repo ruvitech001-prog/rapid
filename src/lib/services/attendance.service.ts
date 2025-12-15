@@ -3,7 +3,7 @@ import { BaseService } from './base.service'
 // Types for attendance records
 export interface AttendanceRecord {
   id: string
-  employee_id: string
+  employee_id: string | null
   date: string
   clock_in?: string | null
   clock_out?: string | null

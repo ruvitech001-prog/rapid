@@ -1,55 +1,33 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
-import { useEmployeeNotifications } from '@/lib/hooks'
+import {
+  useEmployeeNotifications,
+  useNotificationState,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+  useDeleteNotification,
+} from '@/lib/hooks'
 import type { Notification } from '@/lib/services'
-
-const NOTIFICATIONS_STORAGE_KEY = 'employee_notifications_state'
-
-interface NotificationState {
-  readIds: string[]
-  deletedIds: string[]
-}
+import { useState } from 'react'
 
 export default function NotificationsPage() {
   const { user } = useAuth()
-  const employeeId = user?.id
-  const { data: notificationsData, isLoading } = useEmployeeNotifications(employeeId)
+  const userId = user?.id
+  const { data: notificationsData, isLoading: isLoadingNotifications } = useEmployeeNotifications(userId)
+  const { data: notificationState, isLoading: isLoadingState } = useNotificationState(userId)
+
+  const markAsReadMutation = useMarkNotificationAsRead()
+  const markAllAsReadMutation = useMarkAllNotificationsAsRead()
+  const deleteNotificationMutation = useDeleteNotification()
 
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
-  const [readIds, setReadIds] = useState<Set<string>>(new Set())
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
 
-  // Load persisted state from localStorage
-  useEffect(() => {
-    try {
-      const savedState = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY)
-      if (savedState) {
-        const parsed: NotificationState = JSON.parse(savedState)
-        setReadIds(new Set(parsed.readIds || []))
-        setDeletedIds(new Set(parsed.deletedIds || []))
-      }
-    } catch (error) {
-      console.error('Failed to load notification state:', error)
-    }
-  }, [])
-
-  // Persist state to localStorage
-  const persistState = useCallback((newReadIds: Set<string>, newDeletedIds: Set<string>) => {
-    try {
-      const state: NotificationState = {
-        readIds: Array.from(newReadIds),
-        deletedIds: Array.from(newDeletedIds),
-      }
-      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(state))
-    } catch (error) {
-      console.error('Failed to save notification state:', error)
-    }
-  }, [])
+  const readIds = new Set(notificationState?.readIds || [])
+  const deletedIds = new Set(notificationState?.deletedIds || [])
 
   const notifications = notificationsData?.filter(n => !deletedIds.has(n.id)) || []
   const filteredNotifications = notifications.filter(n => {
@@ -61,26 +39,38 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.isRead && !readIds.has(n.id)).length
 
   const markAsRead = (id: string) => {
-    const newReadIds = new Set([...readIds, id])
-    setReadIds(newReadIds)
-    persistState(newReadIds, deletedIds)
-    toast.success('Marked as read')
+    if (!userId) return
+    markAsReadMutation.mutate(
+      { userId, notificationId: id },
+      {
+        onSuccess: () => toast.success('Marked as read'),
+        onError: () => toast.error('Failed to mark as read'),
+      }
+    )
   }
 
   const markAllAsRead = () => {
+    if (!userId) return
     const allIds = notifications.map(n => n.id)
-    const newReadIds = new Set(allIds)
-    setReadIds(newReadIds)
-    persistState(newReadIds, deletedIds)
-    toast.success('All notifications marked as read')
+    markAllAsReadMutation.mutate(
+      { userId, notificationIds: allIds },
+      {
+        onSuccess: () => toast.success('All notifications marked as read'),
+        onError: () => toast.error('Failed to mark all as read'),
+      }
+    )
   }
 
-  const deleteNotification = (id: string) => {
+  const handleDeleteNotification = (id: string) => {
+    if (!userId) return
     if (confirm('Delete this notification?')) {
-      const newDeletedIds = new Set([...deletedIds, id])
-      setDeletedIds(newDeletedIds)
-      persistState(readIds, newDeletedIds)
-      toast.success('Notification deleted')
+      deleteNotificationMutation.mutate(
+        { userId, notificationId: id },
+        {
+          onSuccess: () => toast.success('Notification deleted'),
+          onError: () => toast.error('Failed to delete notification'),
+        }
+      )
     }
   }
 
@@ -119,6 +109,8 @@ export default function NotificationsPage() {
     if (diffDays < 7) return `${diffDays} days ago`
     return date.toLocaleDateString()
   }
+
+  const isLoading = isLoadingNotifications || isLoadingState
 
   if (isLoading) {
     return (
@@ -172,9 +164,10 @@ export default function NotificationsPage() {
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-sm text-blue-600 hover:text-blue-900"
+              disabled={markAllAsReadMutation.isPending}
+              className="text-sm text-blue-600 hover:text-blue-900 disabled:opacity-50"
             >
-              Mark all as read
+              {markAllAsReadMutation.isPending ? 'Marking...' : 'Mark all as read'}
             </button>
           )}
         </div>
@@ -237,15 +230,17 @@ export default function NotificationsPage() {
                           {!isRead && (
                             <button
                               onClick={() => markAsRead(notification.id)}
-                              className="text-sm text-blue-600 hover:text-blue-900"
+                              disabled={markAsReadMutation.isPending}
+                              className="text-sm text-blue-600 hover:text-blue-900 disabled:opacity-50"
                               title="Mark as read"
                             >
                               ✓
                             </button>
                           )}
                           <button
-                            onClick={() => deleteNotification(notification.id)}
-                            className="text-sm text-gray-400 hover:text-red-600"
+                            onClick={() => handleDeleteNotification(notification.id)}
+                            disabled={deleteNotificationMutation.isPending}
+                            className="text-sm text-gray-400 hover:text-red-600 disabled:opacity-50"
                             title="Delete"
                           >
                             ✕

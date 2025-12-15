@@ -1,4 +1,4 @@
-import { BaseService } from './base.service'
+import { BaseService, ServiceError } from './base.service'
 import type { Tables } from '@/types/database.types'
 
 export type ContractorInvoice = Tables<'contractor_invoice'>
@@ -165,8 +165,33 @@ class InvoicesServiceClass extends BaseService {
   // Pay an invoice
   async payInvoice(
     invoiceId: string,
+    companyId: string,
     paymentReference: string
   ): Promise<ContractorInvoice> {
+    // SECURITY: Verify invoice belongs to the company
+    const { data: invoice, error: fetchError } = await this.supabase
+      .from('contractor_invoice')
+      .select('*, contractor_contractorcontract!inner(company_id)')
+      .eq('id', invoiceId)
+      .single()
+
+    if (fetchError) this.handleError(fetchError)
+    if (!invoice) throw new Error('Invoice not found')
+
+    const invoiceCompanyId = (invoice.contractor_contractorcontract as { company_id: string | null } | null)?.company_id
+    if (invoiceCompanyId !== companyId) {
+      throw new ServiceError(
+        'Cannot pay invoices from other companies',
+        'CROSS_COMPANY_OPERATION',
+        403
+      )
+    }
+
+    // Verify invoice status allows payment
+    if (invoice.status === 'paid') {
+      throw new ServiceError('Invoice already paid', 'ALREADY_PAID', 400)
+    }
+
     const { data, error } = await this.supabase
       .from('contractor_invoice')
       .update({
@@ -184,7 +209,26 @@ class InvoicesServiceClass extends BaseService {
   }
 
   // Approve an invoice
-  async approveInvoice(invoiceId: string): Promise<ContractorInvoice> {
+  async approveInvoice(invoiceId: string, companyId: string): Promise<ContractorInvoice> {
+    // SECURITY: Verify invoice belongs to the company
+    const { data: invoice, error: fetchError } = await this.supabase
+      .from('contractor_invoice')
+      .select('*, contractor_contractorcontract!inner(company_id)')
+      .eq('id', invoiceId)
+      .single()
+
+    if (fetchError) this.handleError(fetchError)
+    if (!invoice) throw new Error('Invoice not found')
+
+    const invoiceCompanyId = (invoice.contractor_contractorcontract as { company_id: string | null } | null)?.company_id
+    if (invoiceCompanyId !== companyId) {
+      throw new ServiceError(
+        'Cannot approve invoices from other companies',
+        'CROSS_COMPANY_OPERATION',
+        403
+      )
+    }
+
     const { data, error } = await this.supabase
       .from('contractor_invoice')
       .update({

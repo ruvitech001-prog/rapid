@@ -226,7 +226,7 @@ export default function PayrollDashboardPage() {
     return `₹${amount.toLocaleString('en-IN')}`
   }
 
-  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
+  const currentMonthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
 
   return (
     <div className="space-y-6">
@@ -290,7 +290,7 @@ export default function PayrollDashboardPage() {
             </div>
             <div className="flex-1">
               <p className="font-semibold text-gray-900">Payroll Processing Due</p>
-              <p className="text-sm text-[#8593A3]">{currentMonth} payroll is pending processing</p>
+              <p className="text-sm text-[#8593A3]">{currentMonthLabel} payroll is pending processing</p>
             </div>
             <Button className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]" onClick={handleRunPayroll}>
               Process Now
@@ -398,7 +398,7 @@ export default function PayrollDashboardPage() {
           <DialogHeader>
             <DialogTitle>Run Payroll</DialogTitle>
             <DialogDescription>
-              Process payroll for {currentMonth}
+              Process payroll for {currentMonthLabel}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

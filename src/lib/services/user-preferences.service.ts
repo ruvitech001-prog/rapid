@@ -1,6 +1,7 @@
 'use client'
 
 import { BaseService } from './base.service'
+import type { Json } from '@/types/database.types'
 
 // User preferences types
 export interface UserPreferences {
@@ -128,7 +129,7 @@ class UserPreferencesServiceClass extends BaseService {
             theme: updatedPreferences.theme,
             currency: updatedPreferences.currency,
             date_format: updatedPreferences.dateFormat,
-            notification_preferences: updatedPreferences.notificationPreferences,
+            notification_preferences: updatedPreferences.notificationPreferences as unknown as Json,
             updated_at: new Date().toISOString(),
           })
           .eq('user_id', userId)
@@ -152,7 +153,7 @@ class UserPreferencesServiceClass extends BaseService {
             theme: updatedPreferences.theme,
             currency: updatedPreferences.currency,
             date_format: updatedPreferences.dateFormat,
-            notification_preferences: updatedPreferences.notificationPreferences,
+            notification_preferences: updatedPreferences.notificationPreferences as unknown as Json,
           })
           .select()
           .single()

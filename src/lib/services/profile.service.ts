@@ -12,12 +12,14 @@ export interface EmployeeProfile extends Employee {
   permanentAddress?: Address | null
   bankAccounts: BankAccount[]
   emergencyContacts: EmergencyContact[]
+  company_id?: string | null
   contract?: {
     designation: string
     department: string | null
     employmentType: string | null
     startDate: string
     companyName: string
+    companyId: string
     workLocation: string | null
   } | null
 }
@@ -107,6 +109,7 @@ class ProfileServiceClass extends BaseService {
           employmentType: contractData.employment_type,
           startDate: contractData.start_date,
           companyName,
+          companyId: contractData.company_id || '',
           workLocation: contractData.work_location,
         }
       : null
@@ -117,6 +120,7 @@ class ProfileServiceClass extends BaseService {
       permanentAddress,
       bankAccounts: bankAccounts || [],
       emergencyContacts: emergencyContacts || [],
+      company_id: contractData?.company_id,
       contract,
     }
   }
@@ -274,8 +278,56 @@ class ProfileServiceClass extends BaseService {
   // Update bank account
   async updateBankAccount(
     accountId: string,
+    userId: string,
     data: Partial<BankAccount>
   ): Promise<BankAccount> {
+    // SECURITY: Verify ownership before update
+    const { data: account, error: fetchError } = await this.supabase
+      .from('commons_bankaccount')
+      .select('employee_id, contractor_id')
+      .eq('id', accountId)
+      .single()
+
+    if (fetchError || !account) {
+      throw new Error('Bank account not found')
+    }
+
+    // Verify the authenticated user owns this bank account
+    const { data: user } = await this.supabase
+      .from('users_user')
+      .select('id, user_type')
+      .eq('id', userId)
+      .single()
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    // Get user's employee or contractor ID
+    let ownsAccount = false
+    if (user.user_type === 'employee' && account.employee_id) {
+      const { data: employee } = await this.supabase
+        .from('employee_employee')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('id', account.employee_id)
+        .single()
+      ownsAccount = !!employee
+    } else if (user.user_type === 'contractor' && account.contractor_id) {
+      const { data: contractor } = await this.supabase
+        .from('contractor_contractor')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('id', account.contractor_id)
+        .single()
+      ownsAccount = !!contractor
+    }
+
+    if (!ownsAccount) {
+      throw new Error('Unauthorized: Cannot update bank account belonging to another user')
+    }
+
+    // Proceed with update
     const { data: updated, error } = await this.supabase
       .from('commons_bankaccount')
       .update({
@@ -327,7 +379,42 @@ class ProfileServiceClass extends BaseService {
   }
 
   // Delete emergency contact
-  async deleteEmergencyContact(contactId: string): Promise<void> {
+  async deleteEmergencyContact(contactId: string, userId: string): Promise<void> {
+    // SECURITY: Verify ownership before deletion
+    const { data: contact } = await this.supabase
+      .from('commons_emergencycontact')
+      .select('employee_id, contractor_id')
+      .eq('id', contactId)
+      .single()
+
+    if (!contact) {
+      throw new Error('Emergency contact not found')
+    }
+
+    // Verify user owns this contact
+    let ownsContact = false
+    if (contact.employee_id) {
+      const { data: employee } = await this.supabase
+        .from('employee_employee')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('id', contact.employee_id)
+        .single()
+      ownsContact = !!employee
+    } else if (contact.contractor_id) {
+      const { data: contractor } = await this.supabase
+        .from('contractor_contractor')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('id', contact.contractor_id)
+        .single()
+      ownsContact = !!contractor
+    }
+
+    if (!ownsContact) {
+      throw new Error('Unauthorized: Cannot delete emergency contact belonging to another user')
+    }
+
     const { error } = await this.supabase
       .from('commons_emergencycontact')
       .delete()

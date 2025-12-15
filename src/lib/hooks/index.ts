@@ -68,6 +68,10 @@ export {
   useEmployeeNotifications,
   useEmployerNotifications,
   useUnreadNotificationCount,
+  useNotificationState,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+  useDeleteNotification,
 } from './use-notifications'
 
 // Invoice hooks
@@ -156,6 +160,10 @@ export {
   useUploadContractorDocument,
   useDeleteDocument,
   useSignDocument,
+  useOnboardingDocuments,
+  useEnsureOnboardingDocuments,
+  useSendForSignature,
+  useCompleteOnboardingDocuments,
 } from './use-documents'
 
 // Timesheet hooks
@@ -232,11 +240,13 @@ export {
   useApproveEmployerRequest,
   useRejectEmployerRequest,
   useWithdrawEmployerRequest,
+  useCreateSpecialRequest,
 } from './use-employer-requests'
 export type {
   EmployerRequest,
   EmployerRequestFilters,
   EmployerRequestCounts,
+  CreateSpecialRequestInput,
 } from './use-employer-requests'
 
 // Employee assets hooks
@@ -270,3 +280,43 @@ export {
   useRemoveEmployeeFromTeam,
   useUpdateTeamMembership,
 } from './use-teams'
+
+// Verification hooks (eKYC, BGV)
+export {
+  useVerificationStatus,
+  useUploadDocument,
+  useSubmitForVerification,
+  useCaptureSelfie,
+  usePerformFaceMatch,
+  usePerformLivenessCheck,
+  useBGVChecks,
+  useInitiateBGV,
+  useProcessBGVCheck,
+  useCompleteBGV,
+} from './use-verification'
+
+// Plum (Health Insurance) hooks
+export {
+  useInsurancePlans,
+  useEmployeeEnrollment,
+  useEnrollInInsurance,
+  useAddDependent,
+  useUpdateCoverage,
+  useCancelEnrollment,
+} from './use-plum'
+
+// Keka (HRMS/Payroll) hooks
+export {
+  useKekaEmployees,
+  useKekaEmployee,
+  useSyncEmployeeToKeka,
+  useKekaSalary,
+  useKekaLeaveTypes,
+  useKekaLeaveBalance,
+  useKekaLeaveRequests,
+  useCreateKekaLeaveRequest,
+  useSyncLeaveToKeka,
+  useKekaDepartments,
+  useKekaJobTitles,
+  useKekaLocations,
+} from './use-keka'

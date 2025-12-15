@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -26,6 +26,14 @@ import {
   Camera,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
+import {
+  useUploadDocument,
+  useSubmitForVerification,
+  usePerformFaceMatch,
+  usePerformLivenessCheck,
+  useVerificationStatus,
+} from '@/lib/hooks'
 
 const eKYCSchema = z.object({
   document_type: z.enum(['aadhar', 'passport', 'driving_license', 'voter_id']),
@@ -37,24 +45,49 @@ const eKYCSchema = z.object({
 
 type EKYCFormData = z.infer<typeof eKYCSchema>
 
-interface VerificationStatus {
+interface VerificationStatusItem {
   step: string
   status: 'pending' | 'in_progress' | 'completed' | 'failed'
   timestamp?: string
 }
 
 export default function EKYCPage() {
+  const { user } = useAuth()
+  const employeeId = user?.id
+
   const [currentStep, setCurrentStep] = useState<'document' | 'capture' | 'verification'>('document')
-  const [verificationStatuses, setVerificationStatuses] = useState<VerificationStatus[]>([
+  const [verificationStatuses, setVerificationStatuses] = useState<VerificationStatusItem[]>([
     { step: 'Document Upload', status: 'pending' },
     { step: 'Face Capture', status: 'pending' },
     { step: 'Liveness Check', status: 'pending' },
     { step: 'Document Verification', status: 'pending' },
     { step: 'Data Verification', status: 'pending' },
   ])
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [capturedImageFile, setCapturedImageFile] = useState<File | null>(null)
-  const [capturedFaceFile, setCapturedFaceFile] = useState<File | null>(null)
+  const [uploadedDocumentId, setUploadedDocumentId] = useState<string | null>(null)
+  const [selfieDocumentId, setSelfieDocumentId] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+  // Hooks for API calls
+  const uploadDocument = useUploadDocument()
+  const submitForVerification = useSubmitForVerification()
+  const performFaceMatch = usePerformFaceMatch()
+  const performLivenessCheck = usePerformLivenessCheck()
+  const { data: existingVerifications } = useVerificationStatus('employee', employeeId)
+
+  // Check existing verification status on load
+  useEffect(() => {
+    if (existingVerifications && existingVerifications.length > 0) {
+      const hasCompletedVerifications = existingVerifications.filter(v => v.status === 'verified')
+      if (hasCompletedVerifications.length >= 3) {
+        // All verifications complete
+        setVerificationStatuses(prev => prev.map(s => ({
+          ...s,
+          status: 'completed',
+          timestamp: new Date().toLocaleTimeString()
+        })))
+      }
+    }
+  }, [existingVerifications])
 
   const {
     register,
@@ -90,20 +123,48 @@ export default function EKYCPage() {
     }
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB')
+        return
+      }
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
+        toast.error('Only JPG, PNG, and PDF files are allowed')
+        return
+      }
+      setSelectedFile(file)
+    }
+  }
+
   const handleDocumentCapture = async () => {
+    if (!employeeId) {
+      toast.error('User not authenticated')
+      return
+    }
+
+    if (!selectedFile) {
+      toast.error('Please select a document file')
+      return
+    }
+
     try {
       setVerificationStatuses((prev) =>
         prev.map((s) => (s.step === 'Document Upload' ? { ...s, status: 'in_progress' } : s))
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Upload the document
+      const result = await uploadDocument.mutateAsync({
+        file: selectedFile,
+        documentType: documentType,
+        entityType: 'employee',
+        entityId: employeeId,
+      })
 
-      const mockFile = new File(
-        ['mock-document-image'],
-        `document-${Date.now()}.jpg`,
-        { type: 'image/jpeg' }
-      )
-      setCapturedImageFile(mockFile)
+      setUploadedDocumentId(result.documentId)
 
       setVerificationStatuses((prev) =>
         prev.map((s) =>
@@ -113,28 +174,43 @@ export default function EKYCPage() {
         )
       )
 
-      toast.success('Document captured successfully')
+      toast.success('Document uploaded successfully')
       setCurrentStep('capture')
     } catch (error) {
       setVerificationStatuses((prev) =>
         prev.map((s) => (s.step === 'Document Upload' ? { ...s, status: 'failed' } : s))
       )
-      toast.error('Failed to capture document')
+      toast.error(error instanceof Error ? error.message : 'Failed to upload document')
     }
   }
 
   const handleFaceCapture = async () => {
+    if (!employeeId) {
+      toast.error('User not authenticated')
+      return
+    }
+
     try {
       setVerificationStatuses((prev) =>
         prev.map((s) => (s.step === 'Face Capture' ? { ...s, status: 'in_progress' } : s))
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // In a real implementation, this would open the camera and capture a photo
+      // For now, we create a placeholder file and use it
+      const selfieFile = new File(
+        ['selfie-placeholder'],
+        `selfie-${Date.now()}.jpg`,
+        { type: 'image/jpeg' }
+      )
 
-      const mockFile = new File(['mock-face-image'], `face-${Date.now()}.jpg`, {
-        type: 'image/jpeg',
+      const selfieResult = await uploadDocument.mutateAsync({
+        file: selfieFile,
+        documentType: 'selfie',
+        entityType: 'employee',
+        entityId: employeeId,
       })
-      setCapturedFaceFile(mockFile)
+
+      setSelfieDocumentId(selfieResult.documentId)
 
       setVerificationStatuses((prev) =>
         prev.map((s) =>
@@ -146,83 +222,126 @@ export default function EKYCPage() {
 
       toast.success('Face captured successfully')
 
+      // Now perform liveness check
       setVerificationStatuses((prev) =>
         prev.map((s) =>
           s.step === 'Liveness Check' ? { ...s, status: 'in_progress' } : s
         )
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Simulate video frames for liveness check (in production, this would use actual camera feed)
+      const livenessResult = await performLivenessCheck.mutateAsync({
+        videoFrames: ['frame1', 'frame2', 'frame3'], // Placeholder frames
+        entityType: 'employee',
+        entityId: employeeId,
+      })
 
-      setVerificationStatuses((prev) =>
-        prev.map((s) =>
-          s.step === 'Liveness Check'
-            ? { ...s, status: 'completed', timestamp: new Date().toLocaleTimeString() }
-            : s
+      if (livenessResult.passed) {
+        setVerificationStatuses((prev) =>
+          prev.map((s) =>
+            s.step === 'Liveness Check'
+              ? { ...s, status: 'completed', timestamp: new Date().toLocaleTimeString() }
+              : s
+          )
         )
-      )
-
-      toast.success('Liveness check completed')
-      setCurrentStep('verification')
+        toast.success('Liveness check completed')
+        setCurrentStep('verification')
+      } else {
+        setVerificationStatuses((prev) =>
+          prev.map((s) => (s.step === 'Liveness Check' ? { ...s, status: 'failed' } : s))
+        )
+        toast.error('Liveness check failed. Please try again.')
+      }
     } catch (error) {
       setVerificationStatuses((prev) =>
         prev.map((s) => (s.step === 'Face Capture' ? { ...s, status: 'failed' } : s))
       )
-      toast.error('Failed to capture face')
+      toast.error(error instanceof Error ? error.message : 'Failed to capture face')
     }
   }
 
-  const onSubmit = async (_data: EKYCFormData) => {
+  const onSubmit = async (data: EKYCFormData) => {
+    if (!employeeId) {
+      toast.error('User not authenticated')
+      return
+    }
+
+    if (!uploadedDocumentId || !selfieDocumentId) {
+      toast.error('Please complete document and face capture')
+      return
+    }
+
     try {
-      if (!capturedImageFile || !capturedFaceFile) {
-        toast.error('Please complete document and face capture')
-        return
-      }
-
-      setIsVerifying(true)
-
+      // Document Verification
       setVerificationStatuses((prev) =>
         prev.map((s) =>
           s.step === 'Document Verification' ? { ...s, status: 'in_progress' } : s
         )
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Submit document for verification
+      const docVerificationResult = await submitForVerification.mutateAsync({
+        documentId: uploadedDocumentId,
+        verificationType: documentType === 'aadhar' ? 'aadhaar' : 'pan',
+        entityType: 'employee',
+        entityId: employeeId,
+      })
 
-      setVerificationStatuses((prev) =>
-        prev.map((s) =>
-          s.step === 'Document Verification'
-            ? { ...s, status: 'completed', timestamp: new Date().toLocaleTimeString() }
-            : s
+      if (docVerificationResult.status === 'verified') {
+        setVerificationStatuses((prev) =>
+          prev.map((s) =>
+            s.step === 'Document Verification'
+              ? { ...s, status: 'completed', timestamp: new Date().toLocaleTimeString() }
+              : s
+          )
         )
-      )
+      } else {
+        setVerificationStatuses((prev) =>
+          prev.map((s) =>
+            s.step === 'Document Verification' ? { ...s, status: 'failed' } : s
+          )
+        )
+        toast.error(docVerificationResult.failedReason || 'Document verification failed')
+        return
+      }
 
+      // Face Match Verification (Data Verification)
       setVerificationStatuses((prev) =>
         prev.map((s) =>
           s.step === 'Data Verification' ? { ...s, status: 'in_progress' } : s
         )
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 1200))
+      const faceMatchResult = await performFaceMatch.mutateAsync({
+        documentId: uploadedDocumentId,
+        selfieDocumentId: selfieDocumentId,
+        entityType: 'employee',
+        entityId: employeeId,
+      })
 
-      setVerificationStatuses((prev) =>
-        prev.map((s) =>
-          s.step === 'Data Verification'
-            ? { ...s, status: 'completed', timestamp: new Date().toLocaleTimeString() }
-            : s
+      if (faceMatchResult.matched) {
+        setVerificationStatuses((prev) =>
+          prev.map((s) =>
+            s.step === 'Data Verification'
+              ? { ...s, status: 'completed', timestamp: new Date().toLocaleTimeString() }
+              : s
+          )
         )
-      )
-
-      toast.success('eKYC verification completed successfully')
+        toast.success('eKYC verification completed successfully')
+      } else {
+        setVerificationStatuses((prev) =>
+          prev.map((s) =>
+            s.step === 'Data Verification' ? { ...s, status: 'failed' } : s
+          )
+        )
+        toast.error('Face match failed. Photo does not match the document.')
+      }
     } catch (error) {
-      console.error('Error during verification:', error)
-      toast.error('Verification failed')
-    } finally {
-      setIsVerifying(false)
+      toast.error(error instanceof Error ? error.message : 'Verification failed')
     }
   }
 
-  const getStatusIcon = (status: VerificationStatus['status']) => {
+  const getStatusIcon = (status: VerificationStatusItem['status']) => {
     switch (status) {
       case 'completed':
         return <CheckCircle2 className="w-5 h-5 text-green-600" />
@@ -234,6 +353,10 @@ export default function EKYCPage() {
         return <AlertCircle className="w-5 h-5 text-gray-400" />
     }
   }
+
+  const isUploading = uploadDocument.isPending
+  const isVerifying = submitForVerification.isPending || performFaceMatch.isPending
+  const isCapturing = uploadDocument.isPending || performLivenessCheck.isPending
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -282,14 +405,8 @@ export default function EKYCPage() {
           title="Step 1: Document Upload"
           description="Upload a clear photo of your government-issued ID"
           onSubmit={handleDocumentCapture}
-          submitLabel={
-            verificationStatuses.find((s) => s.step === 'Document Upload')?.status === 'in_progress'
-              ? 'Capturing...'
-              : 'Capture Document'
-          }
-          isLoading={
-            verificationStatuses.find((s) => s.step === 'Document Upload')?.status === 'in_progress'
-          }
+          submitLabel={isUploading ? 'Uploading...' : 'Upload Document'}
+          isLoading={isUploading}
         >
           <div className="space-y-6">
             <div className="space-y-2">
@@ -349,6 +466,34 @@ export default function EKYCPage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="document_file">Upload Document *</Label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition-colors">
+                <div className="space-y-1 text-center">
+                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="flex text-sm text-gray-600">
+                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                      <span>Upload a file</span>
+                      <input
+                        id="document_file"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleFileSelect}
+                        className="sr-only"
+                      />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="text-xs text-gray-500">PDF, JPG, PNG up to 5MB</p>
+                  {selectedFile && (
+                    <p className="text-sm text-green-600 mt-2 font-medium">
+                      ✓ {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="p-4 bg-blue-50 border border-blue-200 rounded space-y-2">
               <div className="flex gap-2">
                 <Upload className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -363,15 +508,6 @@ export default function EKYCPage() {
                 </div>
               </div>
             </div>
-
-            {capturedImageFile && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <p className="text-sm text-green-800">
-                  Document captured: {capturedImageFile.name}
-                </p>
-              </div>
-            )}
           </div>
         </FormWrapper>
       )}
@@ -381,14 +517,8 @@ export default function EKYCPage() {
           title="Step 2: Face Capture"
           description="Take a selfie for liveness verification"
           onSubmit={handleFaceCapture}
-          submitLabel={
-            verificationStatuses.find((s) => s.step === 'Face Capture')?.status === 'in_progress'
-              ? 'Capturing...'
-              : 'Capture Face'
-          }
-          isLoading={
-            verificationStatuses.find((s) => s.step === 'Face Capture')?.status === 'in_progress'
-          }
+          submitLabel={isCapturing ? 'Capturing...' : 'Capture Face'}
+          isLoading={isCapturing}
         >
           <div className="space-y-6">
             <div className="p-4 bg-blue-50 border border-blue-200 rounded space-y-2">
@@ -401,7 +531,7 @@ export default function EKYCPage() {
                     <li>Face should occupy 70-80% of frame</li>
                     <li>No glasses or heavy makeup</li>
                     <li>Neutral expression</li>
-                    <li>We'll perform a liveness check</li>
+                    <li>We&apos;ll perform a liveness check</li>
                   </ul>
                 </div>
               </div>
@@ -411,17 +541,17 @@ export default function EKYCPage() {
               <div className="flex justify-center mb-3">
                 <Camera className="w-12 h-12 text-blue-400" />
               </div>
-              <p className="text-sm text-gray-600 mb-4">Click "Capture Face" to take a selfie</p>
+              <p className="text-sm text-gray-600 mb-4">Click &quot;Capture Face&quot; to take a selfie</p>
               <p className="text-xs text-gray-500">
                 Your face will be compared with your document for verification
               </p>
             </div>
 
-            {capturedFaceFile && (
+            {selfieDocumentId && (
               <div className="p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <p className="text-sm text-green-800">
-                  Face captured: {capturedFaceFile.name}
+                  Face captured successfully
                 </p>
               </div>
             )}

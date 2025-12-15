@@ -1,12 +1,16 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useRef } from 'react'
 import {
   employerRequestsService,
   type EmployerRequest,
   type EmployerRequestFilters,
   type EmployerRequestCounts,
+  type CreateSpecialRequestInput,
 } from '@/lib/services/employer-requests.service'
+
+const RATE_LIMIT_MS = 2000
 
 /**
  * Hook to fetch all employer requests (leaves, expenses, special)
@@ -94,5 +98,29 @@ export function useWithdrawEmployerRequest() {
   })
 }
 
+/**
+ * Hook to create a special request (equipment, gift, salary amendment, etc.)
+ */
+export function useCreateSpecialRequest() {
+  const queryClient = useQueryClient()
+  const lastCallRef = useRef<number>(0)
+
+  return useMutation<EmployerRequest, Error, CreateSpecialRequestInput>({
+    mutationFn: async (input) => {
+      const now = Date.now()
+      if (now - lastCallRef.current < RATE_LIMIT_MS) {
+        throw new Error('Please wait before trying again')
+      }
+      lastCallRef.current = now
+
+      return employerRequestsService.createSpecialRequest(input)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['employer-requests'] })
+      queryClient.invalidateQueries({ queryKey: ['employer-requests', variables.companyId] })
+    },
+  })
+}
+
 // Re-export types for convenience
-export type { EmployerRequest, EmployerRequestFilters, EmployerRequestCounts }
+export type { EmployerRequest, EmployerRequestFilters, EmployerRequestCounts, CreateSpecialRequestInput }

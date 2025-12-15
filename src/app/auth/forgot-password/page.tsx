@@ -32,9 +32,8 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    // Mock sending reset email
+    // TODO: Implement actual password reset email via Supabase Auth
     setTimeout(() => {
-      console.log('Password reset requested for:', email);
       setLoading(false);
       setSent(true);
     }, 1000);

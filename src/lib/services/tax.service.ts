@@ -557,7 +557,7 @@ class TaxServiceClass extends BaseService {
       subCategory,
       fileName: file.name,
       fileUrl: publicUrl,
-      uploadedAt: data.created_at,
+      uploadedAt: data.created_at ?? '',
       status: 'pending',
     }
   }
@@ -576,24 +576,25 @@ class TaxServiceClass extends BaseService {
       .select('*')
       .eq('employee_id', employeeId)
       .eq('document_type', 'tax_proof')
-      .eq('financial_year', year)
+      // TODO: Add financial_year, document_subcategory, verified_by, rejection_reason columns to commons_document table
+      // .eq('financial_year', year)
       .order('created_at', { ascending: false })
 
     if (error) this.handleError(error)
 
     return (data || []).map(doc => ({
       id: doc.id,
-      employeeId: doc.employee_id,
-      financialYear: doc.financial_year || year,
+      employeeId: doc.employee_id ?? '',
+      financialYear: year, // TODO: doc.financial_year || year,
       category: doc.document_category || '',
-      subCategory: doc.document_subcategory || '',
+      subCategory: '', // TODO: doc.document_subcategory || '',
       fileName: doc.file_name,
-      fileUrl: doc.storage_url,
-      uploadedAt: doc.created_at,
+      fileUrl: doc.storage_url ?? '',
+      uploadedAt: doc.created_at ?? '',
       status: (doc.verification_status || 'pending') as 'pending' | 'approved' | 'rejected',
-      verifiedAt: doc.verified_at,
-      verifiedBy: doc.verified_by,
-      rejectionReason: doc.rejection_reason,
+      verifiedAt: doc.verified_at ?? undefined,
+      verifiedBy: undefined, // TODO: doc.verified_by,
+      rejectionReason: undefined, // TODO: doc.rejection_reason,
     }))
   }
 

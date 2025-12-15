@@ -1,23 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader, FormWrapper } from '@/components/templates'
 import { Button } from '@/components/ui/button'
-import { Input as _Input } from '@/components/ui/input'
-import { Label as _Label } from '@/components/ui/label'
-import { Textarea as _Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  Select as _Select,
-  SelectContent as _SelectContent,
-  SelectItem as _SelectItem,
-  SelectTrigger as _SelectTrigger,
-  SelectValue as _SelectValue,
-} from '@/components/ui/select'
 import {
   FileText,
   CheckCircle2,
@@ -25,191 +15,205 @@ import {
   AlertCircle,
   Download,
   PenTool,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
+import { useEmployeeProfile } from '@/lib/hooks'
+import {
+  useOnboardingDocuments,
+  useEnsureOnboardingDocuments,
+  useSendForSignature,
+  useSignDocument,
+  useCompleteOnboardingDocuments,
+} from '@/lib/hooks'
 
 const documentsSchema = z.object({
-  agreement_type: z.enum([
-    'employment_agreement',
-    'confidentiality',
-    'ip_assignment',
-    'non_compete',
-  ]),
   read_and_understood: z.boolean().refine((val) => val === true, 'Must confirm understanding'),
   signature_consent: z.boolean().refine((val) => val === true, 'Signature consent required'),
 })
 
 type DocumentsFormData = z.infer<typeof documentsSchema>
 
-interface Document {
+interface OnboardingDocument {
   id: string
-  name: string
-  type: 'employment_agreement' | 'confidentiality' | 'ip_assignment' | 'non_compete'
-  status: 'pending' | 'sent' | 'signed' | 'failed'
-  sent_at?: string
-  signed_at?: string
-  pages: number
+  file_name: string
+  document_type: string
+  signature_status?: string | null
+  is_signed?: boolean | null
+  signed_at?: string | null
+  signature_sent_at?: string | null
 }
 
-const DOCUMENTS: Document[] = [
-  {
-    id: 'doc-001',
-    name: 'Employment Agreement',
-    type: 'employment_agreement',
-    status: 'pending',
-    pages: 8,
-  },
-  {
-    id: 'doc-002',
-    name: 'Confidentiality Agreement',
-    type: 'confidentiality',
-    status: 'pending',
-    pages: 4,
-  },
-  {
-    id: 'doc-003',
-    name: 'Intellectual Property Assignment',
-    type: 'ip_assignment',
-    status: 'pending',
-    pages: 3,
-  },
-  {
-    id: 'doc-004',
-    name: 'Non-Compete Agreement',
-    type: 'non_compete',
-    status: 'pending',
-    pages: 2,
-  },
-]
+const getDocumentDisplayName = (docType: string): string => {
+  const names: Record<string, string> = {
+    employment_agreement: 'Employment Agreement',
+    confidentiality: 'Confidentiality Agreement',
+    ip_assignment: 'Intellectual Property Assignment',
+    non_compete: 'Non-Compete Agreement',
+    offer_letter: 'Offer Letter',
+    appointment_letter: 'Appointment Letter',
+  }
+  return names[docType] || docType
+}
+
+const getDocumentPages = (docType: string): number => {
+  const pages: Record<string, number> = {
+    employment_agreement: 8,
+    confidentiality: 4,
+    ip_assignment: 3,
+    non_compete: 2,
+    offer_letter: 2,
+    appointment_letter: 3,
+  }
+  return pages[docType] || 1
+}
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>(DOCUMENTS)
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
-  const [signingInProgress, setSigningInProgress] = useState<string | null>(null)
-  const [showSignatureFlow, setShowSignatureFlow] = useState(false)
-  const [isSubmittingAll, setIsSubmittingAll] = useState(false)
+  const { user } = useAuth()
+  const employeeId = user?.id
+  const { data: profile } = useEmployeeProfile(employeeId)
+
+  const [readAndUnderstood, setReadAndUnderstood] = useState(false)
+  const [signatureConsent, setSignatureConsent] = useState(false)
+  const [signingDocId, setSigningDocId] = useState<string | null>(null)
+
+  // Hooks
+  const { data: documents = [], isLoading, refetch } = useOnboardingDocuments(employeeId)
+  const ensureDocuments = useEnsureOnboardingDocuments()
+  const sendForSignature = useSendForSignature()
+  const signDocument = useSignDocument()
+  const completeOnboarding = useCompleteOnboardingDocuments()
 
   const {
     handleSubmit,
-    control: _control,
     formState: { errors },
-    reset,
   } = useForm<DocumentsFormData>({
     resolver: zodResolver(documentsSchema),
     defaultValues: {
-      agreement_type: 'employment_agreement',
       read_and_understood: false,
       signature_consent: false,
     },
   })
 
-  const handleSendForSignature = async (doc: Document) => {
-    try {
-      setSigningInProgress(doc.id)
-      setSelectedDocument(doc)
-      setShowSignatureFlow(true)
-
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-
-      setDocuments((prev) =>
-        prev.map((d) =>
-          d.id === doc.id
-            ? {
-                ...d,
-                status: 'sent',
-                sent_at: new Date().toLocaleTimeString(),
-              }
-            : d
-        )
+  // Ensure documents exist on mount
+  useEffect(() => {
+    if (employeeId && profile?.company_id && documents.length === 0 && !isLoading) {
+      ensureDocuments.mutate(
+        { employeeId, companyId: profile.company_id },
+        {
+          onSuccess: () => {
+            refetch()
+          },
+        }
       )
+    }
+  }, [employeeId, profile?.company_id, documents.length, isLoading, ensureDocuments, refetch])
 
-      toast.success(`${doc.name} sent for signature`)
+  const handleSendForSignature = async (doc: OnboardingDocument) => {
+    if (!employeeId || !user?.email) {
+      toast.error('User not authenticated')
+      return
+    }
+
+    try {
+      setSigningDocId(doc.id)
+      await sendForSignature.mutateAsync({
+        documentId: doc.id,
+        employeeEmail: user.email,
+        employeeId,
+      })
+      toast.success(`${getDocumentDisplayName(doc.document_type)} sent for signature`)
+      refetch()
     } catch (error) {
-      console.error('Error sending document:', error)
-      toast.error('Failed to send document')
+      toast.error(error instanceof Error ? error.message : 'Failed to send document')
     } finally {
-      setSigningInProgress(null)
-      setTimeout(() => setShowSignatureFlow(false), 500)
+      setSigningDocId(null)
     }
   }
 
-  const handleSignDocument = async (doc: Document) => {
+  const handleSignDocument = async (doc: OnboardingDocument) => {
+    if (!employeeId || !user?.email) {
+      toast.error('User not authenticated')
+      return
+    }
+
     try {
-      setSigningInProgress(doc.id)
-
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      setDocuments((prev) =>
-        prev.map((d) =>
-          d.id === doc.id
-            ? {
-                ...d,
-                status: 'signed',
-                signed_at: new Date().toLocaleTimeString(),
-              }
-            : d
-        )
-      )
-
-      toast.success(`${doc.name} signed successfully`)
+      setSigningDocId(doc.id)
+      await signDocument.mutateAsync({
+        documentId: doc.id,
+        signerId: employeeId,
+        signerName: profile?.full_name || user.email,
+        signerEmail: user.email,
+        employeeId,
+      })
+      toast.success(`${getDocumentDisplayName(doc.document_type)} signed successfully`)
+      refetch()
     } catch (error) {
-      console.error('Error signing document:', error)
-      toast.error('Failed to sign document')
+      toast.error(error instanceof Error ? error.message : 'Failed to sign document')
     } finally {
-      setSigningInProgress(null)
+      setSigningDocId(null)
     }
   }
 
   const onSubmit = async () => {
+    if (!employeeId) {
+      toast.error('User not authenticated')
+      return
+    }
+
+    const unsignedDocs = documents.filter((d) => !d.is_signed)
+    if (unsignedDocs.length > 0) {
+      toast.error('All documents must be signed before completion')
+      return
+    }
+
     try {
-      setIsSubmittingAll(true)
-
-      const unsignedDocs = documents.filter((d) => d.status !== 'signed')
-      if (unsignedDocs.length > 0) {
-        toast.error('All documents must be signed before completion')
-        return
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
+      await completeOnboarding.mutateAsync({ employeeId })
       toast.success('All documents signed successfully!')
-      reset()
     } catch (error) {
-      console.error('Error submitting documents:', error)
-      toast.error('Failed to complete document signing')
-    } finally {
-      setIsSubmittingAll(false)
+      toast.error(error instanceof Error ? error.message : 'Failed to complete document signing')
     }
   }
 
-  const getDocumentIcon = (status: Document['status']) => {
+  const getDocumentStatus = (doc: OnboardingDocument): 'pending' | 'sent' | 'signed' => {
+    if (doc.is_signed) return 'signed'
+    if (doc.signature_status === 'sent') return 'sent'
+    return 'pending'
+  }
+
+  const getDocumentIcon = (status: 'pending' | 'sent' | 'signed') => {
     switch (status) {
       case 'signed':
         return <CheckCircle2 className="w-5 h-5 text-green-600" />
       case 'sent':
         return <Clock className="w-5 h-5 text-blue-600" />
-      case 'failed':
-        return <AlertCircle className="w-5 h-5 text-red-600" />
       default:
         return <FileText className="w-5 h-5 text-gray-400" />
     }
   }
 
-  const getStatusBadge = (status: Document['status']) => {
+  const getStatusBadge = (status: 'pending' | 'sent' | 'signed') => {
     switch (status) {
       case 'signed':
         return <Badge className="bg-green-100 text-green-800">Signed</Badge>
       case 'sent':
         return <Badge className="bg-blue-100 text-blue-800">Pending Signature</Badge>
-      case 'failed':
-        return <Badge className="bg-red-100 text-red-800">Failed</Badge>
       default:
         return <Badge variant="secondary">Pending</Badge>
     }
   }
 
-  const completedCount = documents.filter((d) => d.status === 'signed').length
-  const totalCount = documents.length
+  const completedCount = documents.filter((d) => d.is_signed).length
+  const totalCount = documents.length || 4
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -234,7 +238,7 @@ export default function DocumentsPage() {
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(completedCount / totalCount) * 100}%` }}
+            style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
           ></div>
         </div>
       </Card>
@@ -244,9 +248,13 @@ export default function DocumentsPage() {
         description="Review and electronically sign all required documents using Zoho Sign"
         onSubmit={handleSubmit(onSubmit)}
         submitLabel={
-          isSubmittingAll ? 'Completing...' : completedCount === totalCount ? 'Complete' : 'Review'
+          completeOnboarding.isPending
+            ? 'Completing...'
+            : completedCount === totalCount
+              ? 'Complete'
+              : 'Review'
         }
-        isLoading={isSubmittingAll}
+        isLoading={completeOnboarding.isPending}
       >
         <div className="space-y-6">
           <div className="p-4 bg-blue-50 border border-blue-200 rounded space-y-2">
@@ -263,119 +271,114 @@ export default function DocumentsPage() {
           </div>
 
           <div className="space-y-3">
-            {documents.map((doc) => (
-              <Card key={doc.id} className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1">
-                      {getDocumentIcon(doc.status)}
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{doc.name}</h4>
-                        <p className="text-sm text-gray-600">{doc.pages} pages</p>
+            {documents.map((doc) => {
+              const status = getDocumentStatus(doc)
+              const isProcessing = signingDocId === doc.id
+
+              return (
+                <Card key={doc.id} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        {getDocumentIcon(status)}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">
+                            {getDocumentDisplayName(doc.document_type)}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {getDocumentPages(doc.document_type)} pages
+                          </p>
+                        </div>
                       </div>
+                      <div className="flex items-center gap-2">{getStatusBadge(status)}</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(doc.status)}
-                    </div>
-                  </div>
 
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="w-4 h-4" />
-                      Preview
-                    </Button>
-
-                    {doc.status === 'pending' && (
+                    <div className="flex gap-2 pt-2">
                       <Button
                         type="button"
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleSendForSignature(doc)}
-                        disabled={signingInProgress === doc.id}
                         className="flex items-center gap-2"
                       >
-                        {signingInProgress === doc.id ? (
-                          <>
-                            <Clock className="w-4 h-4 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            <PenTool className="w-4 h-4" />
-                            Send for Signature
-                          </>
-                        )}
+                        <Download className="w-4 h-4" />
+                        Preview
                       </Button>
-                    )}
 
-                    {doc.status === 'sent' && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => handleSignDocument(doc)}
-                        disabled={signingInProgress === doc.id}
-                        className="flex items-center gap-2"
-                      >
-                        {signingInProgress === doc.id ? (
-                          <>
-                            <Clock className="w-4 h-4 animate-spin" />
-                            Signing...
-                          </>
-                        ) : (
-                          <>
-                            <PenTool className="w-4 h-4" />
-                            Sign Now
-                          </>
-                        )}
-                      </Button>
-                    )}
+                      {status === 'pending' && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleSendForSignature(doc)}
+                          disabled={isProcessing}
+                          className="flex items-center gap-2"
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <PenTool className="w-4 h-4" />
+                              Send for Signature
+                            </>
+                          )}
+                        </Button>
+                      )}
 
-                    {doc.status === 'signed' && (
-                      <div className="flex items-center gap-2 text-green-700">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span className="text-sm font-medium">Signed at {doc.signed_at}</span>
-                      </div>
-                    )}
+                      {status === 'sent' && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleSignDocument(doc)}
+                          disabled={isProcessing}
+                          className="flex items-center gap-2"
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Signing...
+                            </>
+                          ) : (
+                            <>
+                              <PenTool className="w-4 h-4" />
+                              Sign Now
+                            </>
+                          )}
+                        </Button>
+                      )}
+
+                      {status === 'signed' && doc.signed_at && (
+                        <div className="flex items-center gap-2 text-green-700">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Signed at {new Date(doc.signed_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              )
+            })}
           </div>
 
-          {showSignatureFlow && selectedDocument && (
-            <Card className="p-4 bg-blue-50 border border-blue-200">
-              <div className="space-y-3">
-                <h4 className="font-semibold text-blue-900">Signing Flow</h4>
-                <div className="space-y-2 text-sm text-blue-800">
-                  <p>
-                    ✓ Document sent to your registered email (
-                    <span className="font-medium">your.email@company.com</span>)
-                  </p>
-                  <p>✓ Click the link in the email to open Zoho Sign</p>
-                  <p>✓ Review the document</p>
-                  <p>✓ Draw your signature or upload a signature image</p>
-                  <p>✓ Complete the signature process</p>
-                </div>
-              </div>
-            </Card>
+          {documents.length === 0 && !isLoading && (
+            <div className="text-center py-8">
+              <FileText className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No documents</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Documents will be generated for your onboarding process.
+              </p>
+            </div>
           )}
 
           <div className="space-y-2">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                {...{
-                  name: 'read_and_understood',
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                    if (e.target.checked) {
-                      // Form update handled by Controller
-                    }
-                  },
-                }}
+                checked={readAndUnderstood}
+                onChange={(e) => setReadAndUnderstood(e.target.checked)}
                 className="mt-1"
               />
               <span className="text-sm text-gray-700">
@@ -391,14 +394,8 @@ export default function DocumentsPage() {
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                {...{
-                  name: 'signature_consent',
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                    if (e.target.checked) {
-                      // Form update handled by Controller
-                    }
-                  },
-                }}
+                checked={signatureConsent}
+                onChange={(e) => setSignatureConsent(e.target.checked)}
                 className="mt-1"
               />
               <span className="text-sm text-gray-700">

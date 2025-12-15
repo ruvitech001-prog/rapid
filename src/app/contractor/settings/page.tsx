@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useUserPreferences, useUpdateUserPreferences, useChangePassword } from '@/lib/hooks';
+import { useAuth } from '@/lib/auth';
 
 export default function ContractorSettingsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'preferences' | 'notifications' | 'security'>('preferences');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -84,7 +86,7 @@ export default function ContractorSettingsPage() {
     }
 
     changePassword.mutate(
-      { currentPassword, newPassword },
+      { email: user?.email || '', currentPassword, newPassword },
       {
         onSuccess: () => {
           setShowPasswordModal(false);

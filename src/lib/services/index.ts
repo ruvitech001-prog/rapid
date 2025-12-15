@@ -175,3 +175,48 @@ export type {
   UpdateTeamInput,
   AssignTeamMemberInput,
 } from './teams.service'
+
+// Third-party integration services
+
+// Springverify (eKYC/BGV)
+export { springverifyService } from './springverify.service'
+export type {
+  SpringverifyCandidate,
+  SpringverifyVerification,
+  SpringverifyStatus,
+  SpringverifyWebhookPayload,
+  SpringverifyCheckType,
+} from './springverify.service'
+
+// Zoho Sign (E-Signatures)
+export { zohoSignService } from './zoho-sign.service'
+export type {
+  ZohoSignRequest,
+  ZohoWebhookPayload,
+} from './zoho-sign.service'
+
+// Plum (Health Insurance)
+export { plumService } from './plum.service'
+export type {
+  PlumInsurancePlan,
+  PlumMember,
+  PlumDependent,
+  PlumPolicy,
+  PlumWebhookPayload,
+  EnrollMemberInput,
+  AddDependentInput,
+} from './plum.service'
+
+// Keka (HRMS/Payroll)
+export { kekaService } from './keka.service'
+export type {
+  KekaEmployee,
+  KekaCreateEmployeeInput,
+  KekaSalaryComponent,
+  KekaSalary,
+  KekaLeaveType,
+  KekaLeaveBalance,
+  KekaLeaveRequest,
+  KekaCreateLeaveRequestInput,
+  KekaWebhookPayload,
+} from './keka.service'

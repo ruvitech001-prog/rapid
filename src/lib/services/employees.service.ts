@@ -37,7 +37,6 @@ class EmployeesServiceClass extends BaseService {
     }
 
     if (!contracts || contracts.length === 0) {
-      console.log('No contracts found for company:', companyId)
       return []
     }
 

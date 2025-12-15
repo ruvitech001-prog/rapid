@@ -59,10 +59,16 @@ export default function InvoicesPage() {
 
   // Handler: Pay Invoice
   const handlePayInvoice = async (invoiceId: string) => {
+    if (!companyId) {
+      toast.error('Company ID is required to process payment')
+      return
+    }
+
     setProcessingId(invoiceId)
     try {
       await payInvoiceMutation.mutateAsync({
         invoiceId,
+        companyId,
         paymentReference: `PAY-${Date.now()}`
       })
       toast.success('Invoice marked as paid')
@@ -77,9 +83,14 @@ export default function InvoicesPage() {
 
   // Handler: Approve Invoice
   const handleApproveInvoice = async (invoiceId: string) => {
+    if (!companyId) {
+      toast.error('Company ID is required to approve invoice')
+      return
+    }
+
     setProcessingId(invoiceId)
     try {
-      await approveInvoiceMutation.mutateAsync(invoiceId)
+      await approveInvoiceMutation.mutateAsync({ invoiceId, companyId })
       toast.success('Invoice approved')
       setIsDetailModalOpen(false)
     } catch (error) {

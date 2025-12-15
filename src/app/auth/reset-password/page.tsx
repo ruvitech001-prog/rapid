@@ -52,9 +52,8 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    // Mock password reset
+    // TODO: Implement actual password reset via Supabase Auth
     setTimeout(() => {
-      console.log('Password reset successful');
       router.push('/auth/login?reset=success');
     }, 1000);
   };

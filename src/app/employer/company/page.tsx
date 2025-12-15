@@ -48,7 +48,7 @@ export default function CompanyPage() {
   };
 
   const handleSave = () => {
-    console.log('Saving company info:', company);
+    // TODO: Implement company update via API
   };
 
   const inputClass = "w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";

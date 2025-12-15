@@ -4,11 +4,14 @@ import { useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   verificationService,
+  bgvService,
   type VerificationType,
   type VerificationResult,
   type DocumentUploadResult,
   type FaceMatchResult,
   type LivenessResult,
+  type BGVCheck,
+  type BGVInitiationResult,
 } from '@/lib/services/verification.service'
 
 // Rate limit configuration: 1 request per 2 seconds
@@ -18,6 +21,7 @@ const verificationKeys = {
   all: ['verification'] as const,
   status: (entityType: 'employee' | 'contractor', entityId: string) =>
     [...verificationKeys.all, 'status', entityType, entityId] as const,
+  bgv: (employeeId: string) => [...verificationKeys.all, 'bgv', employeeId] as const,
 }
 
 export function useVerificationStatus(
@@ -206,6 +210,104 @@ export function usePerformLivenessCheck() {
     },
     onError: (error) => {
       console.error('[Liveness Check] Failed:', error)
+    },
+  })
+}
+
+// BGV Hooks
+
+/**
+ * Get BGV checks for an employee
+ */
+export function useBGVChecks(employeeId: string | undefined) {
+  return useQuery<BGVCheck[]>({
+    queryKey: verificationKeys.bgv(employeeId!),
+    queryFn: () => bgvService.getBGVChecks(employeeId!),
+    enabled: !!employeeId,
+    staleTime: 30000,
+  })
+}
+
+/**
+ * Initiate BGV for an employee
+ */
+export function useInitiateBGV() {
+  const queryClient = useQueryClient()
+  const lastCallRef = useRef<number>(0)
+
+  return useMutation<BGVInitiationResult, Error, { employeeId: string }>({
+    mutationFn: async ({ employeeId }) => {
+      const now = Date.now()
+      if (now - lastCallRef.current < RATE_LIMIT_MS) {
+        throw new Error('Please wait before trying again')
+      }
+      lastCallRef.current = now
+
+      return bgvService.initiateBGV(employeeId)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: verificationKeys.bgv(variables.employeeId),
+      })
+    },
+    onError: (error) => {
+      console.error('[BGV Initiation] Failed:', error)
+    },
+  })
+}
+
+/**
+ * Process a BGV check
+ */
+export function useProcessBGVCheck() {
+  const queryClient = useQueryClient()
+  const lastCallRef = useRef<number>(0)
+
+  return useMutation<BGVCheck, Error, { checkId: string; employeeId: string }>({
+    mutationFn: async ({ checkId }) => {
+      const now = Date.now()
+      if (now - lastCallRef.current < RATE_LIMIT_MS) {
+        throw new Error('Please wait before trying again')
+      }
+      lastCallRef.current = now
+
+      return bgvService.processBGVCheck(checkId)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: verificationKeys.bgv(variables.employeeId),
+      })
+    },
+    onError: (error) => {
+      console.error('[BGV Check Processing] Failed:', error)
+    },
+  })
+}
+
+/**
+ * Complete BGV for an employee
+ */
+export function useCompleteBGV() {
+  const queryClient = useQueryClient()
+  const lastCallRef = useRef<number>(0)
+
+  return useMutation<boolean, Error, { employeeId: string }>({
+    mutationFn: async ({ employeeId }) => {
+      const now = Date.now()
+      if (now - lastCallRef.current < RATE_LIMIT_MS) {
+        throw new Error('Please wait before trying again')
+      }
+      lastCallRef.current = now
+
+      return bgvService.completeBGV(employeeId)
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: verificationKeys.bgv(variables.employeeId),
+      })
+    },
+    onError: (error) => {
+      console.error('[BGV Completion] Failed:', error)
     },
   })
 }

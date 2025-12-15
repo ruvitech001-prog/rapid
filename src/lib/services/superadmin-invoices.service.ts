@@ -188,13 +188,7 @@ class SuperAdminInvoicesServiceClass extends BaseService {
     }
 
     // In production, integrate with email service (SendGrid, AWS SES, etc.)
-    // For now, we'll log and return success
-    console.log('[Payment Reminder] Sending reminder for invoice:', {
-      invoiceNumber: invoice.invoice_number,
-      amount: invoice.total_amount,
-      dueDate: invoice.due_date,
-      contractor: (invoice.contractor as { full_name: string })?.full_name,
-    })
+    // TODO: Implement actual email sending
 
     return {
       success: true,
@@ -228,8 +222,9 @@ class SuperAdminInvoicesServiceClass extends BaseService {
     const { data: newInvoice, error } = await this.supabase
       .from('contractor_invoice')
       .insert({
-        contractor_id: data.contractorId,
-        contract_id: data.contractId,
+        // TODO: Type schema regeneration needed - contractor_id and contract_id exist but aren't recognized
+        contractor_id: data.contractorId ?? null,
+        contract_id: data.contractId ?? null,
         invoice_number: invoiceNumber,
         invoice_date: now.toISOString().split('T')[0],
         billing_period_start: data.billingPeriodStart,
@@ -244,7 +239,7 @@ class SuperAdminInvoicesServiceClass extends BaseService {
         total_amount: totalAmount,
         status: 'draft',
         due_date: dueDate.toISOString().split('T')[0],
-      })
+      } as any)
       .select(`
         id,
         invoice_number,

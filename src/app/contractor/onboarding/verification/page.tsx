@@ -50,7 +50,7 @@ export default function ContractorVerificationPage() {
   const performLivenessCheck = usePerformLivenessCheck();
 
   const completedSteps = verificationSteps.filter(s => s.status === 'completed').length;
-  const contractorId = user?.contractorId || user?.id || '';
+  const contractorId = user?.id || '';
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
