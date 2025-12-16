@@ -25,6 +25,7 @@ import { usePermissions, PermissionGate } from '@/lib/hooks/use-permissions'
 import { toast } from 'sonner'
 import type { ClientDetails, CreateClientInput } from '@/lib/hooks'
 import { Label } from '@/components/ui/label'
+import { colors } from '@/lib/design-tokens'
 
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState('')

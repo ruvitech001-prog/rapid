@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { colors } from '@/lib/design-tokens'
 
 export default function InvoicesPage() {
   const { user } = useAuth()
@@ -132,7 +133,7 @@ export default function InvoicesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
       </div>
     )
   }
@@ -147,10 +148,10 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-          <p className="text-[#8593A3] mt-1">Manage contractor invoices</p>
+          <h1 className="text-2xl font-bold" style={{ color: colors.neutral900 }}>Invoices</h1>
+          <p className="mt-1" style={{ color: colors.neutral500 }}>Manage contractor invoices</p>
         </div>
-        <Button className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]" onClick={handleCreateInvoice}>
+        <Button className="gap-2 text-white" style={{ backgroundColor: colors.primary500 }} onClick={handleCreateInvoice}>
           <Plus className="h-4 w-4" />
           Create Invoice
         </Button>

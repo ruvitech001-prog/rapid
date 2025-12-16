@@ -56,6 +56,7 @@ import {
   useWithdrawEmployerRequest,
   type EmployerRequest,
 } from '@/lib/hooks'
+import { colors } from '@/lib/design-tokens'
 
 // ============================================================================
 // TYPES
@@ -307,15 +308,15 @@ export default function RequestsPage() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen" style={{ backgroundColor: colors.neutral50 }}>
       <div className="p-6 max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Requests</h1>
+          <h1 className="text-2xl font-semibold" style={{ color: colors.neutral900 }}>Requests</h1>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="bg-[#642DFC] hover:bg-[#5224D9] text-white">
+              <Button className="text-white" style={{ backgroundColor: colors.primary500 }}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create request
                 <ChevronDown className="w-4 h-4 ml-2" />
@@ -336,31 +337,25 @@ export default function RequestsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 border-b border-[#DEE4EB]">
+        <div className="flex gap-1 mb-6 border-b" style={{ borderColor: colors.border }}>
           <button
-            className={`px-4 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === 'your_requests'
-                ? 'text-[#642DFC]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className="px-4 py-3 text-sm font-medium transition-colors relative"
+            style={{ color: activeTab === 'your_requests' ? colors.primary500 : colors.neutral500 }}
             onClick={() => setActiveTab('your_requests')}
           >
             Your requests ({requests.length})
             {activeTab === 'your_requests' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#642DFC]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: colors.primary500 }} />
             )}
           </button>
           <button
-            className={`px-4 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === 'for_approval'
-                ? 'text-[#642DFC]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className="px-4 py-3 text-sm font-medium transition-colors relative"
+            style={{ color: activeTab === 'for_approval' ? colors.primary500 : colors.neutral500 }}
             onClick={() => setActiveTab('for_approval')}
           >
             For your approval ({statusCounts.pending})
             {activeTab === 'for_approval' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#642DFC]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: colors.primary500 }} />
             )}
           </button>
         </div>

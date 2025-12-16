@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
+import { colors } from '@/lib/design-tokens'
 import {
   useEmployeesForPayroll,
   useProcessPayroll,
@@ -82,7 +83,7 @@ export default function RunPayrollPage() {
   }
 
   const inputClass =
-    'h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20'
+    'h-10 px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2'
 
   return (
     <div className="space-y-6">
@@ -93,7 +94,7 @@ export default function RunPayrollPage() {
       </div>
 
       {/* Progress Steps */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+      <Card className="rounded-2xl border border-[colors.border] shadow-none">
         <CardContent className="p-6">
           <div className="flex items-center justify-center gap-4">
             <div
@@ -152,7 +153,7 @@ export default function RunPayrollPage() {
       {step === 'review' && (
         <>
           {/* Month Selection */}
-          <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+          <Card className="rounded-2xl border border-[colors.border] shadow-none">
             <CardContent className="p-5">
               <div className="space-y-2">
                 <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
@@ -170,7 +171,7 @@ export default function RunPayrollPage() {
 
           {/* Loading State */}
           {isLoading && (
-            <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+            <Card className="rounded-2xl border border-[colors.border] shadow-none">
               <CardContent className="p-12 text-center">
                 <Loader2 className="h-8 w-8 animate-spin text-[#586AF5] mx-auto mb-4" />
                 <p className="text-[#8593A3]">Loading employee payroll data...</p>
@@ -190,7 +191,7 @@ export default function RunPayrollPage() {
 
           {/* No Employees State */}
           {!isLoading && !isError && payrollData.length === 0 && (
-            <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+            <Card className="rounded-2xl border border-[colors.border] shadow-none">
               <CardContent className="p-12 text-center">
                 <AlertCircle className="h-8 w-8 text-[#8593A3] mx-auto mb-4" />
                 <p className="text-gray-900 font-medium">No employees found</p>
@@ -205,7 +206,7 @@ export default function RunPayrollPage() {
           {!isLoading && payrollData.length > 0 && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+                <Card className="rounded-2xl border border-[colors.border] shadow-none bg-[#EBF5FF]">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div>
@@ -223,7 +224,7 @@ export default function RunPayrollPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+                <Card className="rounded-2xl border border-[colors.border] shadow-none bg-white">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div>
@@ -241,7 +242,7 @@ export default function RunPayrollPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+                <Card className="rounded-2xl border border-[colors.border] shadow-none bg-white">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div>
@@ -261,7 +262,7 @@ export default function RunPayrollPage() {
               </div>
 
               {/* Payroll Data Table */}
-              <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+              <Card className="rounded-2xl border border-[colors.border] shadow-none overflow-hidden">
                 <CardHeader className="pb-0">
                   <CardTitle className="text-gray-900">
                     Employee Payroll Details ({payrollData.length} employees)
@@ -270,7 +271,7 @@ export default function RunPayrollPage() {
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <table className="min-w-full">
-                      <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
+                      <thead className="bg-[#F4F7FA] border-y border-[colors.border]">
                         <tr>
                           <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
                             EMPLOYEE
@@ -332,7 +333,7 @@ export default function RunPayrollPage() {
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
-                  className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA] gap-2"
+                  className="border-[colors.border] text-gray-700 hover:bg-[#F4F7FA] gap-2"
                 >
                   <Download className="h-4 w-4" />
                   Download Preview
@@ -359,7 +360,7 @@ export default function RunPayrollPage() {
 
       {/* Processing Step */}
       {step === 'process' && (
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <Card className="rounded-2xl border border-[colors.border] shadow-none">
           <CardContent className="p-12 text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#586AF5] mx-auto mb-4"></div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Payroll...</h2>
@@ -372,7 +373,7 @@ export default function RunPayrollPage() {
 
       {/* Complete Step */}
       {step === 'complete' && processedResult && (
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <Card className="rounded-2xl border border-[colors.border] shadow-none">
           <CardContent className="p-12 text-center">
             <div className="w-16 h-16 bg-[#2DD4BF]/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-[#2DD4BF]" />
@@ -416,13 +417,13 @@ export default function RunPayrollPage() {
             <div className="flex justify-center gap-3">
               <Button
                 variant="outline"
-                className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]"
+                className="border-[colors.border] text-gray-700 hover:bg-[#F4F7FA]"
               >
                 Download Payslips
               </Button>
               <Button
                 variant="outline"
-                className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]"
+                className="border-[colors.border] text-gray-700 hover:bg-[#F4F7FA]"
               >
                 Download Report
               </Button>

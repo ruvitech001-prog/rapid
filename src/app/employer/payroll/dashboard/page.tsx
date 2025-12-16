@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
+import { colors } from '@/lib/design-tokens'
 import {
   useTotalPayrollCost,
   useCompanyPayrollSummary,
@@ -136,12 +137,12 @@ export default function PayrollDashboardPage() {
       cell: ({ row }) => {
         const status = row.getValue('status') as string
         const statusConfig = {
-          pending: { label: 'Pending', class: 'bg-orange-100 text-orange-800' },
-          processed: { label: 'Processed', class: 'bg-blue-100 text-blue-800' },
-          completed: { label: 'Completed', class: 'bg-green-100 text-green-800' },
+          pending: { label: 'Pending', style: { backgroundColor: `${colors.warning600}15`, color: colors.warning600 } },
+          processed: { label: 'Processed', style: { backgroundColor: `${colors.iconBlue}15`, color: colors.iconBlue } },
+          completed: { label: 'Completed', style: { backgroundColor: `${colors.success600}15`, color: colors.success600 } },
         }
         const config = statusConfig[status as keyof typeof statusConfig]
-        return <Badge variant="outline" className={config.class}>{config.label}</Badge>
+        return <Badge variant="outline" style={config.style}>{config.label}</Badge>
       },
     },
     {
@@ -178,7 +179,7 @@ export default function PayrollDashboardPage() {
     subtitle,
     icon: Icon,
     featured = false,
-    color = '#586AF5',
+    color = colors.iconBlue,
   }: {
     title: string
     value: string | number
@@ -187,13 +188,13 @@ export default function PayrollDashboardPage() {
     featured?: boolean
     color?: string
   }) => (
-    <Card className={`rounded-2xl border border-[#DEE4EB] shadow-none ${featured ? 'bg-[#EBF5FF]' : 'bg-white'}`}>
+    <Card className="rounded-2xl shadow-none" style={{ borderColor: colors.border, backgroundColor: featured ? colors.secondaryBlue50 : colors.white }}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider uppercase">{title}</p>
-            <p className="text-3xl font-bold mt-2 text-gray-900">{value}</p>
-            <p className="text-sm text-[#8593A3] mt-1">{subtitle}</p>
+            <p className="text-[11px] font-semibold tracking-wider uppercase" style={{ color: colors.neutral500 }}>{title}</p>
+            <p className="text-3xl font-bold mt-2" style={{ color: colors.neutral900 }}>{value}</p>
+            <p className="text-sm mt-1" style={{ color: colors.neutral500 }}>{subtitle}</p>
           </div>
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center"
@@ -233,10 +234,10 @@ export default function PayrollDashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payroll</h1>
-          <p className="text-[#8593A3] mt-1">Manage and process employee payroll</p>
+          <h1 className="text-2xl font-bold" style={{ color: colors.neutral900 }}>Payroll</h1>
+          <p className="mt-1" style={{ color: colors.neutral500 }}>Manage and process employee payroll</p>
         </div>
-        <Button size="lg" className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]" onClick={handleRunPayroll}>
+        <Button size="lg" className="gap-2" style={{ backgroundColor: colors.primary500 }} onClick={handleRunPayroll}>
           <Plus className="h-4 w-4" />
           Run Payroll
         </Button>
@@ -250,80 +251,80 @@ export default function PayrollDashboardPage() {
           subtitle="Pending Processing"
           icon={<DollarSign className="h-6 w-6" />}
           featured={true}
-          color="#586AF5"
+          color={colors.iconBlue}
         />
         <StatCard
           title="Total Employees"
           value={employeeCount}
           subtitle="Active this month"
           icon={<Users className="h-6 w-6" />}
-          color="#2DD4BF"
+          color={colors.aqua400}
         />
         <StatCard
           title="Average Salary"
           value={formatAmount(averageSalary)}
           subtitle="Per employee"
           icon={<TrendingUp className="h-6 w-6" />}
-          color="#CC7A00"
+          color={colors.warning600}
         />
         <StatCard
           title="Total Deductions"
           value={formatAmount(totalDeductions)}
           subtitle="Tax + EPF + ESI"
           icon={<FileText className="h-6 w-6" />}
-          color="#FF7373"
+          color={colors.error600}
         />
       </div>
 
       {/* Current Month Status */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+      <Card className="rounded-2xl shadow-none" style={{ borderColor: colors.border }}>
         <CardHeader className="pb-4">
-          <CardTitle className="text-gray-900">Current Month Status</CardTitle>
+          <CardTitle style={{ color: colors.neutral900 }}>Current Month Status</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Alert */}
-          <div className="flex items-start gap-4 p-4 bg-[#CC7A00]/5 border border-[#CC7A00]/20 rounded-xl">
+          <div className="flex items-start gap-4 p-4 rounded-xl" style={{ backgroundColor: `${colors.warning600}0D`, borderWidth: '1px', borderColor: `${colors.warning600}33` }}>
             <div className="flex-shrink-0">
-              <div className="h-10 w-10 bg-[#CC7A00]/10 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-[#CC7A00]" />
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${colors.warning600}1A` }}>
+                <Clock className="h-5 w-5" style={{ color: colors.warning600 }} />
               </div>
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-gray-900">Payroll Processing Due</p>
-              <p className="text-sm text-[#8593A3]">{currentMonthLabel} payroll is pending processing</p>
+              <p className="font-semibold" style={{ color: colors.neutral900 }}>Payroll Processing Due</p>
+              <p className="text-sm" style={{ color: colors.neutral500 }}>{currentMonthLabel} payroll is pending processing</p>
             </div>
-            <Button className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]" onClick={handleRunPayroll}>
+            <Button className="gap-2" style={{ backgroundColor: colors.primary500 }} onClick={handleRunPayroll}>
               Process Now
             </Button>
           </div>
 
           {/* Status Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 border border-[#DEE4EB] rounded-xl bg-white">
-              <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">ATTENDANCE VERIFIED</p>
+            <div className="p-4 rounded-xl" style={{ borderWidth: '1px', borderColor: colors.border, backgroundColor: colors.white }}>
+              <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>ATTENDANCE VERIFIED</p>
               <div className="flex items-center justify-between mt-3">
-                <p className="text-2xl font-bold text-[#2DD4BF]">
+                <p className="text-2xl font-bold" style={{ color: colors.aqua400 }}>
                   {attendanceStats?.presentToday || 0}/{attendanceStats?.totalEmployees || employeeCount}
                 </p>
-                <div className="w-8 h-8 rounded-lg bg-[#2DD4BF]/10 flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-[#2DD4BF]" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${colors.aqua400}1A` }}>
+                  <CheckCircle className="h-5 w-5" style={{ color: colors.aqua400 }} />
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border border-[#DEE4EB] rounded-xl bg-white">
-              <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">LEAVE APPLICATIONS</p>
+            <div className="p-4 rounded-xl" style={{ borderWidth: '1px', borderColor: colors.border, backgroundColor: colors.white }}>
+              <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>LEAVE APPLICATIONS</p>
               <div className="flex items-center justify-between mt-3">
-                <p className="text-2xl font-bold text-gray-900">{pendingLeaves || 0}</p>
-                <Badge className="bg-[#CC7A00]/10 text-[#CC7A00] border-0 hover:bg-[#CC7A00]/20">Pending</Badge>
+                <p className="text-2xl font-bold" style={{ color: colors.neutral900 }}>{pendingLeaves || 0}</p>
+                <Badge className="border-0" style={{ backgroundColor: `${colors.warning600}1A`, color: colors.warning600 }}>Pending</Badge>
               </div>
             </div>
 
-            <div className="p-4 border border-[#DEE4EB] rounded-xl bg-white">
-              <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">EXPENSE CLAIMS</p>
+            <div className="p-4 rounded-xl" style={{ borderWidth: '1px', borderColor: colors.border, backgroundColor: colors.white }}>
+              <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>EXPENSE CLAIMS</p>
               <div className="flex items-center justify-between mt-3">
-                <p className="text-2xl font-bold text-gray-900">{pendingExpenses || 0}</p>
-                <Badge className="bg-[#CC7A00]/10 text-[#CC7A00] border-0 hover:bg-[#CC7A00]/20">To process</Badge>
+                <p className="text-2xl font-bold" style={{ color: colors.neutral900 }}>{pendingExpenses || 0}</p>
+                <Badge className="border-0" style={{ backgroundColor: `${colors.warning600}1A`, color: colors.warning600 }}>To process</Badge>
               </div>
             </div>
           </div>
@@ -331,11 +332,11 @@ export default function PayrollDashboardPage() {
       </Card>
 
       {/* Payroll History Table */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+      <Card className="rounded-2xl shadow-none" style={{ borderColor: colors.border }}>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-gray-900">Payroll History</CardTitle>
-            <Link href="/employer/payroll" className="text-sm font-medium text-[#586AF5] hover:underline flex items-center gap-1">
+            <CardTitle style={{ color: colors.neutral900 }}>Payroll History</CardTitle>
+            <Link href="/employer/payroll" className="text-sm font-medium hover:underline flex items-center gap-1" style={{ color: colors.iconBlue }}>
               View all <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -343,8 +344,8 @@ export default function PayrollDashboardPage() {
         <CardContent>
           {payrollData.length === 0 ? (
             <div className="py-12 text-center">
-              <FileText className="h-12 w-12 text-[#8593A3] mx-auto mb-3" />
-              <p className="text-[#8593A3]">No payroll history found</p>
+              <FileText className="h-12 w-12 mx-auto mb-3" style={{ color: colors.neutral500 }} />
+              <p style={{ color: colors.neutral500 }}>No payroll history found</p>
             </div>
           ) : (
             <DataTable columns={columns} data={payrollData} />
@@ -353,39 +354,39 @@ export default function PayrollDashboardPage() {
       </Card>
 
       {/* Quick Actions */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+      <Card className="rounded-2xl shadow-none" style={{ borderColor: colors.border }}>
         <CardHeader className="pb-4">
-          <CardTitle className="text-gray-900">Quick Actions</CardTitle>
+          <CardTitle style={{ color: colors.neutral900 }}>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/employer/payroll/salary-structure" className="block">
-              <div className="h-full p-5 rounded-xl border border-[#DEE4EB] hover:border-[#586AF5] hover:bg-[#586AF5]/5 transition-all cursor-pointer">
-                <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center mb-4">
-                  <DollarSign className="h-6 w-6 text-[#586AF5]" />
+              <div className="h-full p-5 rounded-xl transition-all cursor-pointer" style={{ borderWidth: '1px', borderColor: colors.border }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${colors.iconBlue}1A` }}>
+                  <DollarSign className="h-6 w-6" style={{ color: colors.iconBlue }} />
                 </div>
-                <p className="font-semibold text-gray-900">Configure Salary Structure</p>
-                <p className="text-sm text-[#8593A3] mt-1">Set up salary components</p>
+                <p className="font-semibold" style={{ color: colors.neutral900 }}>Configure Salary Structure</p>
+                <p className="text-sm mt-1" style={{ color: colors.neutral500 }}>Set up salary components</p>
               </div>
             </Link>
 
             <Link href="/employer/compliance/epf" className="block">
-              <div className="h-full p-5 rounded-xl border border-[#DEE4EB] hover:border-[#2DD4BF] hover:bg-[#2DD4BF]/5 transition-all cursor-pointer">
-                <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center mb-4">
-                  <BarChart3 className="h-6 w-6 text-[#2DD4BF]" />
+              <div className="h-full p-5 rounded-xl transition-all cursor-pointer" style={{ borderWidth: '1px', borderColor: colors.border }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${colors.aqua400}1A` }}>
+                  <BarChart3 className="h-6 w-6" style={{ color: colors.aqua400 }} />
                 </div>
-                <p className="font-semibold text-gray-900">View Compliance Reports</p>
-                <p className="text-sm text-[#8593A3] mt-1">EPF, ESI, TDS reports</p>
+                <p className="font-semibold" style={{ color: colors.neutral900 }}>View Compliance Reports</p>
+                <p className="text-sm mt-1" style={{ color: colors.neutral500 }}>EPF, ESI, TDS reports</p>
               </div>
             </Link>
 
             <Link href="/employer/reports" className="block">
-              <div className="h-full p-5 rounded-xl border border-[#DEE4EB] hover:border-[#CC7A00] hover:bg-[#CC7A00]/5 transition-all cursor-pointer">
-                <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center mb-4">
-                  <Download className="h-6 w-6 text-[#CC7A00]" />
+              <div className="h-full p-5 rounded-xl transition-all cursor-pointer" style={{ borderWidth: '1px', borderColor: colors.border }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${colors.warning600}1A` }}>
+                  <Download className="h-6 w-6" style={{ color: colors.warning600 }} />
                 </div>
-                <p className="font-semibold text-gray-900">Download Payslips</p>
-                <p className="text-sm text-[#8593A3] mt-1">Bulk download options</p>
+                <p className="font-semibold" style={{ color: colors.neutral900 }}>Download Payslips</p>
+                <p className="text-sm mt-1" style={{ color: colors.neutral500 }}>Bulk download options</p>
               </div>
             </Link>
           </div>
@@ -403,23 +404,23 @@ export default function PayrollDashboardPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-[#F4F7FA] rounded-lg">
-                <p className="text-sm text-[#8593A3]">Total Employees</p>
-                <p className="text-2xl font-bold text-gray-900">{employeeCount}</p>
+              <div className="p-4 rounded-lg" style={{ backgroundColor: colors.neutral50 }}>
+                <p className="text-sm" style={{ color: colors.neutral500 }}>Total Employees</p>
+                <p className="text-2xl font-bold" style={{ color: colors.neutral900 }}>{employeeCount}</p>
               </div>
-              <div className="p-4 bg-[#F4F7FA] rounded-lg">
-                <p className="text-sm text-[#8593A3]">Total Amount</p>
-                <p className="text-2xl font-bold text-[#586AF5]">{formatAmount(monthlyPayroll)}</p>
+              <div className="p-4 rounded-lg" style={{ backgroundColor: colors.neutral50 }}>
+                <p className="text-sm" style={{ color: colors.neutral500 }}>Total Amount</p>
+                <p className="text-2xl font-bold" style={{ color: colors.iconBlue }}>{formatAmount(monthlyPayroll)}</p>
               </div>
             </div>
-            <div className="p-4 bg-[#CC7A00]/5 border border-[#CC7A00]/20 rounded-lg">
-              <p className="text-sm text-[#CC7A00]">
+            <div className="p-4 rounded-lg" style={{ backgroundColor: `${colors.warning600}0D`, borderWidth: '1px', borderColor: `${colors.warning600}33` }}>
+              <p className="text-sm" style={{ color: colors.warning600 }}>
                 <strong>Note:</strong> Please ensure all leave applications and expense claims are processed before running payroll.
               </p>
             </div>
             {(pendingLeaves || 0) > 0 && (
-              <div className="p-4 bg-[#FF7373]/5 border border-[#FF7373]/20 rounded-lg">
-                <p className="text-sm text-[#FF7373]">
+              <div className="p-4 rounded-lg" style={{ backgroundColor: `${colors.error600}0D`, borderWidth: '1px', borderColor: `${colors.error600}33` }}>
+                <p className="text-sm" style={{ color: colors.error600 }}>
                   There are <strong>{pendingLeaves}</strong> pending leave applications that need to be processed.
                 </p>
               </div>
@@ -432,7 +433,7 @@ export default function PayrollDashboardPage() {
             <Button
               onClick={handleProcessPayroll}
               disabled={isProcessing}
-              className="bg-[#642DFC] hover:bg-[#5020d9]"
+              style={{ backgroundColor: colors.primary500 }}
             >
               {isProcessing ? (
                 <>

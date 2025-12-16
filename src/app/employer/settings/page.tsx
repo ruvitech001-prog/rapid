@@ -52,6 +52,7 @@ import {
   type BGVSettings,
   type WelcomeKitSettings,
 } from './types';
+import { colors } from '@/lib/design-tokens';
 
 // Navigation items for settings sidebar
 const settingsNavItems = [

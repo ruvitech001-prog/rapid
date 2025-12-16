@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth'
 import { useEmployeeExpenses } from '@/lib/hooks'
+import { colors } from '@/lib/design-tokens'
 
 export default function ExpenseHistoryPage() {
   const { user } = useAuth()
@@ -69,7 +70,7 @@ export default function ExpenseHistoryPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
       </div>
     )
   }

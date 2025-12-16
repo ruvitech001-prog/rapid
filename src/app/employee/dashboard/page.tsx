@@ -36,45 +36,7 @@ import {
   useConfirmAssetReceipt,
 } from '@/lib/hooks'
 import { useAuth } from '@/lib/auth'
-
-// Figma Design Tokens
-const colors = {
-  primary500: '#642DFC',
-  primary100: '#E0D5FE',
-  primary50: '#F6F2FF',
-  iconBlue: '#586AF5',
-  neutral900: '#1B1D21',
-  neutral800: '#353B41',
-  neutral700: '#505862',
-  neutral600: '#6A7682',
-  neutral500: '#8593A3',
-  neutral400: '#A8B5C2',
-  neutral50: '#F4F7FA',
-  secondaryBlue50: '#EBF5FF',
-  secondaryBlue200: '#9ACEFE',
-  secondaryBlue600: '#026ACA',
-  success600: '#22957F',
-  success200: '#A7ECCA',
-  success50: '#EDF9F7',
-  warning600: '#CC7A00',
-  warning200: '#FFDD99',
-  aqua200: '#A5E9F2',
-  aqua300: '#77DEEC',
-  aqua400: '#4AD3E5',
-  green200: '#A7ECCA',
-  rose200: '#FFB5C6',
-  border: '#DEE4EB',
-}
-
-// Color palette for charts
-const chartColors = [
-  colors.aqua200,
-  colors.secondaryBlue200,
-  colors.green200,
-  colors.warning200,
-  colors.aqua400,
-  colors.rose200,
-]
+import { colors, chartColors } from '@/lib/design-tokens'
 
 export default function EmployeeDashboard() {
   const { user } = useAuth()
@@ -185,7 +147,7 @@ export default function EmployeeDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[#586AF5]" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: colors.iconBlue }} />
       </div>
     )
   }

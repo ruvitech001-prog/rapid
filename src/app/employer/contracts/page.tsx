@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useEmployeeContracts, useContractorContracts, useContractStats } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth';
+import { colors } from '@/lib/design-tokens';
 
 type ContractStatus = 'active' | 'pending' | 'expired' | 'terminated';
 
@@ -43,17 +44,17 @@ const getStatusDisplay = (status: string | null, isActive: boolean | null): { te
   }
 };
 
-const getStatusColor = (status: ContractStatus) => {
+const getStatusColorValue = (status: ContractStatus) => {
   switch (status) {
     case 'active':
-      return 'text-[#22957F]';
+      return colors.success600;
     case 'pending':
-      return 'text-[#CC7A00]';
+      return colors.warning600;
     case 'expired':
     case 'terminated':
-      return 'text-[#E24949]';
+      return colors.error600;
     default:
-      return 'text-[#8593A3]';
+      return colors.neutral500;
   }
 };
 
@@ -166,7 +167,7 @@ export default function ContractsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[#586AF5]" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: colors.iconBlue }} />
       </div>
     );
   }
@@ -175,7 +176,7 @@ export default function ContractsPage() {
     <div className="space-y-6">
       {/* Header Section */}
       <div className="flex items-center justify-between">
-        <h1 className="text-[24px] font-semibold text-[#353B41]">
+        <h1 className="text-[24px] font-semibold" style={{ color: colors.neutral800 }}>
           Contracts ({totalCount})
         </h1>
 
@@ -379,8 +380,8 @@ export default function ContractsPage() {
                       index === filteredEmployeeContracts.length - 1 ? 'border-b-0' : ''
                     }`}
                   >
-                    <td className="px-7 py-5 text-[14px] font-medium text-[#353B41]">{contract.name}</td>
-                    <td className={`px-7 py-5 text-[14px] font-medium ${getStatusColor(contract.statusType)}`}>
+                    <td className="px-7 py-5 text-[14px] font-medium" style={{ color: colors.neutral800 }}>{contract.name}</td>
+                    <td className="px-7 py-5 text-[14px] font-medium" style={{ color: getStatusColorValue(contract.statusType) }}>
                       {contract.status}
                     </td>
                     <td className="px-7 py-5 text-[14px] font-medium text-[#8593A3]">{contract.designation}</td>
@@ -431,9 +432,9 @@ export default function ContractsPage() {
                     <td className="px-7 py-5 text-[14px] font-medium text-[#8593A3]">{contract.contractName}</td>
                     <td className="px-7 py-5 text-[14px] font-medium text-[#8593A3]">{contract.createdOn}</td>
                     <td className="px-7 py-5 text-[14px] font-medium text-[#8593A3]">{contract.type}</td>
-                    <td className="px-7 py-5 text-[14px] font-medium text-[#8593A3]">{contract.role}</td>
-                    <td className="px-7 py-5 text-[14px] font-medium text-[#8593A3]">{contract.rate}</td>
-                    <td className={`px-7 py-5 text-[14px] font-medium ${getStatusColor(contract.statusType)}`}>
+                    <td className="px-7 py-5 text-[14px] font-medium" style={{ color: colors.neutral500 }}>{contract.role}</td>
+                    <td className="px-7 py-5 text-[14px] font-medium" style={{ color: colors.neutral500 }}>{contract.rate}</td>
+                    <td className="px-7 py-5 text-[14px] font-medium" style={{ color: getStatusColorValue(contract.statusType) }}>
                       {contract.status}
                     </td>
                     <td className="px-7 py-5">

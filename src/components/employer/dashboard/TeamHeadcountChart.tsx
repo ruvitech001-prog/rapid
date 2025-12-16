@@ -4,19 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts'
 import { useTeamHeadcount } from '@/lib/hooks'
 import { Loader2 } from 'lucide-react'
+import { colors, chartColors } from '@/lib/design-tokens'
 
-const colors = {
-  primary500: '#642DFC',
-  iconBlue: '#586AF5',
-  neutral800: '#353B41',
-  neutral500: '#8593A3',
-  neutral400: '#A8B5C2',
-  border: '#DEE4EB',
-  aqua400: '#4AD3E5',
-  rose200: '#FFB5C6',
-}
-
-const barColors = ['#4AD3E5', '#FFB5C6', '#9ACEFE', '#A7ECCA', '#FFDD99', '#77DEEC']
+const barColors = chartColors
 
 interface TeamHeadcountChartProps {
   companyId: string | undefined

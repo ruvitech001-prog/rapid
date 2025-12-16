@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/lib/auth'
+import { colors } from '@/lib/design-tokens'
 import { useEmployerNotifications } from '@/lib/hooks'
 import type { Notification } from '@/lib/services'
 

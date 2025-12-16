@@ -17,22 +17,7 @@ import {
   Search,
 } from 'lucide-react'
 import Link from 'next/link'
-
-const colors = {
-  primary500: '#642DFC',
-  primary100: '#E0D5FE',
-  primary50: '#F6F2FF',
-  iconBlue: '#586AF5',
-  neutral800: '#353B41',
-  neutral700: '#505862',
-  neutral600: '#6A7682',
-  neutral500: '#8593A3',
-  neutral50: '#F4F7FA',
-  border: '#DEE4EB',
-  success600: '#22957F',
-  success50: '#EDF9F7',
-  secondaryBlue50: '#EBF5FF',
-}
+import { colors } from '@/lib/design-tokens'
 
 interface FirstTimeSetupProps {
   companyId: string | undefined

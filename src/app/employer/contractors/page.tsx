@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Search, ChevronDown, ChevronRight, Download, SlidersHorizontal, AlertCircle, Loader2 } from 'lucide-react'
 import { useContractors } from '@/lib/hooks'
 import { useAuth } from '@/lib/auth'
+import { colors } from '@/lib/design-tokens'
 
 interface Contractor {
   id: string
@@ -112,7 +113,7 @@ export default function ContractorsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
       </div>
     )
   }
@@ -122,7 +123,7 @@ export default function ContractorsPage() {
       {/* Header Row */}
       <div className="flex items-center justify-between">
         {/* Title */}
-        <h1 className="font-semibold text-[24px] text-[#353B41] leading-none">
+        <h1 className="font-semibold text-[24px] leading-none" style={{ color: colors.neutral800 }}>
           Contractors ({contractors.length})
         </h1>
 

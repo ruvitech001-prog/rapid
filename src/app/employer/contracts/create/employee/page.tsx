@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { PredefinedJobDescriptionModal } from '@/components/modals/predefined-job-description-modal';
 import { NoticePeriodModal } from '@/components/modals/notice-period-modal';
 import { StockOptionsModal } from '@/components/modals/stock-options-modal';
+import { colors } from '@/lib/design-tokens';
 
 export default function CreateEmployeeContractPage() {
   // Form state
@@ -43,7 +44,7 @@ export default function CreateEmployeeContractPage() {
     <div className="min-h-screen pb-12">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-[24px] font-semibold text-[#353B41]">
+        <h1 className="text-[24px] font-semibold" style={{ color: colors.neutral800 }}>
           Create employee contract
         </h1>
 
@@ -51,19 +52,22 @@ export default function CreateEmployeeContractPage() {
           <Link href="/employer/contracts">
             <Button
               variant="ghost"
-              className="text-[#586AF5] font-semibold text-[12px] tracking-[0.75px]"
+              className="font-semibold text-[12px] tracking-[0.75px]"
+              style={{ color: colors.iconBlue }}
             >
               Cancel
             </Button>
           </Link>
           <Button
             variant="outline"
-            className="border-[#586AF5] text-[#586AF5] font-semibold text-[12px] tracking-[0.75px]"
+            className="font-semibold text-[12px] tracking-[0.75px]"
+            style={{ color: colors.iconBlue, borderColor: colors.iconBlue }}
           >
             Save draft
           </Button>
           <Button
-            className="bg-[#642DFC] hover:bg-[#5020d9] text-white font-semibold text-[12px] tracking-[0.75px]"
+            className="text-white font-semibold text-[12px] tracking-[0.75px]"
+            style={{ backgroundColor: colors.primary500 }}
           >
             Save & Preview
           </Button>
@@ -74,23 +78,23 @@ export default function CreateEmployeeContractPage() {
         {/* Left Sidebar - Navigation */}
         <div className="w-[150px] shrink-0">
           <nav className="space-y-2">
-            <a href="#job-details" className="block text-[16px] font-semibold text-[#642DFC] leading-[47px]">
+            <a href="#job-details" className="block text-[16px] font-semibold leading-[47px]" style={{ color: colors.primary500 }}>
               Job Details
             </a>
-            <a href="#compensations" className="block text-[16px] font-semibold text-[#8593A3] leading-[47px]">
+            <a href="#compensations" className="block text-[16px] font-semibold leading-[47px]" style={{ color: colors.neutral500 }}>
               Compensations
             </a>
-            <a href="#benefits" className="block text-[16px] font-semibold text-[#8593A3] leading-[47px]">
+            <a href="#benefits" className="block text-[16px] font-semibold leading-[47px]" style={{ color: colors.neutral500 }}>
               Benefits
             </a>
           </nav>
         </div>
 
         {/* Main Form */}
-        <div className="flex-1 max-w-[532px] border-l border-[#DEE4EB] pl-12">
+        <div className="flex-1 max-w-[532px] border-l pl-12" style={{ borderColor: colors.border }}>
           {/* Job Details Section */}
           <section id="job-details" className="mb-12">
-            <h2 className="text-[20px] font-semibold text-[#353B41] mb-8">Job details</h2>
+            <h2 className="text-[20px] font-semibold mb-8" style={{ color: colors.neutral800 }}>Job details</h2>
 
             <div className="space-y-8">
               {/* Country */}
@@ -180,7 +184,7 @@ export default function CreateEmployeeContractPage() {
 
           {/* Compensation Section */}
           <section id="compensations" className="mb-12">
-            <h2 className="text-[20px] font-semibold text-[#353B41] mb-8">Compensation</h2>
+            <h2 className="text-[20px] font-semibold mb-8" style={{ color: colors.neutral800 }}>Compensation</h2>
 
             <div className="space-y-8">
               {/* Currency */}
@@ -229,7 +233,7 @@ export default function CreateEmployeeContractPage() {
 
           {/* Benefits Section */}
           <section id="benefits">
-            <h2 className="text-[20px] font-semibold text-[#353B41] mb-8">Benefits</h2>
+            <h2 className="text-[20px] font-semibold mb-8" style={{ color: colors.neutral800 }}>Benefits</h2>
 
             <div className="space-y-6">
               {/* Leave policy */}

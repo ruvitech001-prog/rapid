@@ -44,6 +44,7 @@ import {
 } from '@/lib/hooks'
 import { useAuth } from '@/lib/auth'
 import { toast } from 'sonner'
+import { colors } from '@/lib/design-tokens'
 
 interface Employee {
   id: string
@@ -297,7 +298,7 @@ export default function EmployeesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
       </div>
     )
   }
@@ -306,13 +307,13 @@ export default function EmployeesPage() {
     <div className="space-y-6">
       {/* Header Row */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-[#353B41]">
+        <h1 className="text-2xl font-semibold" style={{ color: colors.neutral800 }}>
           Employees ({filteredEmployees.length})
         </h1>
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="border-[#586AF5] text-[#586AF5] hover:bg-[#586AF5]/10">
+              <Button variant="outline" style={{ borderColor: colors.iconBlue, color: colors.iconBlue }}>
                 + Create request
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
@@ -327,15 +328,15 @@ export default function EmployeesPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button asChild className="bg-[#642DFC] hover:bg-[#5020d9]">
+          <Button asChild className="text-white" style={{ backgroundColor: colors.primary500 }}>
             <Link href="/employer/employees/new">
               Hire another
               <ChevronDown className="ml-2 h-4 w-4" />
             </Link>
           </Button>
 
-          <Button variant="outline" size="icon" className="border-[#EFF2F5]">
-            <Bell className="h-5 w-5 text-[#8593A3]" />
+          <Button variant="outline" size="icon" style={{ borderColor: colors.neutral100 }}>
+            <Bell className="h-5 w-5" style={{ color: colors.neutral500 }} />
           </Button>
         </div>
       </div>

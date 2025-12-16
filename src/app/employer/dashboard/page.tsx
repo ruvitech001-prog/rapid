@@ -51,44 +51,7 @@ import {
   CelebrationsWidget,
   FirstTimeSetup,
 } from '@/components/employer/dashboard'
-
-// Figma Design Tokens
-const colors = {
-  primary500: '#642DFC',
-  primary100: '#E0D5FE',
-  primary50: '#F6F2FF',
-  iconBlue: '#586AF5',
-  neutral900: '#1B1D21',
-  neutral800: '#353B41',
-  neutral700: '#505862',
-  neutral600: '#6A7682',
-  neutral500: '#8593A3',
-  neutral400: '#A8B5C2',
-  neutral50: '#F4F7FA',
-  secondaryBlue50: '#EBF5FF',
-  secondaryBlue200: '#9ACEFE',
-  secondaryBlue600: '#026ACA',
-  success600: '#22957F',
-  success50: '#EDF9F7',
-  warning600: '#CC7A00',
-  warning200: '#FFDD99',
-  aqua200: '#A5E9F2',
-  aqua300: '#77DEEC',
-  aqua400: '#4AD3E5',
-  green200: '#A7ECCA',
-  rose200: '#FFB5C6',
-  border: '#DEE4EB',
-}
-
-// Color palette for charts
-const chartColors = [
-  colors.aqua200,
-  colors.secondaryBlue200,
-  colors.green200,
-  colors.warning200,
-  colors.aqua400,
-  colors.rose200,
-]
+import { colors, chartColors } from '@/lib/design-tokens'
 
 export default function EmployerDashboard() {
   const { user } = useAuth()
@@ -341,12 +304,20 @@ export default function EmployerDashboard() {
     )
   }
 
+  // Helper function to get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+  }
+
   return (
     <div className="space-y-6 pb-32">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold" style={{ color: colors.neutral800 }}>
-          Welcome to {user?.companyName || 'Your Company'}
+          {getGreeting()} {user?.name?.split(' ')[0] || 'there'}!
         </h1>
         <div className="flex items-center gap-3">
           <Button
@@ -362,8 +333,8 @@ export default function EmployerDashboard() {
           </Button>
           <Button
             asChild
-            className="h-10 px-4 text-xs font-semibold tracking-wide rounded-lg"
-            style={{ backgroundColor: colors.primary500 }}
+            className="h-10 px-4 text-xs font-semibold tracking-wide rounded-lg text-white"
+            style={{ backgroundColor: colors.primary500, color: 'white' }}
           >
             <Link href="/employer/employees/new">Hire another</Link>
           </Button>

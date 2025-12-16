@@ -4,18 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProbationEnding } from '@/lib/hooks'
 import { Loader2, AlertCircle, ChevronRight, Clock } from 'lucide-react'
 import Link from 'next/link'
-
-const colors = {
-  primary500: '#642DFC',
-  iconBlue: '#586AF5',
-  neutral800: '#353B41',
-  neutral700: '#505862',
-  neutral500: '#8593A3',
-  neutral50: '#F4F7FA',
-  border: '#DEE4EB',
-  warning600: '#CC7A00',
-  warning50: '#FFF8EB',
-}
+import { colors } from '@/lib/design-tokens'
 
 interface ProbationWidgetProps {
   companyId: string | undefined

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { colors } from '@/lib/design-tokens';
 
 interface Holiday {
   id: number;
@@ -34,13 +35,13 @@ export default function HolidaysPage() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'National':
-        return { bg: 'bg-[#FF7373]/10', text: 'text-[#FF7373]' };
+        return { bg: `${colors.error600}10`, text: colors.error600 };
       case 'Optional':
-        return { bg: 'bg-[#CC7A00]/10', text: 'text-[#CC7A00]' };
+        return { bg: `${colors.warning600}10`, text: colors.warning600 };
       case 'Company':
-        return { bg: 'bg-[#586AF5]/10', text: 'text-[#586AF5]' };
+        return { bg: `${colors.iconBlue}10`, text: colors.iconBlue };
       default:
-        return { bg: 'bg-[#8593A3]/10', text: 'text-[#8593A3]' };
+        return { bg: `${colors.neutral500}10`, text: colors.neutral500 };
     }
   };
 
@@ -54,19 +55,20 @@ export default function HolidaysPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Holidays</h1>
-          <p className="text-[#8593A3] mt-1">Manage company holidays and important dates</p>
+          <p className="mt-1" style={{ color: colors.neutral500 }}>Manage company holidays and important dates</p>
         </div>
         <div className="flex gap-3">
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="h-10 px-4 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none"
+            className="h-10 px-4 rounded-lg border bg-white text-sm focus:outline-none"
+            style={{ borderColor: colors.border }}
           >
             <option value="2024">2024</option>
             <option value="2025">2025</option>
             <option value="2026">2026</option>
           </select>
-          <Button onClick={() => setShowModal(true)} className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]">
+          <Button onClick={() => setShowModal(true)} className="gap-2" style={{ backgroundColor: colors.primary500 }}>
             <Plus className="h-4 w-4" />
             Add Holiday
           </Button>
@@ -75,57 +77,57 @@ export default function HolidaysPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+        <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border, backgroundColor: colors.secondaryBlue50 }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TOTAL HOLIDAYS</p>
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>TOTAL HOLIDAYS</p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">{holidays.length}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-[#586AF5]" />
+                <Calendar className="h-6 w-6" style={{ color: colors.iconBlue }} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+        <Card className="rounded-2xl border shadow-none bg-white" style={{ borderColor: colors.border }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">NATIONAL HOLIDAYS</p>
-                <p className="text-3xl font-bold text-[#FF7373] mt-2">{nationalHolidays.length}</p>
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>NATIONAL HOLIDAYS</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: colors.error600 }}>{nationalHolidays.length}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
-                <CalendarDays className="h-6 w-6 text-[#FF7373]" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${colors.error600}10` }}>
+                <CalendarDays className="h-6 w-6" style={{ color: colors.error600 }} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+        <Card className="rounded-2xl border shadow-none bg-white" style={{ borderColor: colors.border }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">OPTIONAL HOLIDAYS</p>
-                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{optionalHolidays.length}</p>
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>OPTIONAL HOLIDAYS</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: colors.warning600 }}>{optionalHolidays.length}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#CC7A00]/10 flex items-center justify-center">
-                <Gift className="h-6 w-6 text-[#CC7A00]" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${colors.warning600}10` }}>
+                <Gift className="h-6 w-6" style={{ color: colors.warning600 }} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+        <Card className="rounded-2xl border shadow-none bg-white" style={{ borderColor: colors.border }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">COMPANY HOLIDAYS</p>
-                <p className="text-3xl font-bold text-[#586AF5] mt-2">{companyHolidays.length}</p>
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>COMPANY HOLIDAYS</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: colors.iconBlue }}>{companyHolidays.length}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-[#586AF5]" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${colors.iconBlue}10` }}>
+                <Calendar className="h-6 w-6" style={{ color: colors.iconBlue }} />
               </div>
             </div>
           </CardContent>
@@ -133,34 +135,34 @@ export default function HolidaysPage() {
       </div>
 
       {/* Holidays Table */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+      <Card className="rounded-2xl border shadow-none overflow-hidden" style={{ borderColor: colors.border }}>
         <CardHeader className="pb-0">
           <CardTitle className="text-gray-900">Holiday Calendar - {selectedYear}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
-                <tr>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">HOLIDAY NAME</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DATE</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">DAY</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">TYPE</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">STATUS</th>
-                  <th className="px-6 py-4 text-right text-[11px] font-semibold text-[#8593A3] tracking-wider">ACTIONS</th>
+              <thead style={{ backgroundColor: colors.neutral50 }}>
+                <tr style={{ borderTop: `1px solid ${colors.border}`, borderBottom: `1px solid ${colors.border}` }}>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>HOLIDAY NAME</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>DATE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>DAY</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>TYPE</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>STATUS</th>
+                  <th className="px-6 py-4 text-right text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>ACTIONS</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#DEE4EB]">
+              <tbody style={{ borderColor: colors.border }} className="divide-y">
                 {holidays.map((holiday) => {
                   const typeColors = getTypeColor(holiday.type);
                   const date = new Date(holiday.date);
                   const isPast = date < new Date();
                   return (
-                    <tr key={holiday.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                    <tr key={holiday.id} className="hover:opacity-90 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl ${typeColors.bg} flex items-center justify-center`}>
-                            <Calendar className={`h-5 w-5 ${typeColors.text}`} />
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: typeColors.bg }}>
+                            <Calendar className="h-5 w-5" style={{ color: typeColors.text }} />
                           </div>
                           <span className="text-sm font-medium text-gray-900">{holiday.name}</span>
                         </div>
@@ -168,27 +170,31 @@ export default function HolidaysPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#8593A3]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: colors.neutral500 }}>
                         {date.toLocaleDateString('en-IN', { weekday: 'long' })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${typeColors.bg} ${typeColors.text}`}>
+                        <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: typeColors.bg, color: typeColors.text }}>
                           {holiday.type}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          isPast ? 'bg-[#8593A3]/10 text-[#8593A3]' : 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
-                        }`}>
+                        <span
+                          className="px-3 py-1 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: isPast ? `${colors.neutral500}10` : `${colors.success600}10`,
+                            color: isPast ? colors.neutral500 : colors.success600
+                          }}
+                        >
                           {isPast ? 'Completed' : 'Upcoming'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button className="p-2 hover:bg-[#586AF5]/10 rounded-lg transition-colors text-[#586AF5]">
+                          <button className="p-2 rounded-lg transition-colors" style={{ color: colors.iconBlue }}>
                             <Edit2 className="h-4 w-4" />
                           </button>
-                          <button className="p-2 hover:bg-[#FF7373]/10 rounded-lg transition-colors text-[#FF7373]">
+                          <button className="p-2 rounded-lg transition-colors" style={{ color: colors.error600 }}>
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
@@ -205,42 +211,44 @@ export default function HolidaysPage() {
       {/* Add Holiday Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md rounded-2xl border border-[#DEE4EB] shadow-xl">
+          <Card className="w-full max-w-md rounded-2xl border shadow-xl" style={{ borderColor: colors.border }}>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-gray-900">Add New Holiday</CardTitle>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#F4F7FA] rounded-lg">
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg" style={{ backgroundColor: colors.neutral50 }}>
                 <X className="h-4 w-4" />
               </button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">HOLIDAY NAME *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>HOLIDAY NAME *</Label>
                 <Input
                   type="text"
                   placeholder="Enter holiday name"
-                  className="h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
+                  className="h-10 px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2"
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">DATE *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>DATE *</Label>
                 <Input
                   type="date"
-                  className="h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
+                  className="h-10 px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2"
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">TYPE *</Label>
-                <select className="w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none">
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>TYPE *</Label>
+                <select className="w-full h-10 px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none" style={{ borderColor: colors.border }}>
                   <option value="National">National Holiday</option>
                   <option value="Optional">Optional Holiday</option>
                   <option value="Company">Company Holiday</option>
                 </select>
               </div>
               <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => setShowModal(false)} className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]">
+                <Button variant="outline" onClick={() => setShowModal(false)} className="border text-gray-700" style={{ borderColor: colors.border }}>
                   Cancel
                 </Button>
-                <Button className="bg-[#642DFC] hover:bg-[#5020d9]">
+                <Button style={{ backgroundColor: colors.primary500 }}>
                   Add Holiday
                 </Button>
               </div>

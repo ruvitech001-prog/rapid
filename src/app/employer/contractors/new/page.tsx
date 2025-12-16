@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { colors } from '@/lib/design-tokens';
 
 interface ContractorForm {
   firstName: string;
@@ -68,8 +69,8 @@ export default function NewContractorPage() {
     });
   };
 
-  const inputClass = "w-full h-10 px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";
-  const selectClass = "w-full h-10 rounded-lg border border-[#DEE4EB] bg-white px-3 py-2 text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20";
+  const inputClass = `w-full h-10 px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2`;
+  const selectClass = `w-full h-10 rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2`;
 
   return (
     <div className="space-y-6">
@@ -77,27 +78,27 @@ export default function NewContractorPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/employer/contractors">
-            <Button variant="outline" size="icon" className="border-[#DEE4EB] hover:bg-[#F4F7FA]">
+            <Button variant="outline" size="icon" className="border hover:bg-[#F4F7FA]" style={{ borderColor: colors.border }}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Add New Contractor</h1>
-            <p className="text-[#8593A3] mt-1">Fill in the details to onboard a new contractor</p>
+            <p className="mt-1" style={{ color: colors.neutral500 }}>Fill in the details to onboard a new contractor</p>
           </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Information */}
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border }}>
           <CardHeader>
             <CardTitle className="text-gray-900">Personal Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">FIRST NAME *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>FIRST NAME *</Label>
                 <Input
                   type="text"
                   name="firstName"
@@ -105,10 +106,11 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">LAST NAME *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>LAST NAME *</Label>
                 <Input
                   type="text"
                   name="lastName"
@@ -116,10 +118,11 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">EMAIL *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>EMAIL *</Label>
                 <Input
                   type="email"
                   name="email"
@@ -127,10 +130,11 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PHONE NUMBER *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>PHONE NUMBER *</Label>
                 <Input
                   type="tel"
                   name="phone"
@@ -138,6 +142,7 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
             </div>
@@ -145,14 +150,14 @@ export default function NewContractorPage() {
         </Card>
 
         {/* Contract Details */}
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border }}>
           <CardHeader>
             <CardTitle className="text-gray-900">Contract Details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">CONTRACTOR ID *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>CONTRACTOR ID *</Label>
                 <Input
                   type="text"
                   name="contractorId"
@@ -161,10 +166,11 @@ export default function NewContractorPage() {
                   required
                   placeholder="CON001"
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">SPECIALTY *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>SPECIALTY *</Label>
                 <Input
                   type="text"
                   name="specialty"
@@ -173,10 +179,11 @@ export default function NewContractorPage() {
                   required
                   placeholder="e.g., Frontend Development"
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">START DATE *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>START DATE *</Label>
                 <Input
                   type="date"
                   name="startDate"
@@ -184,26 +191,29 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">END DATE</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>END DATE</Label>
                 <Input
                   type="date"
                   name="endDate"
                   value={formData.endDate}
                   onChange={handleChange}
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">RATE TYPE *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>RATE TYPE *</Label>
                 <select
                   name="rateType"
                   value={formData.rateType}
                   onChange={handleChange}
                   required
                   className={selectClass}
+                  style={{ borderColor: colors.border }}
                 >
                   <option value="hourly">Hourly</option>
                   <option value="daily">Daily</option>
@@ -211,7 +221,7 @@ export default function NewContractorPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">RATE AMOUNT *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>RATE AMOUNT *</Label>
                 <Input
                   type="number"
                   name="rate"
@@ -220,6 +230,7 @@ export default function NewContractorPage() {
                   required
                   placeholder="2500"
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
             </div>
@@ -227,14 +238,14 @@ export default function NewContractorPage() {
         </Card>
 
         {/* Bank Details */}
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border }}>
           <CardHeader>
             <CardTitle className="text-gray-900">Bank Details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">BANK NAME *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>BANK NAME *</Label>
                 <Input
                   type="text"
                   name="bankName"
@@ -242,10 +253,11 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">ACCOUNT NUMBER *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>ACCOUNT NUMBER *</Label>
                 <Input
                   type="text"
                   name="accountNumber"
@@ -253,10 +265,11 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">IFSC CODE *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>IFSC CODE *</Label>
                 <Input
                   type="text"
                   name="ifscCode"
@@ -264,6 +277,7 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   required
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
             </div>
@@ -271,14 +285,14 @@ export default function NewContractorPage() {
         </Card>
 
         {/* Tax Details */}
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border }}>
           <CardHeader>
             <CardTitle className="text-gray-900">Tax Details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PAN NUMBER *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>PAN NUMBER *</Label>
                 <Input
                   type="text"
                   name="panNumber"
@@ -287,10 +301,11 @@ export default function NewContractorPage() {
                   required
                   placeholder="ABCDE1234F"
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">GST NUMBER</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>GST NUMBER</Label>
                 <Input
                   type="text"
                   name="gstNumber"
@@ -298,6 +313,7 @@ export default function NewContractorPage() {
                   onChange={handleChange}
                   placeholder="22AAAAA0000A1Z5"
                   className={inputClass}
+                  style={{ borderColor: colors.border }}
                 />
               </div>
             </div>
@@ -305,26 +321,27 @@ export default function NewContractorPage() {
         </Card>
 
         {/* Address */}
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+        <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border }}>
           <CardHeader>
             <CardTitle className="text-gray-900">Address</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">STREET ADDRESS *</Label>
+                <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>STREET ADDRESS *</Label>
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
                   required
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-[#DEE4EB] bg-white text-sm focus:border-[#586AF5] focus:outline-none focus:ring-2 focus:ring-[#586AF5]/20"
+                  className="w-full px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2"
+                  style={{ borderColor: colors.border }}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">CITY *</Label>
+                  <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>CITY *</Label>
                   <Input
                     type="text"
                     name="city"
@@ -332,10 +349,11 @@ export default function NewContractorPage() {
                     onChange={handleChange}
                     required
                     className={inputClass}
+                    style={{ borderColor: colors.border }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">STATE *</Label>
+                  <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>STATE *</Label>
                   <Input
                     type="text"
                     name="state"
@@ -343,10 +361,11 @@ export default function NewContractorPage() {
                     onChange={handleChange}
                     required
                     className={inputClass}
+                    style={{ borderColor: colors.border }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-semibold text-[#8593A3] tracking-wider">PINCODE *</Label>
+                  <Label className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>PINCODE *</Label>
                   <Input
                     type="text"
                     name="pincode"
@@ -354,6 +373,7 @@ export default function NewContractorPage() {
                     onChange={handleChange}
                     required
                     className={inputClass}
+                    style={{ borderColor: colors.border }}
                   />
                 </div>
               </div>
@@ -367,13 +387,15 @@ export default function NewContractorPage() {
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            className="border-[#DEE4EB] text-gray-700 hover:bg-[#F4F7FA]"
+            className="border text-gray-700"
+            style={{ borderColor: colors.border }}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            className="gap-2 bg-[#642DFC] hover:bg-[#5020d9]"
+            className="gap-2"
+            style={{ backgroundColor: colors.primary500 }}
           >
             <UserPlus className="h-4 w-4" />
             Add Contractor

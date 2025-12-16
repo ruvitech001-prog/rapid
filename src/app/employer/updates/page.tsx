@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Bell, Trash2, Clock, CheckCircle, DollarSign, Users, Calendar, Shield, AlertCircle, Settings } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { colors } from '@/lib/design-tokens';
 
 interface Update {
   id: number;
@@ -75,20 +76,20 @@ export default function UpdatesPage() {
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColorValues = (type: string) => {
     switch (type) {
       case 'payroll':
-        return { bg: 'bg-[#2DD4BF]/10', text: 'text-[#2DD4BF]' };
+        return { bg: colors.aqua400, text: colors.aqua400 };
       case 'employee':
-        return { bg: 'bg-[#586AF5]/10', text: 'text-[#586AF5]' };
+        return { bg: colors.iconBlue, text: colors.iconBlue };
       case 'leave':
-        return { bg: 'bg-[#CC7A00]/10', text: 'text-[#CC7A00]' };
+        return { bg: colors.warning600, text: colors.warning600 };
       case 'compliance':
-        return { bg: 'bg-[#FF7373]/10', text: 'text-[#FF7373]' };
+        return { bg: colors.error600, text: colors.error600 };
       case 'system':
-        return { bg: 'bg-[#8593A3]/10', text: 'text-[#8593A3]' };
+        return { bg: colors.neutral500, text: colors.neutral500 };
       default:
-        return { bg: 'bg-[#586AF5]/10', text: 'text-[#586AF5]' };
+        return { bg: colors.iconBlue, text: colors.iconBlue };
     }
   };
 
@@ -167,7 +168,7 @@ export default function UpdatesPage() {
       <div className="space-y-4">
         {updates.map((update) => {
           const Icon = getTypeIcon(update.type);
-          const colors = getTypeColor(update.type);
+          const typeColors = getTypeColorValues(update.type);
           return (
             <Card
               key={update.id}
@@ -179,13 +180,13 @@ export default function UpdatesPage() {
             >
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center`}>
-                    <Icon className={`h-6 w-6 ${colors.text}`} />
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${typeColors.bg}1A` }}>
+                    <Icon className="h-6 w-6" style={{ color: typeColors.text }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-base font-semibold text-gray-900">{update.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${colors.bg} ${colors.text}`}>
+                      <h3 className="text-base font-semibold" style={{ color: colors.neutral900 }}>{update.title}</h3>
+                      <span className="px-3 py-1 rounded-full text-xs font-medium capitalize" style={{ backgroundColor: `${typeColors.bg}1A`, color: typeColors.text }}>
                         {update.type}
                       </span>
                       {!update.read && (

@@ -12,6 +12,7 @@ import {
   useRejectLeave,
 } from '@/lib/hooks'
 import { useAuth } from '@/lib/auth'
+import { colors } from '@/lib/design-tokens'
 
 type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected'
 
@@ -139,7 +140,7 @@ export default function LeaveRequestsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#642DFC]" />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.primary500 }} />
       </div>
     )
   }
@@ -150,71 +151,71 @@ export default function LeaveRequestsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Leave Requests</h1>
-          <p className="text-[#8593A3] mt-1">Review and manage employee leave requests</p>
+          <p className="mt-1" style={{ color: colors.neutral500 }}>Review and manage employee leave requests</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-[#EBF5FF]">
+        <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border, backgroundColor: colors.secondaryBlue50 }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                   PENDING REQUESTS
                 </p>
-                <p className="text-3xl font-bold text-[#CC7A00] mt-2">{pendingCount}</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: colors.warning600 }}>{pendingCount}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-white/60 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-[#CC7A00]" />
+                <Clock className="h-6 w-6" style={{ color: colors.warning600 }} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+        <Card className="rounded-2xl border shadow-none bg-white" style={{ borderColor: colors.border }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                   APPROVED TODAY
                 </p>
-                <p className="text-3xl font-bold text-[#2DD4BF] mt-2">{approvedToday}</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: colors.success600 }}>{approvedToday}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#2DD4BF]/10 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-[#2DD4BF]" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${colors.success600}10` }}>
+                <CheckCircle className="h-6 w-6" style={{ color: colors.success600 }} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+        <Card className="rounded-2xl border shadow-none bg-white" style={{ borderColor: colors.border }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                   REJECTED TODAY
                 </p>
-                <p className="text-3xl font-bold text-[#FF7373] mt-2">{rejectedToday}</p>
+                <p className="text-3xl font-bold mt-2" style={{ color: colors.error600 }}>{rejectedToday}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#FF7373]/10 flex items-center justify-center">
-                <XCircle className="h-6 w-6 text-[#FF7373]" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${colors.error600}10` }}>
+                <XCircle className="h-6 w-6" style={{ color: colors.error600 }} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-[#DEE4EB] shadow-none bg-white">
+        <Card className="rounded-2xl border shadow-none bg-white" style={{ borderColor: colors.border }}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                <p className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                   TOTAL THIS MONTH
                 </p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">{thisMonth}</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#586AF5]/10 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-[#586AF5]" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${colors.iconBlue}10` }}>
+                <Calendar className="h-6 w-6" style={{ color: colors.iconBlue }} />
               </div>
             </div>
           </CardContent>
@@ -222,18 +223,18 @@ export default function LeaveRequestsPage() {
       </div>
 
       {/* Filters */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none">
+      <Card className="rounded-2xl border shadow-none" style={{ borderColor: colors.border }}>
         <CardContent className="p-5">
           <div className="flex items-center gap-4">
-            <span className="text-[11px] font-semibold text-[#8593A3] tracking-wider">
+            <span className="text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
               FILTER BY STATUS:
             </span>
             <div className="flex gap-2">
               {[
-                { key: 'all' as FilterStatus, label: 'All', color: '#586AF5' },
-                { key: 'pending' as FilterStatus, label: 'Pending', color: '#CC7A00' },
-                { key: 'approved' as FilterStatus, label: 'Approved', color: '#2DD4BF' },
-                { key: 'rejected' as FilterStatus, label: 'Rejected', color: '#FF7373' },
+                { key: 'all' as FilterStatus, label: 'All', color: colors.iconBlue },
+                { key: 'pending' as FilterStatus, label: 'Pending', color: colors.warning600 },
+                { key: 'approved' as FilterStatus, label: 'Approved', color: colors.success600 },
+                { key: 'rejected' as FilterStatus, label: 'Rejected', color: colors.error600 },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -241,9 +242,9 @@ export default function LeaveRequestsPage() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     filterStatus === item.key
                       ? 'text-white'
-                      : 'bg-[#F4F7FA] text-[#8593A3] hover:bg-[#DEE4EB]'
+                      : ''
                   }`}
-                  style={filterStatus === item.key ? { backgroundColor: item.color } : {}}
+                  style={filterStatus === item.key ? { backgroundColor: item.color } : { backgroundColor: colors.neutral50, color: colors.neutral500 }}
                 >
                   {item.label}
                 </button>
@@ -254,47 +255,47 @@ export default function LeaveRequestsPage() {
       </Card>
 
       {/* Requests List */}
-      <Card className="rounded-2xl border border-[#DEE4EB] shadow-none overflow-hidden">
+      <Card className="rounded-2xl border shadow-none overflow-hidden" style={{ borderColor: colors.border }}>
         <CardHeader className="pb-0">
           <CardTitle className="text-gray-900">Leave Requests ({filteredRequests.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-[#F4F7FA] border-y border-[#DEE4EB]">
-                <tr>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+              <thead style={{ backgroundColor: colors.neutral50 }}>
+                <tr style={{ borderTop: `1px solid ${colors.border}`, borderBottom: `1px solid ${colors.border}` }}>
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                     EMPLOYEE
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                     LEAVE TYPE
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                     DURATION
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                     DAYS
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                     APPLIED ON
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                     STATUS
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-[#8593A3] tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold tracking-wider" style={{ color: colors.neutral500 }}>
                     ACTIONS
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#DEE4EB]">
+              <tbody style={{ borderColor: colors.border }} className="divide-y">
                 {filteredRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-[#F4F7FA]/50 transition-colors">
+                  <tr key={request.id} className="hover:opacity-90 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
                           {request.employeeName}
                         </div>
-                        <div className="text-sm text-[#8593A3]">{request.employeeCode}</div>
+                        <div className="text-sm" style={{ color: colors.neutral500 }}>{request.employeeCode}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -311,19 +312,17 @@ export default function LeaveRequestsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#8593A3]">
+                      <div className="text-sm" style={{ color: colors.neutral500 }}>
                         {formatFullDate(request.createdAt)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
-                          request.status === 'pending'
-                            ? 'bg-[#CC7A00]/10 text-[#CC7A00]'
-                            : request.status === 'approved'
-                              ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
-                              : 'bg-[#FF7373]/10 text-[#FF7373]'
-                        }`}
+                        className="px-3 py-1 inline-flex text-xs font-semibold rounded-full"
+                        style={{
+                          backgroundColor: request.status === 'pending' ? `${colors.warning600}10` : request.status === 'approved' ? `${colors.success600}10` : `${colors.error600}10`,
+                          color: request.status === 'pending' ? colors.warning600 : request.status === 'approved' ? colors.success600 : colors.error600
+                        }}
                       >
                         {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </span>
@@ -332,7 +331,8 @@ export default function LeaveRequestsPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setSelectedRequest(request)}
-                          className="text-[#586AF5] hover:underline font-medium"
+                          className="hover:underline font-medium"
+                          style={{ color: colors.iconBlue }}
                         >
                           View
                         </button>
@@ -341,14 +341,16 @@ export default function LeaveRequestsPage() {
                             <button
                               onClick={() => handleApprove(request.id)}
                               disabled={approveMutation.isPending}
-                              className="text-[#2DD4BF] hover:underline font-medium disabled:opacity-50"
+                              className="hover:underline font-medium disabled:opacity-50"
+                              style={{ color: colors.success600 }}
                             >
                               {approveMutation.isPending ? 'Approving...' : 'Approve'}
                             </button>
                             <button
                               onClick={() => openRejectModal(request)}
                               disabled={rejectMutation.isPending}
-                              className="text-[#FF7373] hover:underline font-medium disabled:opacity-50"
+                              className="hover:underline font-medium disabled:opacity-50"
+                              style={{ color: colors.error600 }}
                             >
                               Reject
                             </button>
@@ -363,7 +365,7 @@ export default function LeaveRequestsPage() {
           </div>
           {filteredRequests.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-[#8593A3]">No leave requests found.</p>
+              <p style={{ color: colors.neutral500 }}>No leave requests found.</p>
             </div>
           )}
         </CardContent>
@@ -377,56 +379,57 @@ export default function LeaveRequestsPage() {
               <h2 className="text-xl font-bold text-gray-900">Leave Request Details</h2>
               <button
                 onClick={() => setSelectedRequest(null)}
-                className="w-8 h-8 rounded-lg bg-[#F4F7FA] hover:bg-[#DEE4EB] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: colors.neutral50 }}
               >
-                <X className="w-5 h-5 text-[#8593A3]" />
+                <X className="w-5 h-5" style={{ color: colors.neutral500 }} />
               </button>
             </div>
 
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                <div className="p-4 rounded-xl" style={{ backgroundColor: colors.neutral50 }}>
+                  <p className="text-[11px] font-semibold tracking-wider mb-1" style={{ color: colors.neutral500 }}>
                     EMPLOYEE NAME
                   </p>
                   <p className="text-base font-medium text-gray-900">
                     {selectedRequest.employeeName}
                   </p>
                 </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                <div className="p-4 rounded-xl" style={{ backgroundColor: colors.neutral50 }}>
+                  <p className="text-[11px] font-semibold tracking-wider mb-1" style={{ color: colors.neutral500 }}>
                     EMPLOYEE ID
                   </p>
                   <p className="text-base font-medium text-gray-900">
                     {selectedRequest.employeeCode}
                   </p>
                 </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                <div className="p-4 rounded-xl" style={{ backgroundColor: colors.neutral50 }}>
+                  <p className="text-[11px] font-semibold tracking-wider mb-1" style={{ color: colors.neutral500 }}>
                     LEAVE TYPE
                   </p>
                   <p className="text-base font-medium text-gray-900">
                     {selectedRequest.leaveType}
                   </p>
                 </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                <div className="p-4 rounded-xl" style={{ backgroundColor: colors.neutral50 }}>
+                  <p className="text-[11px] font-semibold tracking-wider mb-1" style={{ color: colors.neutral500 }}>
                     DURATION
                   </p>
                   <p className="text-base font-medium text-gray-900">
                     {selectedRequest.totalDays} {selectedRequest.totalDays === 1 ? 'day' : 'days'}
                   </p>
                 </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                <div className="p-4 rounded-xl" style={{ backgroundColor: colors.neutral50 }}>
+                  <p className="text-[11px] font-semibold tracking-wider mb-1" style={{ color: colors.neutral500 }}>
                     START DATE
                   </p>
                   <p className="text-base font-medium text-gray-900">
                     {formatFullDate(selectedRequest.startDate)}
                   </p>
                 </div>
-                <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                  <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-1">
+                <div className="p-4 rounded-xl" style={{ backgroundColor: colors.neutral50 }}>
+                  <p className="text-[11px] font-semibold tracking-wider mb-1" style={{ color: colors.neutral500 }}>
                     END DATE
                   </p>
                   <p className="text-base font-medium text-gray-900">
@@ -435,8 +438,8 @@ export default function LeaveRequestsPage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-[#F4F7FA] rounded-xl">
-                <p className="text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">
+              <div className="p-4 rounded-xl" style={{ backgroundColor: colors.neutral50 }}>
+                <p className="text-[11px] font-semibold tracking-wider mb-2" style={{ color: colors.neutral500 }}>
                   REASON
                 </p>
                 <p className="text-base text-gray-900">
@@ -449,14 +452,16 @@ export default function LeaveRequestsPage() {
                   <Button
                     variant="outline"
                     onClick={() => openRejectModal(selectedRequest)}
-                    className="border-[#FF7373] text-[#FF7373] hover:bg-[#FF7373]/10"
+                    className="border"
+                    style={{ borderColor: colors.error600, color: colors.error600 }}
                   >
                     Reject
                   </Button>
                   <Button
                     onClick={() => handleApprove(selectedRequest.id)}
                     disabled={approveMutation.isPending}
-                    className="bg-[#2DD4BF] hover:bg-[#2DD4BF]/90 text-white"
+                    className="text-white"
+                    style={{ backgroundColor: colors.success600 }}
                   >
                     {approveMutation.isPending ? 'Approving...' : 'Approve'}
                   </Button>
@@ -478,26 +483,27 @@ export default function LeaveRequestsPage() {
                   setShowRejectModal(false)
                   setRejectReason('')
                 }}
-                className="w-8 h-8 rounded-lg bg-[#F4F7FA] hover:bg-[#DEE4EB] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: colors.neutral50 }}
               >
-                <X className="w-5 h-5 text-[#8593A3]" />
+                <X className="w-5 h-5" style={{ color: colors.neutral500 }} />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-[#8593A3] mb-2">
+                <p className="text-sm mb-2" style={{ color: colors.neutral500 }}>
                   Rejecting leave request for{' '}
                   <span className="font-medium text-gray-900">{selectedRequest.employeeName}</span>
                 </p>
-                <p className="text-sm text-[#8593A3]">
+                <p className="text-sm" style={{ color: colors.neutral500 }}>
                   {selectedRequest.leaveType} | {formatDate(selectedRequest.startDate)} -{' '}
                   {formatDate(selectedRequest.endDate)}
                 </p>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#8593A3] tracking-wider mb-2">
+                <label className="block text-[11px] font-semibold tracking-wider mb-2" style={{ color: colors.neutral500 }}>
                   REJECTION REASON *
                 </label>
                 <textarea
@@ -505,7 +511,8 @@ export default function LeaveRequestsPage() {
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Please provide a reason for rejection..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-[#DEE4EB] rounded-xl text-sm focus:outline-none focus:border-[#586AF5] resize-none"
+                  className="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none resize-none"
+                  style={{ borderColor: colors.border }}
                 />
               </div>
 
@@ -522,7 +529,8 @@ export default function LeaveRequestsPage() {
                 <Button
                   onClick={() => handleReject(selectedRequest.id)}
                   disabled={rejectMutation.isPending || !rejectReason.trim()}
-                  className="bg-[#FF7373] hover:bg-[#FF7373]/90 text-white"
+                  className="text-white"
+                  style={{ backgroundColor: colors.error600 }}
                 >
                   {rejectMutation.isPending ? 'Rejecting...' : 'Reject Request'}
                 </Button>

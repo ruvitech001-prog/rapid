@@ -4,21 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useUpcomingCelebrations } from '@/lib/hooks'
 import { Loader2, Cake, Award, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
-
-const colors = {
-  primary500: '#642DFC',
-  primary50: '#F6F2FF',
-  iconBlue: '#586AF5',
-  neutral800: '#353B41',
-  neutral700: '#505862',
-  neutral500: '#8593A3',
-  neutral50: '#F4F7FA',
-  border: '#DEE4EB',
-  rose200: '#FFB5C6',
-  rose50: '#FFF5F7',
-  aqua200: '#A5E9F2',
-  aqua50: '#F0FBFC',
-}
+import { colors } from '@/lib/design-tokens'
 
 interface CelebrationsWidgetProps {
   companyId: string | undefined
