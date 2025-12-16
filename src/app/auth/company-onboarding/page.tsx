@@ -1,525 +1,401 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, ChevronRight, Check } from 'lucide-react';
+import { Loader2, ArrowLeft, Upload, CheckCircle } from 'lucide-react';
 import { AuthLayout } from '@/components/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2;
+
+interface FormData {
+  legalName: string;
+  country: string;
+  state: string;
+  city: string;
+  addressLine1: string;
+  addressLine2: string;
+  zipCode: string;
+  phoneNumber: string;
+  entityType: string;
+  taxId: string;
+  taxIdDocuments: File[];
+}
 
 export default function CompanyOnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    // Step 1: Company Details
-    companyName: '',
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState<FormData>({
     legalName: '',
-    industry: '',
-    size: '',
-    // Step 2: Tax Information
-    pan: '',
-    gstin: '',
-    tan: '',
-    // Step 3: Statutory Details
-    epfNumber: '',
-    esicNumber: '',
-    ptNumber: '',
-    // Step 4: Address
+    country: 'India',
+    state: '',
+    city: '',
     addressLine1: '',
     addressLine2: '',
-    city: '',
-    state: '',
-    pincode: '',
-    country: 'India',
+    zipCode: '',
+    phoneNumber: '',
+    entityType: '',
+    taxId: '',
+    taxIdDocuments: [],
   });
+
+  const indianStates = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+    'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+    'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+    'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+    'Delhi', 'Puducherry', 'Jammu and Kashmir', 'Ladakh'
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setError('');
   };
 
-  const handleNext = () => {
-    if (currentStep < 5) {
-      setCurrentStep((currentStep + 1) as Step);
-    }
+  const validateZipCode = (zipCode: string): boolean => {
+    // Indian PIN code validation: 6 digits
+    return /^\d{6}$/.test(zipCode);
   };
 
-  const handlePrev = () => {
-    if (currentStep > 1) {
-      setCurrentStep((currentStep - 1) as Step);
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + formData.taxIdDocuments.length > 5) {
+      setError('Maximum 5 files allowed');
+      return;
     }
+    setFormData({
+      ...formData,
+      taxIdDocuments: [...formData.taxIdDocuments, ...files],
+    });
+    setError('');
+  };
+
+  const removeDocument = (index: number) => {
+    setFormData({
+      ...formData,
+      taxIdDocuments: formData.taxIdDocuments.filter((_, i) => i !== index),
+    });
   };
 
   const handleSubmit = () => {
+    // Validation
+    if (!formData.legalName || !formData.country || !formData.state || !formData.city ||
+        !formData.addressLine1 || !formData.zipCode || !formData.phoneNumber ||
+        !formData.taxId) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    if (!validateZipCode(formData.zipCode)) {
+      setError('Please enter a valid 6-digit ZIP code');
+      return;
+    }
+
     setLoading(true);
     // TODO: Implement actual company creation via API
     setTimeout(() => {
-      router.push('/employer/dashboard');
+      setCurrentStep(2); // Go to welcome page
     }, 1000);
   };
 
-  const steps = [
-    { number: 1, label: 'Company' },
-    { number: 2, label: 'Tax' },
-    { number: 3, label: 'Statutory' },
-    { number: 4, label: 'Address' },
-    { number: 5, label: 'Review' },
-  ];
+  // Auto-redirect from welcome page after 3 seconds
+  useEffect(() => {
+    if (currentStep === 2) {
+      const timer = setTimeout(() => {
+        router.push('/employer/dashboard');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, router]);
 
-  const stepTitles: Record<Step, { title: string; description: string }> = {
-    1: { title: 'Company Details', description: 'Basic information about your company' },
-    2: { title: 'Tax Information', description: 'PAN, GSTIN, and TAN details' },
-    3: { title: 'Statutory Details', description: 'EPF, ESIC, and PT registration details' },
-    4: { title: 'Company Address', description: 'Where is your company located?' },
-    5: { title: 'Review & Confirm', description: 'Please verify all details are correct' },
-  };
+  // Welcome Page (Step 2)
+  if (currentStep === 2) {
+    return (
+      <AuthLayout>
+        <div className="text-center">
+          {/* Success Icon */}
+          <div className="flex justify-center mb-6">
+            <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle className="h-12 w-12 text-green-600" />
+            </div>
+          </div>
 
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">Welcome to Rapid</h1>
+          <p className="text-xl text-gray-600 mb-6">
+            We are happy to have you onboard!!!
+          </p>
+
+          <div className="bg-blue-50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-600">
+              Redirecting to your dashboard in 3 seconds...
+            </p>
+          </div>
+
+          <Button
+            onClick={() => router.push('/employer/dashboard')}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  // Company Details Form (Step 1)
   return (
     <AuthLayout>
-      {/* Step Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                    currentStep > step.number
-                      ? 'bg-green-500 text-white'
-                      : currentStep === step.number
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-gray-500'
-                  }`}
-                >
-                  {currentStep > step.number ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    step.number
-                  )}
-                </div>
-                <span className="mt-1 text-xs text-gray-500 hidden sm:block">{step.label}</span>
-              </div>
-              {index < steps.length - 1 && (
-                <div
-                  className={`w-8 sm:w-12 h-0.5 mx-1 ${
-                    currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'
-                  }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          {stepTitles[currentStep].title}
+          Let's get some details about your Company
         </h1>
         <p className="text-sm text-gray-500">
-          {stepTitles[currentStep].description}
+          Please provide your company information to complete the setup
         </p>
       </div>
 
-      {/* Step 1: Company Details */}
-      {currentStep === 1 && (
-        <div className="space-y-4">
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Form */}
+      <div className="space-y-4">
+        {/* Legal Name */}
+        <div className="space-y-2">
+          <Label htmlFor="legalName" className="text-gray-700">
+            Company's Legal Name*
+          </Label>
+          <Input
+            id="legalName"
+            type="text"
+            name="legalName"
+            value={formData.legalName}
+            onChange={handleChange}
+            placeholder="Acme Technologies Private Limited"
+            className="h-12 border-gray-200"
+            required
+          />
+        </div>
+
+        {/* Country, State, City */}
+        <div className="grid grid-cols-3 gap-3">
           <div className="space-y-2">
-            <Label htmlFor="companyName" className="text-gray-700">
-              Company Name*
+            <Label htmlFor="country" className="text-gray-700">
+              Country*
             </Label>
             <Input
-              id="companyName"
+              id="country"
               type="text"
-              name="companyName"
-              required
-              value={formData.companyName}
-              onChange={handleChange}
-              placeholder="Acme Inc."
-              className="h-12 border-gray-200"
+              name="country"
+              value={formData.country}
+              disabled
+              className="h-12 border-gray-200 bg-gray-50 text-gray-500"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="legalName" className="text-gray-700">
-              Legal Name*
-            </Label>
-            <Input
-              id="legalName"
-              type="text"
-              name="legalName"
-              required
-              value={formData.legalName}
-              onChange={handleChange}
-              placeholder="Acme Technologies Private Limited"
-              className="h-12 border-gray-200"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="industry" className="text-gray-700">
-              Industry*
+            <Label htmlFor="state" className="text-gray-700">
+              State*
             </Label>
             <select
-              id="industry"
-              name="industry"
-              required
-              value={formData.industry}
+              id="state"
+              name="state"
+              value={formData.state}
               onChange={handleChange}
               className="w-full h-12 rounded-lg border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              required
             >
-              <option value="">Select industry</option>
-              <option value="technology">Technology</option>
-              <option value="finance">Finance</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="retail">Retail</option>
-              <option value="manufacturing">Manufacturing</option>
-              <option value="other">Other</option>
+              <option value="">Select state</option>
+              {indianStates.map((state) => (
+                <option key={state} value={state}>{state}</option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="size" className="text-gray-700">
-              Company Size*
+            <Label htmlFor="city" className="text-gray-700">
+              City*
             </Label>
-            <select
-              id="size"
-              name="size"
+            <Input
+              id="city"
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              placeholder="Mumbai"
+              className="h-12 border-gray-200"
               required
-              value={formData.size}
-              onChange={handleChange}
-              className="w-full h-12 rounded-lg border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">Select size</option>
-              <option value="1-10">1-10 employees</option>
-              <option value="11-50">11-50 employees</option>
-              <option value="51-200">51-200 employees</option>
-              <option value="201-500">201-500 employees</option>
-              <option value="501+">501+ employees</option>
-            </select>
+            />
           </div>
         </div>
-      )}
 
-      {/* Step 2: Tax Information */}
-      {currentStep === 2 && (
-        <div className="space-y-4">
+        {/* Address Line 1 */}
+        <div className="space-y-2">
+          <Label htmlFor="addressLine1" className="text-gray-700">
+            Address Line 1*
+          </Label>
+          <Input
+            id="addressLine1"
+            type="text"
+            name="addressLine1"
+            value={formData.addressLine1}
+            onChange={handleChange}
+            placeholder="Building No., Street Name"
+            className="h-12 border-gray-200"
+            required
+          />
+        </div>
+
+        {/* Address Line 2 */}
+        <div className="space-y-2">
+          <Label htmlFor="addressLine2" className="text-gray-700">
+            Address Line 2
+          </Label>
+          <Input
+            id="addressLine2"
+            type="text"
+            name="addressLine2"
+            value={formData.addressLine2}
+            onChange={handleChange}
+            placeholder="Locality, Landmark (optional)"
+            className="h-12 border-gray-200"
+          />
+        </div>
+
+        {/* Zip Code & Phone */}
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label htmlFor="pan" className="text-gray-700">
-              PAN Number*
+            <Label htmlFor="zipCode" className="text-gray-700">
+              Zip Code*
             </Label>
             <Input
-              id="pan"
+              id="zipCode"
               type="text"
-              name="pan"
+              name="zipCode"
+              value={formData.zipCode}
+              onChange={handleChange}
+              placeholder="400001"
+              maxLength={6}
+              className="h-12 border-gray-200"
               required
-              maxLength={10}
-              value={formData.pan}
-              onChange={handleChange}
-              placeholder="ABCDE1234F"
-              className="h-12 border-gray-200 uppercase"
             />
-            <p className="text-xs text-gray-500">10 characters (e.g., ABCDE1234F)</p>
+            <p className="text-xs text-gray-500">6-digit PIN code</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="gstin" className="text-gray-700">
-              GSTIN
+            <Label htmlFor="phoneNumber" className="text-gray-700">
+              Phone number*
             </Label>
             <Input
-              id="gstin"
-              type="text"
-              name="gstin"
-              maxLength={15}
-              value={formData.gstin}
+              id="phoneNumber"
+              type="tel"
+              name="phoneNumber"
+              value={formData.phoneNumber}
               onChange={handleChange}
-              placeholder="22ABCDE1234F1Z5"
-              className="h-12 border-gray-200 uppercase"
-            />
-            <p className="text-xs text-gray-500">15 characters (optional)</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tan" className="text-gray-700">
-              TAN Number
-            </Label>
-            <Input
-              id="tan"
-              type="text"
-              name="tan"
-              maxLength={10}
-              value={formData.tan}
-              onChange={handleChange}
-              placeholder="ABCD12345E"
-              className="h-12 border-gray-200 uppercase"
-            />
-            <p className="text-xs text-gray-500">10 characters (optional)</p>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Statutory Details */}
-      {currentStep === 3 && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="epfNumber" className="text-gray-700">
-              EPF Number
-            </Label>
-            <Input
-              id="epfNumber"
-              type="text"
-              name="epfNumber"
-              value={formData.epfNumber}
-              onChange={handleChange}
-              placeholder="MH/12345/2024"
+              placeholder="+91 98765 43210"
               className="h-12 border-gray-200"
-            />
-            <p className="text-xs text-gray-500">EPF establishment code (optional)</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="esicNumber" className="text-gray-700">
-              ESIC Number
-            </Label>
-            <Input
-              id="esicNumber"
-              type="text"
-              name="esicNumber"
-              value={formData.esicNumber}
-              onChange={handleChange}
-              placeholder="12-34-567890-000"
-              className="h-12 border-gray-200"
-            />
-            <p className="text-xs text-gray-500">ESIC registration number (optional)</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ptNumber" className="text-gray-700">
-              Professional Tax Number
-            </Label>
-            <Input
-              id="ptNumber"
-              type="text"
-              name="ptNumber"
-              value={formData.ptNumber}
-              onChange={handleChange}
-              placeholder="PT123456789"
-              className="h-12 border-gray-200"
-            />
-            <p className="text-xs text-gray-500">State PT registration (optional)</p>
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: Address */}
-      {currentStep === 4 && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="addressLine1" className="text-gray-700">
-              Address Line 1*
-            </Label>
-            <Input
-              id="addressLine1"
-              type="text"
-              name="addressLine1"
               required
-              value={formData.addressLine1}
-              onChange={handleChange}
-              placeholder="Building No., Street Name"
-              className="h-12 border-gray-200"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="addressLine2" className="text-gray-700">
-              Address Line 2
-            </Label>
-            <Input
-              id="addressLine2"
-              type="text"
-              name="addressLine2"
-              value={formData.addressLine2}
-              onChange={handleChange}
-              placeholder="Locality, Landmark"
-              className="h-12 border-gray-200"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="city" className="text-gray-700">
-                City*
-              </Label>
-              <Input
-                id="city"
-                type="text"
-                name="city"
-                required
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="Mumbai"
-                className="h-12 border-gray-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="state" className="text-gray-700">
-                State*
-              </Label>
-              <select
-                id="state"
-                name="state"
-                required
-                value={formData.state}
-                onChange={handleChange}
-                className="w-full h-12 rounded-lg border border-gray-200 bg-white px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="">Select state</option>
-                <option value="Maharashtra">Maharashtra</option>
-                <option value="Karnataka">Karnataka</option>
-                <option value="Delhi">Delhi</option>
-                <option value="Tamil Nadu">Tamil Nadu</option>
-                <option value="West Bengal">West Bengal</option>
-                <option value="Andhra Pradesh">Andhra Pradesh</option>
-                <option value="Gujarat">Gujarat</option>
-                <option value="Telangana">Telangana</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="pincode" className="text-gray-700">
-                Pincode*
-              </Label>
-              <Input
-                id="pincode"
-                type="text"
-                name="pincode"
-                required
-                maxLength={6}
-                value={formData.pincode}
-                onChange={handleChange}
-                placeholder="400001"
-                className="h-12 border-gray-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="country" className="text-gray-700">
-                Country
-              </Label>
-              <Input
-                id="country"
-                type="text"
-                name="country"
-                value={formData.country}
-                disabled
-                className="h-12 border-gray-200 bg-gray-50 text-gray-500"
-              />
-            </div>
           </div>
         </div>
-      )}
 
-      {/* Step 5: Review */}
-      {currentStep === 5 && (
-        <div className="space-y-4">
-          {/* Company Details */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Company Details</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Company Name:</span>
-                <span className="font-medium text-gray-900">{formData.companyName || '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Legal Name:</span>
-                <span className="font-medium text-gray-900">{formData.legalName || '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Industry:</span>
-                <span className="font-medium text-gray-900 capitalize">{formData.industry || '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Size:</span>
-                <span className="font-medium text-gray-900">{formData.size || '-'}</span>
-              </div>
-            </div>
+        {/* Entity Type & Tax ID */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="entityType" className="text-gray-700">
+              Entity Type*
+            </Label>
+            <Input
+              id="entityType"
+              type="text"
+              name="entityType"
+              value={formData.entityType}
+              onChange={handleChange}
+              placeholder="C-Corp"
+              className="h-12 border-gray-200"
+              required
+            />
+            <p className="text-xs text-gray-500">Default: C-Corp for USA</p>
           </div>
-
-          {/* Tax Information */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Tax Information</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">PAN:</span>
-                <span className="font-medium text-gray-900 uppercase">{formData.pan || '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">GSTIN:</span>
-                <span className="font-medium text-gray-900 uppercase">{formData.gstin || '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">TAN:</span>
-                <span className="font-medium text-gray-900 uppercase">{formData.tan || '-'}</span>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="taxId" className="text-gray-700">
+              Tax ID*
+            </Label>
+            <Input
+              id="taxId"
+              type="text"
+              name="taxId"
+              value={formData.taxId}
+              onChange={handleChange}
+              placeholder="12-3456789"
+              className="h-12 border-gray-200"
+              required
+            />
           </div>
+        </div>
 
-          {/* Statutory Details */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Statutory Details</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">EPF Number:</span>
-                <span className="font-medium text-gray-900">{formData.epfNumber || '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">ESIC Number:</span>
-                <span className="font-medium text-gray-900">{formData.esicNumber || '-'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">PT Number:</span>
-                <span className="font-medium text-gray-900">{formData.ptNumber || '-'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Address */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Address</h3>
-            <p className="text-sm text-gray-900">
-              {formData.addressLine1 && <>{formData.addressLine1}<br /></>}
-              {formData.addressLine2 && <>{formData.addressLine2}<br /></>}
-              {formData.city && formData.state && (
-                <>{formData.city}, {formData.state} - {formData.pincode}<br /></>
-              )}
-              {formData.country}
+        {/* Tax ID Document Upload */}
+        <div className="space-y-2">
+          <Label className="text-gray-700">
+            Tax ID Document* (Max 5 files)
+          </Label>
+          <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
+            <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+            <p className="text-sm text-gray-600 mb-2">
+              Click to upload or drag and drop
             </p>
+            <p className="text-xs text-gray-500 mb-3">
+              PDF, JPG, PNG (Max 5 files)
+            </p>
+            <input
+              type="file"
+              onChange={handleFileUpload}
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png"
+              className="hidden"
+              id="tax-doc-upload"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => document.getElementById('tax-doc-upload')?.click()}
+              className="border-primary text-primary"
+            >
+              Choose Files
+            </Button>
           </div>
+
+          {/* Uploaded Files List */}
+          {formData.taxIdDocuments.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {formData.taxIdDocuments.map((file, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeDocument(index)}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Navigation Buttons */}
-      <div className="flex items-center justify-between mt-8">
-        {currentStep > 1 ? (
-          <button
-            type="button"
-            onClick={handlePrev}
-            className="flex items-center gap-2 text-primary font-medium hover:underline"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-        ) : (
-          <div />
-        )}
-
-        {currentStep < 5 ? (
-          <Button
-            type="button"
-            onClick={handleNext}
-            className="h-12 px-8 bg-gray-400 hover:bg-gray-500 text-white"
-          >
-            Next
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        ) : (
+        {/* Submit Button */}
+        <div className="flex justify-end pt-4">
           <Button
             type="button"
             onClick={handleSubmit}
@@ -535,7 +411,7 @@ export default function CompanyOnboardingPage() {
               'Complete Setup'
             )}
           </Button>
-        )}
+        </div>
       </div>
     </AuthLayout>
   );

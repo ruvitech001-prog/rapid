@@ -88,6 +88,7 @@ export default function EmployerDashboard() {
     queryKey: ['holidays', 'upcoming', companyId],
     queryFn: () => dashboardService.getCompanyHolidays(companyId!),
     enabled: !!companyId,
+    staleTime: 300000, // 5 minutes - holidays don't change often
   })
 
   const isLoading = loadingEmployees || loadingContractors || loadingLeaves || loadingExpenses
@@ -176,15 +177,40 @@ export default function EmployerDashboard() {
     }))
   }, [recentContracts])
 
-  // Holidays data
+  // Holidays data - Show next 2 holidays with different colors for fixed vs floating
   const holidaysData = useMemo(() => {
     if (upcomingHolidays.length === 0) {
-      return [{ id: '1', date: 'No upcoming holidays', name: '' }]
+      return []
     }
-    return upcomingHolidays.slice(0, 4).map((h, i) => ({
-      id: String(i + 1),
-      date: new Date(h.date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }),
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Filter and sort upcoming holidays
+    const upcoming = upcomingHolidays
+      .filter((h) => new Date(h.date) >= today)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+    // Per requirements: Only show fixed holidays + floating holidays filed by team members
+    // For now, showing all fixed and filtering floating (TODO: add filed-by-member check)
+    const filtered = upcoming.filter((h) => {
+      if (h.holiday_type === 'fixed') return true
+      // Floating holidays: only show if filed by a team member
+      // TODO: Check against leave requests to see if any employee has filed this date
+      return false // For now, hide all floating holidays from employer view
+    })
+
+    // Show next 2 holidays only
+    return filtered.slice(0, 2).map((h) => ({
+      id: h.id,
+      date: new Date(h.date).toLocaleDateString('en-US', {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
       name: h.name,
+      type: h.holiday_type || 'fixed',
     }))
   }, [upcomingHolidays])
 
@@ -795,12 +821,12 @@ export default function EmployerDashboard() {
             </CardContent>
           </Card>
 
-          {/* Contract Summary */}
+          {/* Offer Summary */}
           <Card className="rounded-2xl" style={{ borderColor: colors.border }}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-bold" style={{ color: colors.neutral800 }}>
-                  Contract summary
+                  Offer summary
                 </CardTitle>
                 <span
                   className="text-xs font-semibold flex items-center gap-0.5 cursor-default"
@@ -866,17 +892,17 @@ export default function EmployerDashboard() {
                 </div>
               </div>
 
-              {/* Recent Contracts */}
+              {/* Recent Offers */}
               <div className="pt-4 border-t" style={{ borderColor: colors.border }}>
                 <div className="flex items-center justify-between mb-3">
                   <p
                     className="text-xs font-medium tracking-widest uppercase"
                     style={{ color: colors.neutral500 }}
                   >
-                    Recent contracts ({recentContractsData.length})
+                    Recent offers ({recentContractsData.length})
                   </p>
                   <Link
-                    href="/employer/contracts"
+                    href="/employer/offers"
                     className="text-xs font-semibold flex items-center gap-0.5"
                     style={{ color: colors.iconBlue }}
                   >
@@ -993,25 +1019,46 @@ export default function EmployerDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-2">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {holidaysData.map((holiday) => (
-                <div
-                  key={holiday.id}
-                  className="p-4 rounded-lg"
-                  style={{ backgroundColor: colors.success50 }}
-                >
-                  <p className="text-sm font-medium" style={{ color: colors.neutral700 }}>
-                    {holiday.date}
-                  </p>
-                  <p
-                    className="text-xs font-medium tracking-widest uppercase mt-1"
-                    style={{ color: colors.neutral500 }}
+            {holidaysData.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-sm" style={{ color: colors.neutral500 }}>
+                  No upcoming holidays in the next 60 days
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {holidaysData.map((holiday) => (
+                  <div
+                    key={holiday.id}
+                    className="p-4 rounded-lg"
+                    style={{
+                      backgroundColor:
+                        holiday.type === 'fixed' ? colors.success50 : colors.warning50,
+                    }}
                   >
-                    {holiday.name}
-                  </p>
-                </div>
-              ))}
-            </div>
+                    <p className="text-sm font-medium" style={{ color: colors.neutral700 }}>
+                      {holiday.date}
+                    </p>
+                    <p
+                      className="text-xs font-medium tracking-widest uppercase mt-1"
+                      style={{ color: colors.neutral500 }}
+                    >
+                      {holiday.name}
+                    </p>
+                    <span
+                      className="text-[10px] font-medium mt-1 inline-block px-2 py-0.5 rounded"
+                      style={{
+                        backgroundColor:
+                          holiday.type === 'fixed' ? colors.success600 : colors.warning600,
+                        color: 'white',
+                      }}
+                    >
+                      {holiday.type === 'fixed' ? 'FIXED' : 'FLOATING'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <Link
               href="/employer/holidays"
               className="text-xs font-semibold flex items-center gap-0.5"

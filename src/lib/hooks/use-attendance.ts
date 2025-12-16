@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import {
   attendanceService,
   type AttendanceStats,
@@ -17,6 +18,7 @@ export function useAttendanceStats(
     queryKey: ['attendance', 'stats', employeeId, month, year],
     queryFn: () => attendanceService.getAttendanceStats(employeeId!, month, year),
     enabled: !!employeeId,
+    staleTime: 60000, // 1 minute
   })
 }
 
@@ -30,6 +32,7 @@ export function useCompanyAttendanceStats(companyId: string | undefined) {
     queryKey: ['attendance', 'company', companyId],
     queryFn: () => attendanceService.getCompanyAttendanceStats(companyId!),
     enabled: !!companyId,
+    staleTime: 60000, // 1 minute
   })
 }
 
@@ -42,6 +45,7 @@ export function useMonthlyAttendanceCalendar(
     queryKey: ['attendance', 'calendar', employeeId, month, year],
     queryFn: () => attendanceService.getMonthlyCalendar(employeeId!, month, year),
     enabled: !!employeeId,
+    staleTime: 60000, // 1 minute
   })
 }
 
@@ -51,6 +55,7 @@ export function useTodayAttendance(employeeId: string | undefined) {
     queryKey: ['attendance', 'today', employeeId],
     queryFn: () => attendanceService.getTodayRecord(employeeId!),
     enabled: !!employeeId,
+    staleTime: 30000, // 30 seconds
     refetchInterval: 60000, // Refetch every minute
   })
 }
@@ -64,6 +69,7 @@ export function useAttendanceHistory(
     queryKey: ['attendance', 'history', employeeId, startDate, endDate],
     queryFn: () => attendanceService.getAttendanceHistory(employeeId!, startDate, endDate),
     enabled: !!employeeId,
+    staleTime: 60000, // 1 minute
   })
 }
 
@@ -84,6 +90,10 @@ export function useClockIn() {
       queryClient.invalidateQueries({
         queryKey: ['attendance', 'history', variables.employeeId],
       })
+      toast.success('Clocked in successfully')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to clock in')
     },
   })
 }
@@ -105,6 +115,10 @@ export function useClockOut() {
       queryClient.invalidateQueries({
         queryKey: ['attendance', 'history', variables.employeeId],
       })
+      toast.success('Clocked out successfully')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to clock out')
     },
   })
 }

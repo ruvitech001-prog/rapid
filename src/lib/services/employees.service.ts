@@ -96,42 +96,50 @@ class EmployeesServiceClass extends BaseService {
     })
   }
 
-  async getById(id: string): Promise<EmployeeWithContract | null> {
-    const { data: employee, error } = await this.supabase
+  async getById(id: string, companyId?: string): Promise<EmployeeWithContract | null> {
+    // Build query with company verification for multi-tenancy security
+    let query = this.supabase
       .from('employee_employee')
-      .select('*')
+      .select(`
+        *,
+        contract:employee_employeecontract!inner(*)
+      `)
       .eq('id', id)
-      .single()
+      .eq('employee_employeecontract.is_current', true);
 
-    if (error) {
-      if (error.code === 'PGRST116') return null
-      this.handleError(error)
+    // CRITICAL: Verify company ownership to prevent cross-company data access
+    if (companyId) {
+      query = query.eq('employee_employeecontract.company_id', companyId);
     }
 
-    // Get current contract
-    const { data: contract } = await this.supabase
-      .from('employee_employeecontract')
-      .select('*')
-      .eq('employee_id', id)
-      .eq('is_current', true)
-      .single()
+    const { data: result, error } = await query.single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      this.handleError(error);
+    }
+
+    if (!result) return null;
+
+    // Extract contract from the joined data
+    const contract = Array.isArray(result.contract) ? result.contract[0] : result.contract;
 
     // Get email if user exists
-    let email = ''
-    if (employee?.user_id) {
+    let email = '';
+    if (result?.user_id) {
       const { data: user } = await this.supabase
         .from('users_user')
         .select('email')
-        .eq('id', employee.user_id)
-        .single()
-      email = user?.email || ''
+        .eq('id', result.user_id)
+        .single();
+      email = user?.email || '';
     }
 
     return {
-      ...employee,
+      ...result,
       contract: contract || null,
       email,
-    } as EmployeeWithContract
+    } as EmployeeWithContract;
   }
 
   async getCount(companyId: string): Promise<number> {

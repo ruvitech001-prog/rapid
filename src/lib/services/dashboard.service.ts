@@ -202,23 +202,23 @@ class DashboardServiceClass extends BaseService {
     }
   }
 
-  async getCompanyHolidays(companyId: string): Promise<{ name: string; date: string }[]> {
+  async getCompanyHolidays(companyId: string): Promise<{ id: string; name: string; date: string; holiday_type: string }[]> {
     const today = new Date().toISOString().split('T')[0]
-    const thirtyDaysLater = new Date()
-    thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30)
+    const ninetyDaysLater = new Date()
+    ninetyDaysLater.setDate(ninetyDaysLater.getDate() + 90)
 
     const { data: holidays, error } = await this.supabase
       .from('holiday_holiday')
-      .select('name, date')
+      .select('id, name, date, holiday_type')
       .eq('company_id', companyId)
       .gte('date', today)
-      .lte('date', thirtyDaysLater.toISOString().split('T')[0])
+      .lte('date', ninetyDaysLater.toISOString().split('T')[0])
       .order('date', { ascending: true })
-      .limit(5)
+      .limit(10)
 
     if (error) this.handleError(error)
 
-    return holidays?.map((h) => ({ name: h.name, date: h.date })) || []
+    return holidays || []
   }
 
   /**

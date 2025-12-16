@@ -473,44 +473,60 @@ export default function EmployeesPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#DEE4EB]">
-              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">ID</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Name</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Designation</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Team</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Email Address</th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Phone Number</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Contact</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Start Date</th>
+              {teams.length > 1 && (
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">Team</th>
+              )}
+              <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider">CTC</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-[#353B41] uppercase tracking-wider"></th>
             </tr>
           </thead>
           <tbody>
             {displayedEmployees.map((employee, index) => (
               <tr key={employee.id} className={index !== displayedEmployees.length - 1 ? 'border-b border-[#DEE4EB]' : ''}>
-                <td className="px-6 py-4 text-sm font-medium text-[#8593A3]">
-                  {employee.employee_code}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    {/* Employee Picture */}
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-semibold text-primary">
+                        {employee.first_name[0]}{employee.last_name[0]}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#353B41]">
+                        {employee.first_name} {employee.last_name}
+                      </p>
+                      <p className="text-xs text-[#8593A3]">
+                        {employee.designation}
+                      </p>
+                      {employee.badge_status !== 'none' && (
+                        <Badge className={`mt-1 text-[10px] font-medium uppercase tracking-wider ${getBadgeStyle(employee.badge_status)}`}>
+                          {getBadgeLabel(employee.badge_status)}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div>
-                    <p className="text-sm font-medium text-[#8593A3]">
-                      {employee.first_name} {employee.last_name}
-                    </p>
-                    {employee.badge_status !== 'none' && (
-                      <Badge className={`mt-1 text-[10px] font-medium uppercase tracking-wider ${getBadgeStyle(employee.badge_status)}`}>
-                        {getBadgeLabel(employee.badge_status)}
-                      </Badge>
-                    )}
+                    <p className="text-sm text-[#586AF5]">{employee.email}</p>
+                    <p className="text-xs text-[#8593A3]">{employee.phone || 'Not provided'}</p>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-[#8593A3]">
-                  {employee.designation}
+                  {/* TODO: Add start_date to employee data */}
+                  -
                 </td>
+                {teams.length > 1 && (
+                  <td className="px-6 py-4 text-sm text-[#8593A3]">
+                    {employee.team_name}
+                  </td>
+                )}
                 <td className="px-6 py-4 text-sm text-[#8593A3]">
-                  {employee.team_name}
-                </td>
-                <td className="px-6 py-4 text-sm text-[#586AF5]">
-                  {employee.email}
-                </td>
-                <td className="px-6 py-4 text-sm text-[#8593A3]">
-                  {employee.phone}
+                  {/* TODO: Add CTC from contract */}
+                  -
                 </td>
                 <td className="px-6 py-4">
                   <DropdownMenu>

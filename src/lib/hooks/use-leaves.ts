@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { queryKeys } from '@/lib/queries/keys'
 import {
   leavesService,
@@ -18,6 +19,7 @@ export function useLeaveRequests(
     queryKey: queryKeys.leaves.requests(companyId!, filters),
     queryFn: () => leavesService.getRequests(companyId!, filters),
     enabled: !!companyId,
+    staleTime: 60000, // 1 minute
   })
 }
 
@@ -26,6 +28,7 @@ export function useLeaveBalances(employeeId: string | undefined) {
     queryKey: queryKeys.leaves.balances(employeeId!),
     queryFn: () => leavesService.getBalances(employeeId!),
     enabled: !!employeeId,
+    staleTime: 60000, // 1 minute
   })
 }
 
@@ -34,6 +37,7 @@ export function usePendingLeaveCount(companyId: string | undefined) {
     queryKey: queryKeys.leaves.pendingCount(companyId!),
     queryFn: () => leavesService.getPendingCount(companyId!),
     enabled: !!companyId,
+    staleTime: 30000, // 30 seconds
   })
 }
 
@@ -52,9 +56,11 @@ export function useApproveLeave() {
       // Invalidate all leave-related queries
       queryClient.invalidateQueries({ queryKey: ['leaves'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      toast.success('Leave request approved successfully')
     },
     onError: (error) => {
       console.error('[Leave Approval] Failed:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to approve leave request')
     },
   })
 }
@@ -76,9 +82,11 @@ export function useRejectLeave() {
       // Invalidate all leave-related queries
       queryClient.invalidateQueries({ queryKey: ['leaves'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      toast.success('Leave request rejected')
     },
     onError: (error) => {
       console.error('[Leave Rejection] Failed:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to reject leave request')
     },
   })
 }
@@ -89,6 +97,7 @@ export function useEmployeeLeaveRequests(employeeId: string | undefined) {
     queryKey: ['leaves', 'employee', employeeId],
     queryFn: () => leavesService.getEmployeeLeaveRequests(employeeId!),
     enabled: !!employeeId,
+    staleTime: 60000, // 1 minute
   })
 }
 
@@ -108,9 +117,11 @@ export function useCreateLeaveRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaves'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      toast.success('Leave request submitted successfully')
     },
     onError: (error) => {
       console.error('[Leave Request Creation] Failed:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to submit leave request')
     },
   })
 }

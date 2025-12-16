@@ -65,9 +65,11 @@ export interface BonusSettings {
 export interface ExpenseCategory {
   id: string;
   name: string;
-  type: 'travel' | 'equipment' | 'food' | 'meeting' | 'phone' | 'home_office' | 'education' | 'others';
+  type: 'travel' | 'equipment' | 'food' | 'meeting' | 'phone' | 'home_office' | 'education' | 'others' |
+        'meals' | 'development' | 'wfh' | 'supplies' | 'perdiem' | 'insurance' | 'clubs' | 'wellness' | 'subscriptions';
   useRapidStandard: boolean;
   customAmount?: number;
+  isActive?: boolean;
 }
 
 export interface ExpenseSettings {
@@ -171,4 +173,6 @@ export type SettingsSection =
   | 'leave-policy'
   | 'portal-management'
   | 'background-verification'
-  | 'welcome-kit';
+  | 'welcome-kit'
+  | 'perks-benefits'
+  | 'team-management';

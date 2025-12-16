@@ -2,18 +2,20 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { AuthLayout } from '@/components/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export default function VerifyEmailPage() {
+export default function ForgotPasswordVerifyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email') || '';
+
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
-  const [verified, setVerified] = useState(false);
   const [error, setError] = useState('');
   const [resending, setResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
@@ -77,8 +79,8 @@ export default function VerifyEmailPage() {
         return;
       }
 
-      setLoading(false);
-      setVerified(true);
+      // On success, redirect to reset password page
+      router.push(`/auth/forgot-password/reset?email=${encodeURIComponent(email)}`);
     }, 1000);
   };
 
@@ -93,43 +95,6 @@ export default function VerifyEmailPage() {
       setTimeout(() => setResendSuccess(false), 3000);
     }, 1000);
   };
-
-  if (verified) {
-    return (
-      <AuthLayout>
-        <div className="text-center">
-          {/* Success Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Email verified!</h1>
-          <p className="text-gray-500 mb-8">
-            Your email has been successfully verified. You can now access your account.
-          </p>
-
-          {/* Continue Button */}
-          <Button
-            onClick={() => router.push('/employer/dashboard')}
-            className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium mb-6"
-          >
-            Continue to Dashboard
-          </Button>
-
-          {/* Back to Login */}
-          <Link
-            href="/auth/login"
-            className="inline-flex items-center gap-2 text-primary font-medium hover:underline text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to login
-          </Link>
-        </div>
-      </AuthLayout>
-    );
-  }
 
   return (
     <AuthLayout>

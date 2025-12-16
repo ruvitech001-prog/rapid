@@ -80,9 +80,17 @@ class ClientsServiceClass extends BaseService {
       query = query.eq('is_active', false)
     }
 
-    // Apply search filter
+    // Apply search filter (sanitized to prevent SQL injection)
     if (filters?.search) {
-      query = query.or(`legal_name.ilike.%${filters.search}%,display_name.ilike.%${filters.search}%`)
+      const sanitized = filters.search
+        .replace(/\\/g, '\\\\')
+        .replace(/%/g, '\\%')
+        .replace(/_/g, '\\_')
+        .replace(/'/g, "''")
+        .trim()
+        .slice(0, 100);
+
+      query = query.or(`legal_name.ilike.%${sanitized}%,display_name.ilike.%${sanitized}%`)
     }
 
     const { data: companies, error, count } = await query.range(offset, offset + limit - 1)

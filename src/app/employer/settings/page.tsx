@@ -54,19 +54,17 @@ import {
 } from './types';
 import { colors } from '@/lib/design-tokens';
 
-// Navigation items for settings sidebar
+// Navigation items for settings sidebar (per requirements)
 const settingsNavItems = [
   { id: 'profile' as SettingsSection, label: 'Profile', icon: Building2 },
-  { id: 'salary' as SettingsSection, label: 'Salary', icon: DollarSign },
-  { id: 'stock-options' as SettingsSection, label: 'Stock options', icon: TrendingUp },
-  { id: 'bonus' as SettingsSection, label: 'Bonus', icon: Gift },
-  { id: 'expense' as SettingsSection, label: 'Expense', icon: Receipt },
-  { id: 'probation-notice' as SettingsSection, label: 'Probation & notice period', icon: Clock },
-  { id: 'holiday-calendar' as SettingsSection, label: 'Holiday calendar', icon: Calendar },
+  { id: 'bonus' as SettingsSection, label: 'Incentive Structure', icon: Gift },
+  { id: 'probation-notice' as SettingsSection, label: 'Employment terms', icon: Clock },
   { id: 'leave-policy' as SettingsSection, label: 'Leave policy', icon: CalendarDays },
-  { id: 'portal-management' as SettingsSection, label: 'Portal management', icon: Users },
-  { id: 'background-verification' as SettingsSection, label: 'Background verification', icon: ShieldCheck },
-  { id: 'welcome-kit' as SettingsSection, label: 'Welcome kit', icon: Package },
+  { id: 'holiday-calendar' as SettingsSection, label: 'Holiday calendar', icon: Calendar },
+  { id: 'expense' as SettingsSection, label: 'Expense Categories', icon: Receipt },
+  { id: 'perks-benefits' as SettingsSection, label: 'Perks & Benefits', icon: Package },
+  { id: 'portal-management' as SettingsSection, label: 'Roles & Permissions', icon: Users },
+  { id: 'team-management' as SettingsSection, label: 'Team management', icon: Users },
 ];
 
 // Default data
@@ -158,14 +156,22 @@ const defaultBonus: BonusSettings = {
 
 const defaultExpense: ExpenseSettings = {
   categories: [
-    { id: '1', name: 'Travel', type: 'travel', useRapidStandard: true },
-    { id: '2', name: 'Work equipments', type: 'equipment', useRapidStandard: true },
-    { id: '3', name: 'Food', type: 'food', useRapidStandard: true },
-    { id: '4', name: 'Business meeting', type: 'meeting', useRapidStandard: true },
-    { id: '5', name: 'Phone & utilities', type: 'phone', useRapidStandard: true },
-    { id: '6', name: 'Home office', type: 'home_office', useRapidStandard: true },
-    { id: '7', name: 'Education & training', type: 'education', useRapidStandard: true },
-    { id: '8', name: 'Others', type: 'others', useRapidStandard: true },
+    // Default Active Categories
+    { id: '1', name: 'Business meeting', type: 'meeting', useRapidStandard: true, isActive: true },
+    { id: '2', name: 'Work Travel', type: 'travel', useRapidStandard: true, isActive: true },
+    { id: '3', name: 'Meals & entertainment', type: 'meals', useRapidStandard: true, isActive: true },
+    { id: '4', name: 'Professional Development', type: 'development', useRapidStandard: true, isActive: true },
+    { id: '5', name: 'Work equipment related', type: 'equipment', useRapidStandard: true, isActive: true },
+    { id: '6', name: 'Others', type: 'others', useRapidStandard: true, isActive: true },
+    // Inactive Categories (available but not switched on by default)
+    { id: '7', name: 'Phone & Internet', type: 'phone', useRapidStandard: true, isActive: false },
+    { id: '8', name: 'Work from Home', type: 'wfh', useRapidStandard: true, isActive: false },
+    { id: '9', name: 'Business supplies', type: 'supplies', useRapidStandard: true, isActive: false },
+    { id: '10', name: 'Per diem Travel', type: 'perdiem', useRapidStandard: true, isActive: false },
+    { id: '11', name: 'Health Insurance', type: 'insurance', useRapidStandard: true, isActive: false },
+    { id: '12', name: 'Clubs & Memberships', type: 'clubs', useRapidStandard: true, isActive: false },
+    { id: '13', name: 'Employee Wellness', type: 'wellness', useRapidStandard: true, isActive: false },
+    { id: '14', name: 'Subscriptions & payments', type: 'subscriptions', useRapidStandard: true, isActive: false },
   ],
 };
 
@@ -306,10 +312,86 @@ export default function SettingsPage() {
         return <BGVSection />;
       case 'welcome-kit':
         return <WelcomeKitSection />;
+      case 'perks-benefits':
+        return <PerksAndBenefitsSection />;
+      case 'team-management':
+        return <TeamManagementSection />;
       default:
         return <ProfileSection />;
     }
   };
+
+  // Perks & Benefits Section (combines Health Insurance, Welcome Swag, BGV)
+  const PerksAndBenefitsSection = () => {
+    const [activeTab, setActiveTab] = useState<'health' | 'swag' | 'bgv'>('health')
+
+    return (
+      <div className="space-y-6">
+        {/* Horizontal Sub-tabs */}
+        <div className="flex gap-4 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('health')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'health'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Health Insurance
+          </button>
+          <button
+            onClick={() => setActiveTab('swag')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'swag'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Welcome Swag
+          </button>
+          <button
+            onClick={() => setActiveTab('bgv')}
+            className={`px-4 py-2 font-medium transition-colors ${
+              activeTab === 'bgv'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Background Verification
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'health' && <div className="py-4 text-gray-500">Health Insurance plans will be displayed here</div>}
+        {activeTab === 'swag' && <WelcomeKitSection />}
+        {activeTab === 'bgv' && <BGVSection />}
+      </div>
+    )
+  };
+
+  // Team Management Section
+  const TeamManagementSection = () => (
+    <div className="space-y-6">
+      <Card className="rounded-2xl border border-[#E5E7EB] shadow-none">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Team Management</h3>
+              <p className="text-sm text-[#6B7280]">
+                Manage your teams and assign members. Default team can only be edited and not deleted.
+              </p>
+            </div>
+            <Button className="bg-primary hover:bg-primary/90">
+              Create Team
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500">
+            Team management interface - shows team list with members and managers
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   // Profile Section
   const ProfileSection = () => (
@@ -557,15 +639,17 @@ export default function SettingsPage() {
     </div>
   );
 
-  // Bonus Section
+  // Incentive Structure Section
   const BonusSection = () => (
     <div className="space-y-6">
       <Card className="rounded-2xl border border-[#E5E7EB] shadow-none">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Bonus policy</h3>
-              <p className="text-sm text-[#6B7280]">Configure bonus and incentive policies</p>
+              <h3 className="text-lg font-semibold text-gray-900">Incentive Structure</h3>
+              <p className="text-sm text-[#6B7280]">
+                Incentives play a crucial role in attracting & retaining great talents.
+              </p>
             </div>
             <Button
               variant="outline"
@@ -582,81 +666,127 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p className="text-xs font-medium text-[#6B7280] mb-1">Performance bonus</p>
-                <p className="text-sm font-medium text-gray-900">{bonus.performanceBonus.description}</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-[#6B7280] mb-1">Joining/Sign on bonus</p>
-                <p className="text-sm font-medium text-gray-900">INR {formatCurrency(bonus.joiningBonus.amount)}</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-[#6B7280] mb-1">Referral bonus</p>
-                <p className="text-sm font-medium text-gray-900">{bonus.referralBonus.description}</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-[#6B7280] mb-1">Cash rewards/Spot bonus</p>
-                <p className="text-sm font-medium text-gray-900">{bonus.spotBonus.description}</p>
-              </div>
-            </div>
-
-            <div className="bg-[#F9FAFB] rounded-xl p-4 mt-4">
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Recovery of joining bonus/signing on bonus</h4>
+            {/* Annual Variable Compensation */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-gray-900 mb-2">Annual Variable Compensation</p>
               <p className="text-xs text-[#6B7280] mb-3">
-                If the employee leaves before a certain time duration, they will return some percentage of the joining bonus.
+                Offer a variable performance bonus in the Cost to Company (CTC) structure.
+                A very popular way to rewarding employees. You can always change the values while rolling out an offer.
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs font-medium text-[#6B7280] mb-1">Duration</p>
-                  <p className="text-sm font-medium text-gray-900">{bonus.recovery.duration} months</p>
+                  <p className="text-xs font-medium text-[#6B7280] mb-1">Calculation basis</p>
+                  <p className="text-sm font-medium text-gray-900">Percentage</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-[#6B7280] mb-1">Percentage</p>
-                  <p className="text-sm font-medium text-gray-900">{bonus.recovery.percentage}%</p>
+                  <p className="text-xs font-medium text-[#6B7280] mb-1">Calculation Value</p>
+                  <p className="text-sm font-medium text-gray-900">10%</p>
                 </div>
               </div>
             </div>
+
+            {/* Joining/Sign-on Bonus */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-gray-900 mb-2">Joining/Sign-on Bonus</p>
+              <p className="text-xs text-[#6B7280] mb-3">
+                Offer incentives to new hires for joining your team. Paid after 3 months of service.
+                Recovered if the employee quits before a year. One time payment.
+              </p>
+              <div className="bg-white rounded-lg p-3 mb-3">
+                <h5 className="text-xs font-semibold text-gray-900 mb-2">Recover Criteria</h5>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-[#6B7280] mb-1">Recover Duration</p>
+                    <p className="text-sm font-medium text-gray-900">12 months</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-[#6B7280] mb-1">Recover Amount</p>
+                    <p className="text-sm font-medium text-gray-900">100%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Referral Bonus */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-gray-900 mb-2">Referral Bonus</p>
+              <p className="text-xs text-[#6B7280]">
+                Offer Incentives to existing employees for referring successful hires.
+                Paid after 3 months of service of the new hire.
+              </p>
+            </div>
+
+            {/* Cash Rewards/Spot Bonus */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-gray-900 mb-2">Cash rewards/Spot Bonus</p>
+              <p className="text-xs text-[#6B7280]">
+                Offer spot incentives to employees in recognition of their performance & contributions.
+                These are paid one time based on your instructions.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 
-  // Expense Section
-  const ExpenseSection = () => (
-    <div className="space-y-6">
-      <Card className="rounded-2xl border border-[#E5E7EB] shadow-none">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Expense policy</h3>
-              <p className="text-sm text-[#6B7280]">Configure expense reimbursement policies</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#E5E7EB] text-[#586AF5] hover:bg-[#F4F7FA]"
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit policy
-            </Button>
-          </div>
+  // Expense Categories Section
+  const ExpenseSection = () => {
+    const activeCategories = expense.categories.filter(c => c.isActive !== false)
+    const inactiveCategories = expense.categories.filter(c => c.isActive === false)
 
-          <div className="grid grid-cols-2 gap-4">
-            {expense.categories.map((category) => (
-              <div key={category.id} className="bg-[#F9FAFB] rounded-lg p-4">
-                <p className="text-sm font-medium text-gray-900 mb-1">{category.name}</p>
-                <p className="text-xs text-[#6B7280]">
-                  {category.useRapidStandard ? 'Standard expense by Rapid applied' : `Custom: INR ${formatCurrency(category.customAmount || 0)}`}
+    return (
+      <div className="space-y-6">
+        <Card className="rounded-2xl border border-[#E5E7EB] shadow-none">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Expense Categories</h3>
+                <p className="text-sm text-[#6B7280]">
+                  Choose your preferred categories for better tracking and control of expenses.
+                  Any legit business expense will require supporting bills & documents when employees file a claim.
                 </p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#E5E7EB] text-[#586AF5] hover:bg-[#F4F7FA]"
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit categories
+              </Button>
+            </div>
+
+            {/* Active Categories */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Active Categories</h4>
+              <div className="grid grid-cols-3 gap-3">
+                {activeCategories.map((category) => (
+                  <div key={category.id} className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                    <span className="text-xs text-green-600 font-medium">ACTIVE</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Inactive Categories */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Available Categories (Inactive)</h4>
+              <div className="grid grid-cols-3 gap-3">
+                {inactiveCategories.map((category) => (
+                  <div key={category.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-500">{category.name}</span>
+                    <span className="text-xs text-gray-400 font-medium">INACTIVE</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  };
 
   // Probation Section
   const ProbationSection = () => (

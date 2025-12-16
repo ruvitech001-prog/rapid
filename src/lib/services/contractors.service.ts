@@ -79,42 +79,50 @@ class ContractorsServiceClass extends BaseService {
     }))
   }
 
-  async getById(id: string): Promise<ContractorWithContract | null> {
-    const { data: contractor, error } = await this.supabase
+  async getById(id: string, companyId?: string): Promise<ContractorWithContract | null> {
+    // Build query with company verification for multi-tenancy security
+    let query = this.supabase
       .from('contractor_contractor')
-      .select('*')
+      .select(`
+        *,
+        contract:contractor_contractorcontract!inner(*)
+      `)
       .eq('id', id)
-      .single()
+      .eq('contractor_contractorcontract.is_current', true);
 
-    if (error) {
-      if (error.code === 'PGRST116') return null
-      this.handleError(error)
+    // CRITICAL: Verify company ownership to prevent cross-company data access
+    if (companyId) {
+      query = query.eq('contractor_contractorcontract.company_id', companyId);
     }
 
-    // Get current contract
-    const { data: contract } = await this.supabase
-      .from('contractor_contractorcontract')
-      .select('*')
-      .eq('contractor_id', id)
-      .eq('is_current', true)
-      .single()
+    const { data: result, error } = await query.single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      this.handleError(error);
+    }
+
+    if (!result) return null;
+
+    // Extract contract from the joined data
+    const contract = Array.isArray(result.contract) ? result.contract[0] : result.contract;
 
     // Get email if user exists
-    let email = ''
-    if (contractor?.user_id) {
+    let email = '';
+    if (result?.user_id) {
       const { data: user } = await this.supabase
         .from('users_user')
         .select('email')
-        .eq('id', contractor.user_id)
-        .single()
-      email = user?.email || ''
+        .eq('id', result.user_id)
+        .single();
+      email = user?.email || '';
     }
 
     return {
-      ...contractor,
+      ...result,
       contract: contract || null,
       email,
-    } as ContractorWithContract
+    } as ContractorWithContract;
   }
 
   async getCount(companyId: string): Promise<number> {

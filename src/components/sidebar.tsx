@@ -62,7 +62,7 @@ const EMPLOYER_SECTIONS: NavSection[] = [
     items: [
       { label: 'Employees', href: '/employer/employees', icon: <Building2 className="h-4 w-4" /> },
       { label: 'Contractors', href: '/employer/contractors', icon: <Users className="h-4 w-4" /> },
-      { label: 'Contracts', href: '/employer/contracts', icon: <FileText className="h-4 w-4" /> },
+      { label: 'Offers', href: '/employer/offers', icon: <FileText className="h-4 w-4" /> },
       { label: 'Timesheet', href: '/employer/timesheet', icon: <Clock className="h-4 w-4" /> },
       { label: 'Reports', href: '/employer/reports', icon: <PieChart className="h-4 w-4" /> },
       { label: 'Perks & Benefits', href: '/employer/perks', icon: <Coffee className="h-4 w-4" /> },

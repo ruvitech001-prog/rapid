@@ -246,7 +246,16 @@ class SuperAdminDashboardServiceClass extends BaseService {
     if (!query || query.length < 2) return []
 
     const results: SearchResult[] = []
-    const searchTerm = `%${query.toLowerCase()}%`
+    // Sanitize search input to prevent SQL injection
+    const sanitized = query
+      .replace(/\\/g, '\\\\')
+      .replace(/%/g, '\\%')
+      .replace(/_/g, '\\_')
+      .replace(/'/g, "''")
+      .trim()
+      .slice(0, 100)
+      .toLowerCase();
+    const searchTerm = `%${sanitized}%`
 
     // Search employees
     if (!filters?.type || filters.type === 'employee') {
